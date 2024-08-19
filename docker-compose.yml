@@ -1,0 +1,16 @@
+services:
+  db:
+    container_name: lixo_zero_api
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=lixo_zero
+      - POSTGRES_PASSWORD=1234
+      - POSGRES_DB=lixo_zero
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data:rw
+networks:
+  default:
+    name: lixo_zero

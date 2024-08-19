@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model categoria {
+  id        Int    @id @default(autoincrement())
+  descricao String
+  acao      acao[]
+}
+
+model usuario {
+  id                      Int             @id @default(autoincrement())
+  nome                    String
+  email                   String
+  senha                   String
+  status                  Boolean         @default(true)
+  tipo                    String          @db.VarChar(2)
+  cpf_cnpj                String          @db.VarChar(14)
+  acao_usuario_alteracao  acao[]          @relation("usuario_alteracao")
+  acao                    acao[]
+  patrocinador_alteracao  patrocionador[] @relation("usuario_alteracao")
+  patrocinador_patrocinio patrocionador[] @relation("usuario_patrocinio")
+}
+
+model acao {
+  id                             Int       @id @default(autoincrement())
+  id_usuario_responsavel         Int
+  celular                        String    @db.VarChar(11)
+  nome_organizador               String    @db.VarChar(60)
+  link_organizador               String
+  titulo_acao                    String
+  descricao_acao                 String
+  id_categoria                   Int
+  data_acao                      DateTime
+  forma_realizacao_acao          String    @db.VarChar(2)
+  local_acao                     String
+  numero_organizadores_acao      Int
+  receber_informacao_patrocionio Boolean   @default(false)
+  data_cadastro                  DateTime  @default(now())
+  data_atualizacao               DateTime  @updatedAt
+  situacao_acao                  String    @db.VarChar(2)
+  id_usuario_alteracao           Int?
+  categoria                      categoria @relation(fields: [id_categoria], references: [id])
+  usuario_alteracao              usuario?  @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
+  usuario_responsavel            usuario   @relation(fields: [id_usuario_responsavel], references: [id])
+}
+
+model patrocionador {
+  id                    Int      @id @default(autoincrement())
+  celular               String   @db.VarChar(11)
+  nome                  String   @db.VarChar(60)
+  descricao             String
+  id_cota               Int
+  data_cadastro         DateTime @default(now())
+  data_atualizacao      DateTime @updatedAt
+  situacao              String   @db.VarChar(2)
+  id_usuario_alteracao  Int?
+  id_usuario_patrocinio Int
+  usuario_alteracao     usuario? @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
+  usuario_patrocinio    usuario  @relation("usuario_patrocinio", fields: [id_usuario_patrocinio], references: [id])
+  cota                  cota     @relation(fields: [id_cota], references: [id])
+}
+
+model cota {
+  id            Int             @id @default(autoincrement())
+  descricao     String
+  patrocionador patrocionador[]
+}
