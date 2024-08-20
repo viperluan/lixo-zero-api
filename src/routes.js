@@ -1,9 +1,9 @@
 import express from 'express';
-import * as categoriaController from './controllers/categoria-controller.js';
-import * as usuarioController from './controllers/usuario-controller.js';
-import * as acaoController from './controllers/acao-controller.js';
-import * as patrocinioController from './controllers/patrocinador-controller.js';
-import * as cotaController from './controllers/cota-controller.js';
+import * as categoriaController from './controllers/categoria-controller';
+import * as usuarioController from './controllers/usuario-controller';
+import * as acaoController from './controllers/acao-controller';
+import * as patrocinioController from './controllers/patrocinador-controller';
+import * as cotaController from './controllers/cota-controller';
 
 const router = express.Router();
 

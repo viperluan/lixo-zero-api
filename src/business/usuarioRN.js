@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { isEmpty } from '../utils/StringUtils.js';
+import { isEmpty } from '../utils/StringUtils';
 import crypto from 'crypto';
 
 class UsuarioRN {

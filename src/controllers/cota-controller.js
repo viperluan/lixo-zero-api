@@ -1,4 +1,4 @@
-import { CotaRN } from '../business/cotaRN.js';
+import { CotaRN } from '../business/cotaRN';
 
 const cotaRN = new CotaRN();
 

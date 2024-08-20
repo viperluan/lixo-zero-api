@@ -1,4 +1,4 @@
-import { PatrocionadorRN } from '../business/patrocinadorRN.js';
+import { PatrocionadorRN } from '../business/patrocinadorRN';
 
 const patrocionadorRN = new PatrocionadorRN();
 

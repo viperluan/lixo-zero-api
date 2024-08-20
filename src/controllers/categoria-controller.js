@@ -1,4 +1,4 @@
-import { CategoriaRN } from '../business/categoriaRN.js';
+import { CategoriaRN } from '../business/categoriaRN';
 
 const categoriaRN = new CategoriaRN();
 

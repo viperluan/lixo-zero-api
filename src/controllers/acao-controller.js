@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { AcaoRN } from '../business/acaoRN.js';
+import { AcaoRN } from '../business/acaoRN';
 
 const prisma = new PrismaClient();
 const acaoRN = new AcaoRN(prisma);
