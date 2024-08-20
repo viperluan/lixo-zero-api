@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { UsuarioRN } from "../business/usuarioRN.js";
+import { PrismaClient } from '@prisma/client';
+import { UsuarioRN } from '../business/usuarioRN.js';
 
 const prisma = new PrismaClient();
 const usuarioRN = new UsuarioRN(prisma);
@@ -29,7 +29,6 @@ export async function getAll(req, res) {
       totalPages,
       currentPage: pageNumber,
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { isEmpty } from "../utils/StringUtils.js";
-import crypto from "crypto";
+import { PrismaClient } from '@prisma/client';
+import { isEmpty } from '../utils/StringUtils.js';
+import crypto from 'crypto';
 
 class UsuarioRN {
   constructor() {
@@ -8,7 +8,7 @@ class UsuarioRN {
   }
 
   criptografarSenha(senha) {
-    return crypto.createHash("md5").update(senha).digest("hex");
+    return crypto.createHash('md5').update(senha).digest('hex');
   }
 
   async criarUsuario(data) {
@@ -29,27 +29,27 @@ class UsuarioRN {
 
   validarUsuario(data) {
     if (isEmpty(data)) {
-      throw new Error("Nenhum dado informado para cadastro.");
+      throw new Error('Nenhum dado informado para cadastro.');
     }
 
     if (isEmpty(data.nome)) {
-      throw new Error("Nome não informado.");
+      throw new Error('Nome não informado.');
     }
 
     if (isEmpty(data.email)) {
-      throw new Error("Email não informado.");
+      throw new Error('Email não informado.');
     }
 
     if (isEmpty(data.senha)) {
-      throw new Error("Senha não informada.");
+      throw new Error('Senha não informada.');
     }
 
     if (isEmpty(data.tipo)) {
-      throw new Error("Tipo de usuário não informado.");
+      throw new Error('Tipo de usuário não informado.');
     }
 
     if (isEmpty(data.cpf_cnpj)) {
-      throw new Error("CPF/CNPJ não informado.");
+      throw new Error('CPF/CNPJ não informado.');
     }
   }
 
@@ -75,11 +75,11 @@ class UsuarioRN {
 
   async verificarUsuarioExistente(data) {
     if (await this.emailJaCadastrado(data.email)) {
-      throw new Error("Email já cadastrado.");
+      throw new Error('Email já cadastrado.');
     }
 
     if (await this.cpfcnpjJaCadastrado(data.cpf_cnpj)) {
-      throw new Error("CPF/CNPJ já cadastrado.");
+      throw new Error('CPF/CNPJ já cadastrado.');
     }
   }
 
@@ -111,7 +111,7 @@ class UsuarioRN {
 
   async deletarUsuarioPorId(id) {
     if (isNaN(id)) {
-      throw new Error("ID inválido");
+      throw new Error('ID inválido');
     }
 
     return await this.prisma.usuario.delete({
@@ -123,11 +123,11 @@ class UsuarioRN {
 
   async buscarPorLogin(data) {
     if (isEmpty(data.email)) {
-      throw new Error("Email não informado.");
+      throw new Error('Email não informado.');
     }
 
     if (isEmpty(data.senha)) {
-      throw new Error("Senha não informada.");
+      throw new Error('Senha não informada.');
     }
 
     const user = await this.prisma.usuario.findFirst({
@@ -144,7 +144,7 @@ class UsuarioRN {
     });
 
     if (user == null) {
-      throw new Error("E-mail ou senha incorretos.");
+      throw new Error('E-mail ou senha incorretos.');
     }
 
     return user;

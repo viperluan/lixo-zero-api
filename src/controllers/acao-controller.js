@@ -1,13 +1,21 @@
-import { PrismaClient } from "@prisma/client";
-import { AcaoRN } from "../business/acaoRN.js";
+import { PrismaClient } from '@prisma/client';
+import { AcaoRN } from '../business/acaoRN.js';
 
 const prisma = new PrismaClient();
 const acaoRN = new AcaoRN(prisma);
 
 export async function getAll(req, res) {
   try {
-
-    const { page = 1, limit = 10, id_categoria, id_usuario, data_acao, search, situacao, forma_realizacao_acao } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      id_categoria,
+      id_usuario,
+      data_acao,
+      search,
+      situacao,
+      forma_realizacao_acao,
+    } = req.query;
 
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
@@ -18,7 +26,7 @@ export async function getAll(req, res) {
       data_acao,
       search,
       situacao,
-      forma_realizacao_acao
+      forma_realizacao_acao,
     };
 
     const { actions, totalActions } = await acaoRN.listarAcoes(filters, pageNumber, limitNumber);
@@ -30,8 +38,6 @@ export async function getAll(req, res) {
       totalPages,
       currentPage: pageNumber,
     });
-
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -54,9 +60,6 @@ export async function update(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
-
-
-
 
 export async function buscarPorData(req, res) {
   try {

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 class CategoriaRN {
   constructor() {
@@ -16,7 +16,6 @@ class CategoriaRN {
   }
 
   async listarCategorias(pageNumber = 1, limitNumber = 10) {
-
     const [categories, totalCategories] = await Promise.all([
       this.prisma.categoria.findMany({
         skip: (pageNumber - 1) * limitNumber,
@@ -29,10 +28,10 @@ class CategoriaRN {
   }
   validarCategoria(descricao) {
     if (!descricao) {
-      throw new Error("Descrição é obrigatória.");
+      throw new Error('Descrição é obrigatória.');
     }
-    if (typeof descricao !== "string" || descricao.length > 100) {
-      throw new Error("Descrição não pode ter mais de 100 caracteres e deve ser texto.");
+    if (typeof descricao !== 'string' || descricao.length > 100) {
+      throw new Error('Descrição não pode ter mais de 100 caracteres e deve ser texto.');
     }
   }
 

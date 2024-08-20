@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 class AcaoRN {
   constructor() {
@@ -6,7 +6,6 @@ class AcaoRN {
   }
 
   async listarAcoes(filters, pageNumber = 1, limitNumber = 10) {
-
     const where = {};
 
     if (filters.id_categoria) {
@@ -38,7 +37,6 @@ class AcaoRN {
       where.forma_realizacao_acao = filters.forma_realizacao_acao;
     }
 
-
     const [actions, totalActions] = await Promise.all([
       this.prisma.acao.findMany({
         where,
@@ -62,19 +60,19 @@ class AcaoRN {
           categoria: {
             select: {
               descricao: true,
-            }
+            },
           },
           usuario_responsavel: {
             select: {
               nome: true,
               email: true,
-            }
+            },
           },
           usuario_alteracao: {
             select: {
               nome: true,
               email: true,
-            }
+            },
           },
           id_usuario_responsavel: false,
           id_categoria: false,
@@ -90,7 +88,7 @@ class AcaoRN {
   async buscarPorData(strData) {
     const dataObj = new Date(strData);
     if (isNaN(dataObj.getTime())) {
-      throw new Error("Data inválida.");
+      throw new Error('Data inválida.');
     }
 
     return await this.prisma.acao.findMany({
@@ -128,15 +126,15 @@ class AcaoRN {
     const dataFimObj = new Date(strDataFinal);
 
     if (isNaN(dataInicioObj.getTime())) {
-      throw new Error("Data inicial inválida.");
+      throw new Error('Data inicial inválida.');
     }
 
     if (isNaN(dataFimObj.getTime())) {
-      throw new Error("Data final inválida.");
+      throw new Error('Data final inválida.');
     }
 
     if (dataInicioObj > dataFimObj) {
-      throw new Error("A data de início deve ser anterior à data de fim.");
+      throw new Error('A data de início deve ser anterior à data de fim.');
     }
 
     return await this.prisma.acao.findMany({
@@ -190,13 +188,13 @@ class AcaoRN {
         data: {
           usuario_responsavel: {
             connect: {
-              id: id_usuario_responsavel
-            }
+              id: id_usuario_responsavel,
+            },
           },
           categoria: {
             connect: {
-              id: id_categoria
-            }
+              id: id_categoria,
+            },
           },
           celular,
           nome_organizador,
@@ -214,19 +212,18 @@ class AcaoRN {
   }
 
   async atualizarAcao(id, fields) {
-    if (!id)
-      throw new Error("Id não informado");
+    if (!id) throw new Error('Id não informado');
 
     return await this.prisma.acao.update({
       data: {
         situacao_acao: fields.situacao_acao,
-        id_usuario_alteracao: fields.id_usuario_alteracao
-      }, where: {
-        id: parseInt(id)
-      }
-    })
+        id_usuario_alteracao: fields.id_usuario_alteracao,
+      },
+      where: {
+        id: parseInt(id),
+      },
+    });
   }
-
 
   // VALIDAÇÕES
   validarInsercao(acao) {
@@ -245,90 +242,90 @@ class AcaoRN {
   }
 
   validarIdUsuarioResponsavel(id) {
-    if (typeof id !== "number" || id === null) {
-      throw new Error("ID de usuário responsável não informado.");
+    if (typeof id !== 'number' || id === null) {
+      throw new Error('ID de usuário responsável não informado.');
     }
   }
 
   validarCelular(celular) {
-    if (typeof celular !== "string" || celular.length !== 11) {
-      throw new Error("Número de celular inválido ou não informado.");
+    if (typeof celular !== 'string' || celular.length !== 11) {
+      throw new Error('Número de celular inválido ou não informado.');
     }
   }
 
   validarNomeOrganizador(nome) {
-    if (typeof nome !== "string" || nome.length === 0 || nome.length > 60) {
-      throw new Error("Nome de organizador inválido ou não informado.");
+    if (typeof nome !== 'string' || nome.length === 0 || nome.length > 60) {
+      throw new Error('Nome de organizador inválido ou não informado.');
     }
   }
 
   validarLinkOrganizador(link) {
-    if (typeof link !== "string" || link.length === 0) {
-      throw new Error("Ao menos um link de organizador deve ser informado.");
+    if (typeof link !== 'string' || link.length === 0) {
+      throw new Error('Ao menos um link de organizador deve ser informado.');
     }
   }
 
   validarTituloAcao(titulo) {
-    if (typeof titulo !== "string" || titulo.length === 0) {
-      throw new Error("A ação deve possuir um título.");
+    if (typeof titulo !== 'string' || titulo.length === 0) {
+      throw new Error('A ação deve possuir um título.');
     }
   }
 
   validarDescricaoAcao(descricao) {
-    if (typeof descricao !== "string" || descricao.length === 0) {
-      throw new Error("A ação deve possuir uma descrição.");
+    if (typeof descricao !== 'string' || descricao.length === 0) {
+      throw new Error('A ação deve possuir uma descrição.');
     }
   }
 
   validarIdCategoria(id) {
-    if (typeof id !== "number" || id === null) {
-      throw new Error("Categoria não informada.");
+    if (typeof id !== 'number' || id === null) {
+      throw new Error('Categoria não informada.');
     }
   }
 
   validarDataAcao(data) {
-    if (typeof data !== "string" || data.length === 0) {
-      throw new Error("Data da ação inválida ou não informada.");
+    if (typeof data !== 'string' || data.length === 0) {
+      throw new Error('Data da ação inválida ou não informada.');
     }
 
     const dataObj = new Date(data);
 
     if (isNaN(dataObj.getTime())) {
-      throw new Error("Data da ação inválida.");
+      throw new Error('Data da ação inválida.');
     }
 
     if (dataObj <= new Date()) {
-      throw new Error("A data da ação deve ser posterior à data atual.");
+      throw new Error('A data da ação deve ser posterior à data atual.');
     }
   }
 
   validarFormaRealizacaoAcao(forma) {
-    if (typeof forma !== "string") {
-      throw new Error("Forma de realização não informada.");
+    if (typeof forma !== 'string') {
+      throw new Error('Forma de realização não informada.');
     }
   }
 
   validarLocalAcao(local) {
-    if (typeof local !== "string" || local.length === 0) {
-      throw new Error("Local da ação não informado.");
+    if (typeof local !== 'string' || local.length === 0) {
+      throw new Error('Local da ação não informado.');
     }
   }
 
   validarNumeroOrganizadoresAcao(numero) {
-    if (typeof numero !== "number" || numero === null) {
-      throw new Error("Quantidade de organizadores não informado.");
+    if (typeof numero !== 'number' || numero === null) {
+      throw new Error('Quantidade de organizadores não informado.');
     }
   }
 
   validarSituacaoAcao(situacao) {
-    if (typeof situacao !== "string") {
-      throw new Error("Situação da ação não informada.");
+    if (typeof situacao !== 'string') {
+      throw new Error('Situação da ação não informada.');
     }
   }
 
   validarIdUsuarioAlteracao(id) {
-    if (typeof id !== "number" || id === null) {
-      throw new Error("Usuário que fez alteração não informado.");
+    if (typeof id !== 'number' || id === null) {
+      throw new Error('Usuário que fez alteração não informado.');
     }
   }
 }
