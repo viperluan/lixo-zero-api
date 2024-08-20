@@ -5,8 +5,10 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 
 export default [
   {
-    files: ['src/**/*.{js,mjs,cjs,ts}'],
     ignores: ['dist/', 'build/', 'node_modules/', 'pg_data/'],
+  },
+  {
+    files: ['src/**/*.{js,mjs,cjs,ts}'],
   },
   {
     languageOptions: {
