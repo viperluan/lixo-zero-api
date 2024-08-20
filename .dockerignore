@@ -1,0 +1,20 @@
+# Ignore development folders
+node_modules/
+dist/
+pg_data/
+
+# Ignore log files
+*.log
+
+# Ignore docker config files
+Dockerfile
+.dockerignore
+
+# Ignore enviroment files
+*.env
+*.local
+
+# Ignore config files
+.git
+.idea
+.vscode
