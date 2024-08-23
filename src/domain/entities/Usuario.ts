@@ -14,10 +14,14 @@ export type UsuarioProps = {
 export default class Usuario {
   private constructor(private props: UsuarioProps) {}
 
+  private static criptografarSenha(senhaLimpa: string): string {
+    return bcrypt.hashSync(senhaLimpa, 10);
+  }
+
   public static criarNovoUsuario(
     novoUsuario: Omit<UsuarioProps, 'id' | 'status' | 'tipo'>
   ): Usuario {
-    const senhaCriptografada = bcrypt.hashSync(novoUsuario.senha, 10);
+    const senhaCriptografada = this.criptografarSenha(novoUsuario.senha);
 
     return new Usuario({
       id: gerarUuid(),
@@ -30,6 +34,10 @@ export default class Usuario {
 
   public static carregarUsuarioExistente(props: UsuarioProps): Usuario {
     return new Usuario(props);
+  }
+
+  public static compararSenha(senhaLimpa: string, senhaCriptografada: string): boolean {
+    return bcrypt.compareSync(senhaLimpa, senhaCriptografada);
   }
 
   public get id() {
