@@ -8,7 +8,7 @@ export type UsuarioProps = {
   senha: string;
   cpf_cnpj: string;
   status: boolean;
-  tipo: number;
+  tipo: string;
 };
 
 export default class Usuario {
@@ -28,7 +28,7 @@ export default class Usuario {
       ...novoUsuario,
       senha: senhaCriptografada,
       status: true,
-      tipo: 1,
+      tipo: '1',
     });
   }
 
