@@ -1,13 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 
-import Usuario from '../../domain/entities/Usuario';
-import IUsuarioRepository from '../../domain/repositories/IUsuarioRepository';
+import Usuario from '../../domain/usuario/entity/Usuario';
+import IUsuarioRepository from '../../domain/usuario/repository/IUsuarioRepository';
 
 export default class UsuarioPrismaRepository implements IUsuarioRepository {
-  readonly prisma: PrismaClient;
+  constructor(private readonly prisma: PrismaClient) {}
 
-  constructor() {
-    this.prisma = new PrismaClient();
+  async buscarPorId(id: string): Promise<Usuario | null> {
+    const idExiste = await this.prisma.usuario.findFirst({ where: { id } });
+
+    if (!idExiste) return null;
+
+    return Usuario.carregarUsuarioExistente(idExiste);
   }
 
   async buscarPorEmail(email: string): Promise<Usuario | null> {
@@ -26,7 +30,24 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
     return Usuario.carregarUsuarioExistente(cpfCnpjExiste);
   }
 
-  async salvar({ id, nome, email, senha, cpf_cnpj, status, tipo }: Usuario): Promise<void> {
+  async buscarComPaginacao(pagina = 1, limiteUsuarios = 10): Promise<Usuario[] | null> {
+    const listaDeUsuarios = await this.prisma.usuario.findMany({
+      skip: (pagina - 1) * limiteUsuarios,
+      take: limiteUsuarios,
+    });
+
+    const usuarios = listaDeUsuarios.map((usuario) => Usuario.carregarUsuarioExistente(usuario));
+
+    return usuarios;
+  }
+
+  async buscarQuantidadeUsuarios(): Promise<number> {
+    const quantidadeUsuarios = await this.prisma.usuario.count();
+
+    return quantidadeUsuarios;
+  }
+
+  async criar({ id, nome, email, senha, cpf_cnpj, status, tipo }: Usuario): Promise<void> {
     const data = {
       id,
       nome,
@@ -40,12 +61,7 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
     await this.prisma.usuario.create({ data });
   }
 
-  async atualizar({
-    nome,
-    email,
-    senha,
-    cpf_cnpj,
-  }: Omit<Usuario, 'id' | 'status' | 'tipo'>): Promise<void> {
+  async atualizar({ nome, email, senha, cpf_cnpj }: Omit<Usuario, 'id' | 'status' | 'tipo'>): Promise<void> {
     const data = {
       nome,
       email,
@@ -53,7 +69,7 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
       cpf_cnpj,
     };
 
-    await this.prisma.usuario.create({ data });
+    await this.prisma.usuario.update({ where: { email }, data });
   }
 
   async deletar(id: string): Promise<void> {
