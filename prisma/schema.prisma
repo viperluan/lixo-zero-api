@@ -7,35 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model categoria {
-  id        Int    @id @default(autoincrement())
+model Categoria {
+  id        String @id @default(uuid())
   descricao String
-  acao      acao[]
+  acao      Acao[]
 }
 
-model usuario {
-  id                      Int             @id @default(autoincrement())
+model Usuario {
+  id                      String         @id @default(uuid())
   nome                    String
-  email                   String
+  email                   String         @unique
   senha                   String
-  status                  Boolean         @default(true)
-  tipo                    String          @db.VarChar(2)
-  cpf_cnpj                String          @db.VarChar(14)
-  acao_usuario_alteracao  acao[]          @relation("usuario_alteracao")
-  acao                    acao[]
-  patrocinador_alteracao  patrocionador[] @relation("usuario_alteracao")
-  patrocinador_patrocinio patrocionador[] @relation("usuario_patrocinio")
+  status                  Boolean        @default(true)
+  tipo                    String         @db.VarChar(2)
+  cpf_cnpj                String         @unique @db.VarChar(14)
+  acao                    Acao[]
+  acao_usuario_alteracao  Acao[]         @relation("usuario_alteracao")
+  patrocinador_alteracao  Patrocinador[] @relation("usuario_alteracao")
+  patrocinador_patrocinio Patrocinador[] @relation("usuario_patrocinio")
 }
 
-model acao {
-  id                             Int       @id @default(autoincrement())
-  id_usuario_responsavel         Int
+model Acao {
+  id                             String    @id @unique @default(uuid())
   celular                        String    @db.VarChar(11)
   nome_organizador               String    @db.VarChar(60)
   link_organizador               String
   titulo_acao                    String
   descricao_acao                 String
-  id_categoria                   Int
   data_acao                      DateTime
   forma_realizacao_acao          String    @db.VarChar(2)
   local_acao                     String
@@ -44,30 +42,32 @@ model acao {
   data_cadastro                  DateTime  @default(now())
   data_atualizacao               DateTime  @updatedAt
   situacao_acao                  String    @db.VarChar(2)
-  id_usuario_alteracao           Int?
-  categoria                      categoria @relation(fields: [id_categoria], references: [id])
-  usuario_alteracao              usuario?  @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
-  usuario_responsavel            usuario   @relation(fields: [id_usuario_responsavel], references: [id])
+  id_usuario_responsavel         String
+  id_categoria                   String
+  id_usuario_alteracao           String?
+  categoria                      Categoria @relation(fields: [id_categoria], references: [id])
+  usuario_alteracao              Usuario?  @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
+  usuario_responsavel            Usuario   @relation(fields: [id_usuario_responsavel], references: [id])
 }
 
-model patrocionador {
-  id                    Int      @id @default(autoincrement())
+model Patrocinador {
+  id                    String   @id @default(uuid())
   celular               String   @db.VarChar(11)
   nome                  String   @db.VarChar(60)
   descricao             String
-  id_cota               Int
   data_cadastro         DateTime @default(now())
   data_atualizacao      DateTime @updatedAt
   situacao              String   @db.VarChar(2)
-  id_usuario_alteracao  Int?
-  id_usuario_patrocinio Int
-  usuario_alteracao     usuario? @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
-  usuario_patrocinio    usuario  @relation("usuario_patrocinio", fields: [id_usuario_patrocinio], references: [id])
-  cota                  cota     @relation(fields: [id_cota], references: [id])
+  id_cota               String
+  id_usuario_alteracao  String?
+  id_usuario_patrocinio String
+  usuario_alteracao     Usuario? @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
+  usuario_patrocinio    Usuario  @relation("usuario_patrocinio", fields: [id_usuario_patrocinio], references: [id])
+  cota                  Cota     @relation(fields: [id_cota], references: [id])
 }
 
-model cota {
-  id            Int             @id @default(autoincrement())
+model Cota {
+  id            String         @id @default(uuid())
   descricao     String
-  patrocionador patrocionador[]
+  patrocionador Patrocinador[]
 }
