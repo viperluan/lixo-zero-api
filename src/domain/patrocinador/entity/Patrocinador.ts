@@ -1,5 +1,7 @@
 import { v4 as gerarUuid } from 'uuid';
 
+import { PatrocinadorSituacao } from '../enum/PatrocinadorSituacao';
+
 export type PatrocinadorProps = {
   id: string;
   nome: string;
@@ -28,7 +30,7 @@ export default class Patrocinador {
       data_cadastro: new Date(),
       data_atualizacao: new Date(),
       id_usuario_alteracao: null,
-      situacao: 0,
+      situacao: PatrocinadorSituacao.Pendente,
     });
   }
 
