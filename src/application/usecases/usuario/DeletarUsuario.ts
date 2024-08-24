@@ -1,15 +1,19 @@
 import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
+import { Usecase } from '../usecase';
 
-export type DeletarUsuarioInputDTO = {
+export type DeletarUsuarioEntradaDTO = {
   id: string;
 };
 
-export default class DeletarUsuario {
-  constructor(readonly usuarioRepository: IUsuarioRepository) {}
+export type DeletarUsuarioSaidaDTO = void;
 
-  async executar({ id }: DeletarUsuarioInputDTO): Promise<void> {
+export default class DeletarUsuario
+  implements Usecase<DeletarUsuarioEntradaDTO, DeletarUsuarioSaidaDTO>
+{
+  constructor(private readonly usuarioRepository: IUsuarioRepository) {}
+
+  async executar({ id }: DeletarUsuarioEntradaDTO): Promise<void> {
     const idExiste = await this.usuarioRepository.buscarPorId(id);
-
     if (!idExiste) throw new Error('Usuário não existe.');
 
     await this.usuarioRepository.deletar(id);

@@ -10,32 +10,36 @@ export type AutenticarUsuarioEntradaDTO = {
 export type AutenticarUsuarioSaidaDTO = {
   id: string;
   nome: string;
-  tipo: number;
+  tipo: string;
   email: string;
 };
 
 export default class AutenticarUsuario
   implements Usecase<AutenticarUsuarioEntradaDTO, AutenticarUsuarioSaidaDTO>
 {
-  constructor(private usuarioRepository: IUsuarioRepository) {}
+  constructor(private readonly usuarioRepository: IUsuarioRepository) {}
 
   async executar({
     email,
     senha,
   }: AutenticarUsuarioEntradaDTO): Promise<AutenticarUsuarioSaidaDTO> {
-    const emailExiste = await this.usuarioRepository.buscarPorEmail(email);
+    const usuario = await this.usuarioRepository.buscarPorEmail(email);
+    if (!usuario) throw new Error('Email ou senha incorretos');
 
-    if (!emailExiste) throw new Error('Email ou senha incorretos');
-
-    const senhasSaoIguais = Usuario.compararSenha(senha, emailExiste.senha);
-
+    const senhasSaoIguais = Usuario.compararSenha(senha, usuario.senha);
     if (!senhasSaoIguais) throw new Error('Email ou senha incorretos');
 
-    return {
-      id: emailExiste.id,
-      nome: emailExiste.nome,
-      email: emailExiste.email,
-      tipo: emailExiste.tipo,
+    return this.objetoSaida(usuario);
+  }
+
+  private objetoSaida({ id, nome, email, tipo }: Usuario): AutenticarUsuarioSaidaDTO {
+    const output: AutenticarUsuarioSaidaDTO = {
+      id,
+      nome,
+      email,
+      tipo,
     };
+
+    return output;
   }
 }
