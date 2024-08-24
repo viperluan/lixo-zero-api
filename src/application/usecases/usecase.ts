@@ -1,3 +1,3 @@
 export interface Usecase<EntradaDto, SaidaDto> {
-  execute(entrada: EntradaDto): Promise<SaidaDto>;
+  executar(entrada: EntradaDto): Promise<SaidaDto>;
 }
