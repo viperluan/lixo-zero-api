@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
 class PatrocionadorRN {
+  private readonly prisma: PrismaClient;
+
   constructor() {
     this.prisma = new PrismaClient();
   }
@@ -9,7 +11,7 @@ class PatrocionadorRN {
     const { id_usuario_responsavel, celular, nome, descricao, id_cota, situacao } = payload;
     this.validarPatrocinio(payload);
 
-    const patrocinio = await this.prisma.patrocionador.create({
+    const patrocinio = await this.prisma.patrocinador.create({
       data: {
         celular: celular,
         nome: nome,
@@ -33,7 +35,7 @@ class PatrocionadorRN {
 
   async listarPatrocinios(pageNumber = 1, limitNumber = 10) {
     const [partnes, totalPartnes] = await Promise.all([
-      this.prisma.patrocionador.findMany({
+      this.prisma.patrocinador.findMany({
         skip: (pageNumber - 1) * limitNumber,
         take: limitNumber,
         select: {
@@ -53,7 +55,7 @@ class PatrocionadorRN {
           },
         },
       }),
-      this.prisma.patrocionador.count(),
+      this.prisma.patrocinador.count(),
     ]);
 
     return { partnes, totalPartnes };

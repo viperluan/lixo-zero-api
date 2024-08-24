@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
 class AcaoRN {
+  private readonly prisma: PrismaClient;
+
   constructor() {
     this.prisma = new PrismaClient();
   }
@@ -9,11 +11,11 @@ class AcaoRN {
     const where = {};
 
     if (filters.id_categoria) {
-      where.id_categoria = parseInt(filters.id_categoria);
+      where.id_categoria = filters.id_categoria;
     }
 
     if (filters.id_usuario) {
-      where.id_usuario_responsavel = parseInt(filters.id_usuario);
+      where.id_usuario_responsavel = filters.id_usuario;
     }
 
     if (filters.data_acao) {
@@ -76,7 +78,6 @@ class AcaoRN {
           },
           id_usuario_responsavel: false,
           id_categoria: false,
-          id_categoria: false,
         },
       }),
       this.prisma.acao.count({ where }),
@@ -115,7 +116,6 @@ class AcaoRN {
         usuario_responsavel: true,
         usuario_alteracao: true,
         id_usuario_responsavel: false,
-        id_categoria: false,
         id_categoria: false,
       },
     });
@@ -162,7 +162,6 @@ class AcaoRN {
         usuario_responsavel: true,
         usuario_alteracao: true,
         id_usuario_responsavel: false,
-        id_categoria: false,
         id_categoria: false,
       },
     });
@@ -220,7 +219,7 @@ class AcaoRN {
         id_usuario_alteracao: fields.id_usuario_alteracao,
       },
       where: {
-        id: parseInt(id),
+        id,
       },
     });
   }
@@ -242,7 +241,7 @@ class AcaoRN {
   }
 
   validarIdUsuarioResponsavel(id) {
-    if (typeof id !== 'number' || id === null) {
+    if (id === null) {
       throw new Error('ID de usuário responsável não informado.');
     }
   }
@@ -278,7 +277,7 @@ class AcaoRN {
   }
 
   validarIdCategoria(id) {
-    if (typeof id !== 'number' || id === null) {
+    if (id === null) {
       throw new Error('Categoria não informada.');
     }
   }
