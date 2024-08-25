@@ -6,7 +6,7 @@ export default interface IUsuarioRepository {
   buscarPorCpfCnpj(cpf_cnpj: string): Promise<Usuario | null>;
   buscarComPaginacao(pagina: number, limiteUsuarios: number): Promise<Usuario[] | null>;
   buscarQuantidadeUsuarios(): Promise<number>;
-  criar(usuario: Usuario): Promise<void>;
+  salvar(usuario: Usuario): Promise<void>;
   atualizar(usuario: Usuario): Promise<void>;
   deletar(id: string): Promise<void>;
 }

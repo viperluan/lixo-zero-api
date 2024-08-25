@@ -22,6 +22,6 @@ export default class CriarUsuario implements Usecase<CriarUsuarioEntradaDTO, Cri
     if (cpfCnpjExiste) throw new Error('CPF/CNPJ já cadastrado.');
 
     const usuario = Usuario.criarNovoUsuario({ nome, email, senha, cpf_cnpj });
-    await this.usuarioRepository.criar(usuario);
+    await this.usuarioRepository.salvar(usuario);
   }
 }

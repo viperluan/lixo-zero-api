@@ -47,7 +47,7 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
     return quantidadeUsuarios;
   }
 
-  async criar({ id, nome, email, senha, cpf_cnpj, status, tipo }: Usuario): Promise<void> {
+  async salvar({ id, nome, email, senha, cpf_cnpj, status, tipo }: Usuario): Promise<void> {
     const data = {
       id,
       nome,
@@ -61,7 +61,12 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
     await this.prisma.usuario.create({ data });
   }
 
-  async atualizar({ nome, email, senha, cpf_cnpj }: Omit<Usuario, 'id' | 'status' | 'tipo'>): Promise<void> {
+  async atualizar({
+    nome,
+    email,
+    senha,
+    cpf_cnpj,
+  }: Omit<Usuario, 'id' | 'status' | 'tipo'>): Promise<void> {
     const data = {
       nome,
       email,
