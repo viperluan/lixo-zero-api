@@ -1,6 +1,7 @@
 import Usuario from '../../../domain/usuario/entity/Usuario';
 import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
 import { Usecase } from '../usecase';
+import GerarTokenUsuario from './GerarTokenUsuario';
 
 export type AutenticarUsuarioEntradaDTO = {
   email: string;
@@ -8,16 +9,22 @@ export type AutenticarUsuarioEntradaDTO = {
 };
 
 export type AutenticarUsuarioSaidaDTO = {
-  id: string;
-  nome: string;
-  tipo: string;
-  email: string;
+  token: string;
+  usuario: {
+    id: string;
+    nome: string;
+    email: string;
+    tipo: string;
+  };
 };
 
 export default class AutenticarUsuario
   implements Usecase<AutenticarUsuarioEntradaDTO, AutenticarUsuarioSaidaDTO>
 {
-  constructor(private readonly usuarioRepository: IUsuarioRepository) {}
+  constructor(
+    private readonly usuarioRepository: IUsuarioRepository,
+    private readonly gerarTokenUsuario: GerarTokenUsuario
+  ) {}
 
   async executar({
     email,
@@ -29,17 +36,32 @@ export default class AutenticarUsuario
     const senhasSaoIguais = Usuario.compararSenha(senha, usuario.senha);
     if (!senhasSaoIguais) throw new Error('Email ou senha incorretos');
 
-    return this.objetoSaida(usuario);
+    return await this.objetoSaida(usuario);
   }
 
-  private objetoSaida({ id, nome, email, tipo }: Usuario): AutenticarUsuarioSaidaDTO {
-    const output: AutenticarUsuarioSaidaDTO = {
+  private async objetoSaida({
+    id,
+    nome,
+    email,
+    tipo,
+  }: Usuario): Promise<AutenticarUsuarioSaidaDTO> {
+    const { token } = await this.gerarTokenUsuario.executar({
       id,
-      nome,
       email,
+      nome,
       tipo,
+    });
+
+    const saida: AutenticarUsuarioSaidaDTO = {
+      token,
+      usuario: {
+        id,
+        email,
+        nome,
+        tipo,
+      },
     };
 
-    return output;
+    return saida;
   }
 }
