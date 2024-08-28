@@ -6,6 +6,7 @@ import CriarUsuario from '../application/usecases/usuario/CriarUsuario';
 import AutenticarUsuario from '../application/usecases/usuario/AutenticarUsuario';
 import DeletarUsuario from '../application/usecases/usuario/DeletarUsuario';
 import ListarUsuarios from '../application/usecases/usuario/ListarUsuarios';
+import GerarTokenUsuario from '../application/usecases/usuario/GerarTokenUsuario';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 
@@ -63,7 +64,8 @@ export async function autenticar(request: Request, response: Response) {
   try {
     const { email, senha } = request.body;
 
-    const autenticarUsuario = new AutenticarUsuario(usuarioPrismaRepository);
+    const gerarTokenUsuario = new GerarTokenUsuario();
+    const autenticarUsuario = new AutenticarUsuario(usuarioPrismaRepository, gerarTokenUsuario);
     const usuario = await autenticarUsuario.executar({ email, senha });
 
     response.status(200).json(usuario);
