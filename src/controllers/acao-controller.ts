@@ -4,6 +4,7 @@ import AcaoPrismaRepository from '../application/repositories/AcaoPrismaReposito
 import CriarAcao from '../application/usecases/acao/CriarAcao';
 import ListarAcoes from '../application/usecases/acao/ListarAcoes';
 import { AcaoRN } from '../business/acaoRN';
+import AtualizarAcao from '../application/usecases/acao/AtualizarAcao';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 
@@ -67,9 +68,14 @@ export async function create(request: Request, response: Response) {
 export async function update(request: Request, response: Response) {
   try {
     const { id } = request.params;
-    response.status(201).json(await acaoRN.atualizarAcao(id, request.body));
+    const campos = request.body;
+
+    const atualizarAcao = new AtualizarAcao(acaoPrismaRepository);
+    const acao = await atualizarAcao.executar({ id, campos });
+
+    response.status(200).json(acao);
   } catch (error) {
-    response.status(400).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
 
