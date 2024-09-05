@@ -21,15 +21,15 @@ export type AcaoProps = {
   id_usuario_responsavel: string;
   id_usuario_alteracao: string;
   categoria?: {
-    descricao: string;
+    descricao?: string;
   };
   usuario_responsavel?: {
-    nome: string;
-    email: string;
+    nome?: string;
+    email?: string;
   };
   usuario_alteracao?: {
-    nome: string;
-    email: string;
+    nome?: string;
+    email?: string;
   };
 };
 

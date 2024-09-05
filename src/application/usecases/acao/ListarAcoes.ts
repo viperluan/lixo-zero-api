@@ -1,7 +1,6 @@
 import Acao from '../../../domain/acao/entity/Acao';
-import IAcaoRepository, {
-  FiltrosListarComPaginacaoType,
-} from '../../../domain/acao/repository/IAcaoRepository';
+import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
+import { FiltrosListarComPaginacaoType } from '../../repositories/AcaoPrismaRepository';
 import { Usecase } from '../usecase';
 
 type ListarAcoesDTO = {
