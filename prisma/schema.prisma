@@ -38,13 +38,13 @@ model Acao {
   forma_realizacao_acao          String    @db.VarChar(2)
   local_acao                     String
   numero_organizadores_acao      Int
-  receber_informacao_patrocionio Boolean   @default(false)
+  receber_informacao_patrocinio Boolean   @default(false)
   data_cadastro                  DateTime  @default(now())
   data_atualizacao               DateTime  @updatedAt
   situacao_acao                  String    @db.VarChar(2)
   id_usuario_responsavel         String
   id_categoria                   String
-  id_usuario_alteracao           String?
+  id_usuario_alteracao           String
   categoria                      Categoria @relation(fields: [id_categoria], references: [id])
   usuario_alteracao              Usuario?  @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
   usuario_responsavel            Usuario   @relation(fields: [id_usuario_responsavel], references: [id])
