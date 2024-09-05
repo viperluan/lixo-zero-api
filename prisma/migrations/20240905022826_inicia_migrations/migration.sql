@@ -31,13 +31,13 @@ CREATE TABLE "Acao" (
     "forma_realizacao_acao" VARCHAR(2) NOT NULL,
     "local_acao" TEXT NOT NULL,
     "numero_organizadores_acao" INTEGER NOT NULL,
-    "receber_informacao_patrocionio" BOOLEAN NOT NULL DEFAULT false,
+    "receber_informacao_patrocinio" BOOLEAN NOT NULL DEFAULT false,
     "data_cadastro" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "data_atualizacao" TIMESTAMP(3) NOT NULL,
     "situacao_acao" VARCHAR(2) NOT NULL,
     "id_usuario_responsavel" TEXT NOT NULL,
     "id_categoria" TEXT NOT NULL,
-    "id_usuario_alteracao" TEXT,
+    "id_usuario_alteracao" TEXT NOT NULL,
 
     CONSTRAINT "Acao_pkey" PRIMARY KEY ("id")
 );
@@ -52,7 +52,7 @@ CREATE TABLE "Patrocinador" (
     "data_atualizacao" TIMESTAMP(3) NOT NULL,
     "situacao" VARCHAR(2) NOT NULL,
     "id_cota" TEXT NOT NULL,
-    "id_usuario_alteracao" TEXT,
+    "id_usuario_alteracao" TEXT NOT NULL,
     "id_usuario_patrocinio" TEXT NOT NULL,
 
     CONSTRAINT "Patrocinador_pkey" PRIMARY KEY ("id")
@@ -79,13 +79,13 @@ CREATE UNIQUE INDEX "Acao_id_key" ON "Acao"("id");
 ALTER TABLE "Acao" ADD CONSTRAINT "Acao_id_categoria_fkey" FOREIGN KEY ("id_categoria") REFERENCES "Categoria"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Acao" ADD CONSTRAINT "Acao_id_usuario_alteracao_fkey" FOREIGN KEY ("id_usuario_alteracao") REFERENCES "Usuario"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Acao" ADD CONSTRAINT "Acao_id_usuario_alteracao_fkey" FOREIGN KEY ("id_usuario_alteracao") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Acao" ADD CONSTRAINT "Acao_id_usuario_responsavel_fkey" FOREIGN KEY ("id_usuario_responsavel") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Patrocinador" ADD CONSTRAINT "Patrocinador_id_usuario_alteracao_fkey" FOREIGN KEY ("id_usuario_alteracao") REFERENCES "Usuario"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Patrocinador" ADD CONSTRAINT "Patrocinador_id_usuario_alteracao_fkey" FOREIGN KEY ("id_usuario_alteracao") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Patrocinador" ADD CONSTRAINT "Patrocinador_id_usuario_patrocinio_fkey" FOREIGN KEY ("id_usuario_patrocinio") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
