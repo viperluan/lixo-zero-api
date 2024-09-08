@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import * as patrocinioController from '../controllers/patrocinador-controller';
+import * as patrocinioController from '../controllers/PatrocinadorController';
 
 const patrocinioRouter = Router();
 

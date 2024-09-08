@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import * as cotaController from '../controllers/cota-controller';
+import * as cotaController from '../controllers/CotaController';
 
 const cotaRouter = Router();
 

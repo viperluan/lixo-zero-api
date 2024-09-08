@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import * as acaoController from '../controllers/acao-controller';
+import * as acaoController from '../controllers/AcaoController';
 
 const acaoRouter = Router();
 
