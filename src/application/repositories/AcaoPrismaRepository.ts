@@ -106,11 +106,36 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
   }
 
   async listarPorData(data: Date): Promise<Acao[] | null> {
-    throw new Error('Method not implemented.');
+    const listaAcoes = await this.prisma.acao.findMany({
+      where: {
+        data_acao: {
+          equals: data,
+        },
+      },
+    });
+
+    if (!listaAcoes) return null;
+
+    const acoes = listaAcoes.map((acao) => Acao.carregarAcaoExistente(acao));
+
+    return acoes;
   }
 
   async listarPorIntervaloData(dataInicial: Date, dataFinal: Date): Promise<Acao[] | null> {
-    throw new Error('Method not implemented.');
+    const listaAcoes = await this.prisma.acao.findMany({
+      where: {
+        data_acao: {
+          gte: dataInicial,
+          lte: dataFinal,
+        },
+      },
+    });
+
+    if (!listaAcoes) return null;
+
+    const acoes = listaAcoes.map((acao) => Acao.carregarAcaoExistente(acao));
+
+    return acoes;
   }
 
   async salvar({
