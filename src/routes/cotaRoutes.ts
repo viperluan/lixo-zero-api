@@ -4,7 +4,7 @@ import * as cotaController from '../controllers/CotaController';
 
 const cotaRouter = Router();
 
-cotaRouter.post('/', cotaController.create);
-cotaRouter.get('/', cotaController.getAll);
+cotaRouter.post('/', cotaController.criarCota);
+cotaRouter.get('/', cotaController.listarTodasCotas);
 
 export default cotaRouter;

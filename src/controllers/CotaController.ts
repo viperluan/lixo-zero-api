@@ -1,36 +1,44 @@
-import { CotaRN } from '../business/cotaRN';
+import { Request, Response } from 'express';
+import { prisma } from '../package/prisma';
+import CotaPrismaRepository from '../application/repositories/CotaPrismaRepository';
 
-const cotaRN = new CotaRN();
+import CriarCota from '../application/usecases/cota/CriarCota';
+import ListarCotas from '../application/usecases/cota/ListarCotas';
 
-export async function create(req, res) {
+const cotaPrismaRepository = new CotaPrismaRepository(prisma);
+
+export async function criarCota(request: Request, response: Response) {
   try {
-    const { descricao } = req.body;
+    const { descricao } = request.body;
 
-    const categoria = await cotaRN.criarCota(descricao);
+    const criarCota = new CriarCota(cotaPrismaRepository);
+    const cota = await criarCota.executar({ descricao });
 
-    res.status(201).json(categoria);
+    response.status(201).json(cota);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
 
-export async function getAll(req, res) {
+export async function listarTodasCotas(request: Request, response: Response) {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10 } = request.query;
 
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
+    const paginaAtual = Number(page);
+    const limiteDeCotasPorPagina = Number(limit);
 
-    const { quotas, totalQuotas } = await cotaRN.listarCota(pageNumber, limitNumber);
+    const listarCotas = new ListarCotas(cotaPrismaRepository);
+    const { cotas, totalDePaginas } = await listarCotas.executar({
+      paginaAtual,
+      limiteDeCotasPorPagina,
+    });
 
-    const totalPages = Math.ceil(totalQuotas / limitNumber);
-
-    res.status(200).json({
-      quotas,
-      totalPages,
-      currentPage: pageNumber,
+    response.status(200).json({
+      quotas: cotas,
+      totalPages: totalDePaginas,
+      currentPage: paginaAtual,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
