@@ -4,7 +4,7 @@ import * as categoriaController from '../controllers/CategoriaController';
 
 const categoriaRouter = Router();
 
-categoriaRouter.post('/', categoriaController.create);
-categoriaRouter.get('/', categoriaController.getAll);
+categoriaRouter.post('/', categoriaController.criar);
+categoriaRouter.get('/', categoriaController.buscarTodas);
 
 export default categoriaRouter;
