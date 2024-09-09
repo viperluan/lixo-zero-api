@@ -17,7 +17,7 @@ export async function criar(request: Request, response: Response) {
       descricao,
       situacao,
       id_cota,
-      id_usuario: id_usuario_responsavel,
+      id_usuario_responsavel,
     });
 
     response.status(201).end();

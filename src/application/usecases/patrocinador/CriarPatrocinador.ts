@@ -8,7 +8,7 @@ export type CriarPatrocinadorEntradaDTO = {
   descricao: string;
   situacao: string;
   id_cota: string;
-  id_usuario: string;
+  id_usuario_responsavel: string;
 };
 
 export type CriarPatrocinadorSaidaDTO = void;
@@ -24,7 +24,7 @@ export default class CriarPatrocinador
     descricao,
     situacao,
     id_cota,
-    id_usuario,
+    id_usuario_responsavel,
   }: CriarPatrocinadorEntradaDTO): Promise<CriarPatrocinadorSaidaDTO> {
     const nomeExiste = await this.patrocinadorRepository.buscarPorNome(nome);
     if (nomeExiste) throw new Error('Nome de patrocinador já cadastrado.');
@@ -35,8 +35,8 @@ export default class CriarPatrocinador
       descricao,
       situacao,
       id_cota,
-      id_usuario_patrocinio: id_usuario,
-      id_usuario_alteracao: id_usuario,
+      id_usuario_patrocinio: id_usuario_responsavel,
+      id_usuario_alteracao: id_usuario_responsavel,
     });
 
     await this.patrocinadorRepository.salvar(novoPatrocinador);
