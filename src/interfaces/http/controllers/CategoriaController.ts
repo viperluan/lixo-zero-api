@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { prisma } from '../package/prisma';
-import CriarCategoria from '../application/usecases/categoria/CriarCategoria';
-import CategoriaPrismaRepository from '../application/repositories/CategoriaPrismaRepository';
-import ListarCategorias from '../application/usecases/categoria/ListarCategorias';
+import { prisma } from '../../../shared/package/prisma';
+import CriarCategoria from '../../../application/usecases/categoria/CriarCategoria';
+import CategoriaPrismaRepository from '../../../application/repositories/CategoriaPrismaRepository';
+import ListarCategorias from '../../../application/usecases/categoria/ListarCategorias';
 
 const categoriaPrismaRepository = new CategoriaPrismaRepository(prisma);
 

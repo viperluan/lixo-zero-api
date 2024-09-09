@@ -1,12 +1,12 @@
-import { prisma } from '../package/prisma';
+import { prisma } from '../../../shared/package/prisma';
 import { Request, Response } from 'express';
 
-import UsuarioPrismaRepository from '../application/repositories/UsuarioPrismaRepository';
-import CriarUsuario from '../application/usecases/usuario/CriarUsuario';
-import AutenticarUsuario from '../application/usecases/usuario/AutenticarUsuario';
-import DeletarUsuario from '../application/usecases/usuario/DeletarUsuario';
-import ListarUsuarios from '../application/usecases/usuario/ListarUsuarios';
-import GerarTokenUsuario from '../application/usecases/usuario/GerarTokenUsuario';
+import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
+import CriarUsuario from '../../../application/usecases/usuario/CriarUsuario';
+import AutenticarUsuario from '../../../application/usecases/usuario/AutenticarUsuario';
+import DeletarUsuario from '../../../application/usecases/usuario/DeletarUsuario';
+import ListarUsuarios from '../../../application/usecases/usuario/ListarUsuarios';
+import GerarTokenUsuario from '../../../application/usecases/usuario/GerarTokenUsuario';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 

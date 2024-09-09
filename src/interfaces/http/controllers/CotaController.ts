@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { prisma } from '../package/prisma';
-import CotaPrismaRepository from '../application/repositories/CotaPrismaRepository';
+import { prisma } from '../../../shared/package/prisma';
+import CotaPrismaRepository from '../../../application/repositories/CotaPrismaRepository';
 
-import CriarCota from '../application/usecases/cota/CriarCota';
-import ListarCotas from '../application/usecases/cota/ListarCotas';
+import CriarCota from '../../../application/usecases/cota/CriarCota';
+import ListarCotas from '../../../application/usecases/cota/ListarCotas';
 
 const cotaPrismaRepository = new CotaPrismaRepository(prisma);
 

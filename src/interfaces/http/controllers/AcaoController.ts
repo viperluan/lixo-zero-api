@@ -1,11 +1,11 @@
-import { prisma } from '../package/prisma';
+import { prisma } from '../../../shared/package/prisma';
 import { Request, Response } from 'express';
-import AcaoPrismaRepository from '../application/repositories/AcaoPrismaRepository';
-import CriarAcao from '../application/usecases/acao/CriarAcao';
-import ListarAcoes from '../application/usecases/acao/ListarAcoes';
-import AtualizarAcao from '../application/usecases/acao/AtualizarAcao';
-import ListarAcoesPorData from '../application/usecases/acao/ListarAcoesPorData';
-import ListarAcoesPorIntervaloData from '../application/usecases/acao/ListarAcoesPorIntervaloData';
+import AcaoPrismaRepository from '../../../application/repositories/AcaoPrismaRepository';
+import CriarAcao from '../../../application/usecases/acao/CriarAcao';
+import ListarAcoes from '../../../application/usecases/acao/ListarAcoes';
+import AtualizarAcao from '../../../application/usecases/acao/AtualizarAcao';
+import ListarAcoesPorData from '../../../application/usecases/acao/ListarAcoesPorData';
+import ListarAcoesPorIntervaloData from '../../../application/usecases/acao/ListarAcoesPorIntervaloData';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 

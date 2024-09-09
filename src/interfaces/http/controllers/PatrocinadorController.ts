@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { prisma } from '../package/prisma';
-import PatrocinadorPrismaRepository from '../application/repositories/PatrocinadorPrismaRepository';
-import CriarPatrocinador from '../application/usecases/patrocinador/CriarPatrocinador';
-import ListarPatrocinadores from '../application/usecases/patrocinador/ListarPatrocinadores';
+import { prisma } from '../../../shared/package/prisma';
+import PatrocinadorPrismaRepository from '../../../application/repositories/PatrocinadorPrismaRepository';
+import CriarPatrocinador from '../../../application/usecases/patrocinador/CriarPatrocinador';
+import ListarPatrocinadores from '../../../application/usecases/patrocinador/ListarPatrocinadores';
 
 const patrocinadorPrismaRepository = new PatrocinadorPrismaRepository(prisma);
 
