@@ -10,7 +10,7 @@ type OmitirDadosNovaCotaProps = 'id';
 type NovaCotaProps = Omit<CotaProps, OmitirDadosNovaCotaProps>;
 
 export default class Cota {
-  private constructor(readonly props: CotaProps) {}
+  private constructor(private readonly props: CotaProps) {}
 
   public static criarNovaCota(cota: NovaCotaProps) {
     this.validacao(cota);

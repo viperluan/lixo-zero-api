@@ -6,7 +6,7 @@ export type CategoriaProps = {
 };
 
 export default class Categoria {
-  private constructor(readonly props: CategoriaProps) {}
+  private constructor(private readonly props: CategoriaProps) {}
 
   public static criarNovaCategoria(descricao: string) {
     return new Categoria({

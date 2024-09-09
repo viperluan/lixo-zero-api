@@ -12,7 +12,7 @@ export type UsuarioProps = {
 };
 
 export default class Usuario {
-  private constructor(private props: UsuarioProps) {}
+  private constructor(private readonly props: UsuarioProps) {}
 
   private static criptografarSenha(senhaLimpa: string): string {
     return bcrypt.hashSync(senhaLimpa, 10);
