@@ -4,7 +4,7 @@ import * as patrocinioController from '../controllers/PatrocinadorController';
 
 const patrocinioRouter = Router();
 
-patrocinioRouter.post('/', patrocinioController.create);
-patrocinioRouter.get('/', patrocinioController.getAll);
+patrocinioRouter.post('/', patrocinioController.criar);
+patrocinioRouter.get('/', patrocinioController.buscarTodos);
 
 export default patrocinioRouter;
