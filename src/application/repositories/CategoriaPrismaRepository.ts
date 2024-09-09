@@ -25,7 +25,7 @@ export default class CategoriaPrismaRepository implements ICategoriaRepository {
     paginaAtual: number,
     limiteDeCategoriasPorPagina: number
   ): Promise<Categoria[] | null> {
-    const listaDeCategorias = await this.prisma.cota.findMany({
+    const listaDeCategorias = await this.prisma.categoria.findMany({
       skip: (paginaAtual - 1) * limiteDeCategoriasPorPagina,
       take: limiteDeCategoriasPorPagina,
     });
