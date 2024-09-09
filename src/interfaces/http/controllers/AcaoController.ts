@@ -1,16 +1,15 @@
-import { prisma } from '../package/prisma';
+import { prisma } from '../../../shared/package/prisma';
 import { Request, Response } from 'express';
-import AcaoPrismaRepository from '../application/repositories/AcaoPrismaRepository';
-import CriarAcao from '../application/usecases/acao/CriarAcao';
-import ListarAcoes from '../application/usecases/acao/ListarAcoes';
-import { AcaoRN } from '../business/acaoRN';
-import AtualizarAcao from '../application/usecases/acao/AtualizarAcao';
+import AcaoPrismaRepository from '../../../application/repositories/AcaoPrismaRepository';
+import CriarAcao from '../../../application/usecases/acao/CriarAcao';
+import ListarAcoes from '../../../application/usecases/acao/ListarAcoes';
+import AtualizarAcao from '../../../application/usecases/acao/AtualizarAcao';
+import ListarAcoesPorData from '../../../application/usecases/acao/ListarAcoesPorData';
+import ListarAcoesPorIntervaloData from '../../../application/usecases/acao/ListarAcoesPorIntervaloData';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 
-const acaoRN = new AcaoRN();
-
-export async function getAll(request: Request, response: Response) {
+export async function listarTodasAcoes(request: Request, response: Response) {
   try {
     const {
       page = 1,
@@ -52,7 +51,7 @@ export async function getAll(request: Request, response: Response) {
   }
 }
 
-export async function create(request: Request, response: Response) {
+export async function criarAcao(request: Request, response: Response) {
   try {
     const dados = request.body;
 
@@ -65,7 +64,7 @@ export async function create(request: Request, response: Response) {
   }
 }
 
-export async function update(request: Request, response: Response) {
+export async function atualizarAcao(request: Request, response: Response) {
   try {
     const { id } = request.params;
     const campos = request.body;
@@ -79,24 +78,28 @@ export async function update(request: Request, response: Response) {
   }
 }
 
-export async function buscarPorData(request: Request, response: Response) {
+export async function listarPorData(request: Request, response: Response) {
   try {
-    const acao = await acaoRN.buscarPorData(request.params.data);
-    response.status(200).json(acao);
+    const { data } = request.params;
+
+    const listarPorData = new ListarAcoesPorData(acaoPrismaRepository);
+    const acoes = await listarPorData.executar({ data });
+
+    response.status(200).json(acoes);
   } catch (error) {
-    response.status(400).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
 
-export async function buscarPorIntervaloData(request: Request, response: Response) {
-  console.log(request.params);
+export async function listarPorIntervaloData(request: Request, response: Response) {
   try {
-    const acao = await acaoRN.buscarPorIntervaloData(
-      request.params.dataInicial,
-      request.params.dataFinal
-    );
-    response.status(200).json(acao);
+    const { dataInicial, dataFinal } = request.params;
+
+    const listarAcoesPorIntervaloData = new ListarAcoesPorIntervaloData(acaoPrismaRepository);
+    const acoes = await listarAcoesPorIntervaloData.executar({ dataInicial, dataFinal });
+
+    response.status(200).json(acoes);
   } catch (error) {
-    response.status(400).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }

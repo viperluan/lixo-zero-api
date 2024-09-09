@@ -46,7 +46,7 @@ type NovaAcaoProps = Omit<AcaoProps, OmitirDadosNovaAcaoProps> & {
 };
 
 export default class Acao {
-  private constructor(readonly props: AcaoProps) {}
+  private constructor(private readonly props: AcaoProps) {}
 
   public static criarNovaAcao(acao: NovaAcaoProps) {
     this.validacao(acao);
