@@ -1,38 +1,50 @@
-import { PatrocionadorRN } from '../business/patrocinadorRN';
+import { Request, Response } from 'express';
+import { prisma } from '../package/prisma';
+import PatrocinadorPrismaRepository from '../application/repositories/PatrocinadorPrismaRepository';
+import CriarPatrocinador from '../application/usecases/patrocinador/CriarPatrocinador';
+import ListarPatrocinadores from '../application/usecases/patrocinador/ListarPatrocinadores';
 
-const patrocionadorRN = new PatrocionadorRN();
+const patrocinadorPrismaRepository = new PatrocinadorPrismaRepository(prisma);
 
-export async function create(req, res) {
+export async function criar(request: Request, response: Response) {
   try {
-    const patrocinio = await patrocionadorRN.criarPatrocinio(req.body);
+    const { id_usuario_responsavel, celular, nome, descricao, id_cota, situacao } = request.body;
 
-    res.status(201).json(patrocinio);
+    const criarPatrocinador = new CriarPatrocinador(patrocinadorPrismaRepository);
+    await criarPatrocinador.executar({
+      nome,
+      celular,
+      descricao,
+      situacao,
+      id_cota,
+      id_usuario: id_usuario_responsavel,
+    });
+
+    response.status(201).end();
   } catch (error) {
-    console.log('error', error);
-    res.status(400).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
 
-export async function getAll(req, res) {
+export async function buscarTodos(request: Request, response: Response) {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10 } = request.query;
 
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
+    const paginaAtual = Number(page);
+    const limiteDePatrocinadoresPorPagina = Number(limit);
 
-    const { partnes, totalPartnes } = await patrocionadorRN.listarPatrocinios(
-      pageNumber,
-      limitNumber
-    );
+    const listarPatrocinadores = new ListarPatrocinadores(patrocinadorPrismaRepository);
+    const { patrocinadores, totalDePaginas } = await listarPatrocinadores.executar({
+      paginaAtual,
+      limiteDePatrocinadoresPorPagina,
+    });
 
-    const totalPages = Math.ceil(totalPartnes / limitNumber);
-
-    res.status(200).json({
-      partnes,
-      totalPages,
-      currentPage: pageNumber,
+    response.status(200).json({
+      partnes: patrocinadores,
+      totalPages: totalDePaginas,
+      currentPage: paginaAtual,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    response.status(400).json({ error: (error as Error).message });
   }
 }
