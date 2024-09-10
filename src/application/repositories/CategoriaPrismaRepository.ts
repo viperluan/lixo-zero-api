@@ -15,7 +15,6 @@ export default class CategoriaPrismaRepository implements ICategoriaRepository {
 
   public async buscarPorDescricao(descricao: string): Promise<Categoria | null> {
     const categoria = await this.prisma.categoria.findFirst({ where: { descricao } });
-
     if (!categoria) return null;
 
     return Categoria.carregarCategoriaExistente(categoria);
@@ -49,7 +48,7 @@ export default class CategoriaPrismaRepository implements ICategoriaRepository {
       descricao,
     };
 
-    await this.prisma.cota.create({ data });
+    await this.prisma.categoria.create({ data });
   }
 
   public async atualizar({ id, descricao }: Categoria): Promise<void> {
@@ -57,7 +56,7 @@ export default class CategoriaPrismaRepository implements ICategoriaRepository {
       descricao,
     };
 
-    await this.prisma.cota.update({ where: { id }, data });
+    await this.prisma.categoria.update({ where: { id }, data });
   }
 
   public async deletar(id: string): Promise<void> {
