@@ -3,6 +3,7 @@ import ICategoriaRepository from '../../../domain/categoria/repository/ICategori
 import { Usecase } from '../usecase';
 
 type ListarCategoriasDTO = {
+  id: string;
   descricao: string;
 };
 
@@ -57,7 +58,8 @@ export default class ListarCategorias
       } as ListarCategoriasSaidaDTO;
     }
 
-    const categoriasSaidaDto: ListarCategoriasDTO[] = categorias.map(({ descricao }) => ({
+    const categoriasSaidaDto: ListarCategoriasDTO[] = categorias.map(({ id, descricao }) => ({
+      id,
       descricao,
     }));
 
