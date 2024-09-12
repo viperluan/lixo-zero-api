@@ -230,23 +230,15 @@ export default class Acao {
     return this.props.id_usuario_alteracao;
   }
 
-  public get categoria() {
-    return {
-      descricao: this.props.categoria?.descricao,
-    };
+  public get categoria(): CategoriaAcao | undefined {
+    return this.props.categoria;
   }
 
-  public get usuario_responsavel() {
-    return {
-      nome: this.props.usuario_responsavel?.nome,
-      email: this.props.usuario_responsavel?.email,
-    };
+  public get usuario_responsavel(): UsuarioResponsavelAcao | undefined {
+    return this.props.usuario_responsavel;
   }
 
-  public get usuario_alteracao() {
-    return {
-      nome: this.props.usuario_alteracao?.nome,
-      email: this.props.usuario_alteracao?.email,
-    };
+  public get usuario_alteracao(): UsuarioAlteracaoAcao | undefined {
+    return this.props.usuario_alteracao;
   }
 }
