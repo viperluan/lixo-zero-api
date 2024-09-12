@@ -2,6 +2,20 @@ import { v4 as gerarUuid } from 'uuid';
 import { AcaoSituacao } from '../enum/AcaoSituacao';
 import { AcaoFormaRealizacao } from '../enum/AcaoFormaRealizacao';
 
+export type CategoriaAcao = {
+  descricao?: string;
+};
+
+export type UsuarioResponsavelAcao = {
+  nome?: string;
+  email?: string;
+};
+
+export type UsuarioAlteracaoAcao = {
+  nome?: string;
+  email?: string;
+};
+
 export type AcaoProps = {
   id: string;
   celular: string;
@@ -20,17 +34,9 @@ export type AcaoProps = {
   id_categoria: string;
   id_usuario_responsavel: string;
   id_usuario_alteracao: string;
-  categoria?: {
-    descricao?: string;
-  };
-  usuario_responsavel?: {
-    nome?: string;
-    email?: string;
-  };
-  usuario_alteracao?: {
-    nome?: string;
-    email?: string;
-  };
+  categoria?: CategoriaAcao;
+  usuario_responsavel?: UsuarioResponsavelAcao;
+  usuario_alteracao?: UsuarioAlteracaoAcao;
 };
 
 type OmitirDadosNovaAcaoProps =
