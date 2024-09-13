@@ -42,6 +42,8 @@ model Acao {
   data_cadastro                 DateTime  @default(now())
   data_atualizacao              DateTime  @updatedAt
   situacao_acao                 String    @db.VarChar(2)
+  tipo_publico                  String    @db.VarChar(2)
+  orientacao_divulgacao         String
   id_usuario_responsavel        String
   id_categoria                  String
   id_usuario_alteracao          String
