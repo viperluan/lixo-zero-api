@@ -1,6 +1,7 @@
 import { v4 as gerarUuid } from 'uuid';
 import { AcaoSituacao } from '../enum/AcaoSituacao';
 import { AcaoFormaRealizacao } from '../enum/AcaoFormaRealizacao';
+import { AcaoTipoPublico } from '../enum/AcaoTipoPublico';
 
 export type CategoriaAcao = {
   descricao?: string;
@@ -88,6 +89,8 @@ export default class Acao {
       nome_organizador,
       numero_organizadores_acao,
       titulo_acao,
+      tipo_publico,
+      orientacao_divulgacao,
     } = dadosParaValidar;
 
     this.validarTituloAcao(titulo_acao);
@@ -101,6 +104,8 @@ export default class Acao {
     this.validarLocalAcao(local_acao);
     this.validarNomeOrganizador(nome_organizador);
     this.validarNumeroOrganizadoresAcao(numero_organizadores_acao);
+    this.validarPublico(tipo_publico);
+    this.validarOrientacaoDivulgacao(orientacao_divulgacao);
   }
 
   private static validarTituloAcao(tituloAcao: string) {
@@ -162,6 +167,24 @@ export default class Acao {
   private static validarNumeroOrganizadoresAcao(numeroOrganizadoresAcao: number) {
     if (!numeroOrganizadoresAcao || numeroOrganizadoresAcao < 1)
       throw new Error('A ação deve possuir o número aproximado de organizadores');
+  }
+
+  private static validarPublico(tipo_publico: string) {
+    if (!tipo_publico)
+      throw new Error('A ação deve possuir a informação de tipo_publico externo ou interno.');
+
+    const formaAcaoValida = Object.values(AcaoTipoPublico).includes(
+      tipo_publico as AcaoTipoPublico
+    );
+
+    if (!formaAcaoValida) throw new Error('Tipo de público inválido.');
+  }
+
+  private static validarOrientacaoDivulgacao(orientacaoDivulgacao: string) {
+    if (!orientacaoDivulgacao)
+      throw new Error(
+        'A ação deve possuir uma descrição contendo orientações de como será divulgada.'
+      );
   }
 
   public get id(): string {
