@@ -156,6 +156,8 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     receber_informacao_patrocinio,
     situacao_acao,
     titulo_acao,
+    tipo_publico,
+    orientacao_divulgacao,
   }: Acao): Promise<void> {
     const data = {
       celular,
@@ -175,6 +177,8 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
       receber_informacao_patrocinio,
       situacao_acao,
       titulo_acao,
+      tipo_publico,
+      orientacao_divulgacao,
     };
 
     await this.prisma.acao.create({ data });
