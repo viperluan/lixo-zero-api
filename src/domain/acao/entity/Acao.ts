@@ -28,6 +28,8 @@ export type AcaoProps = {
   numero_organizadores_acao: number;
   receber_informacao_patrocinio: boolean;
   situacao_acao: string;
+  tipo_publico: string;
+  orientacao_divulgacao: string;
   data_acao: Date;
   data_cadastro: Date;
   data_atualizacao: Date;
@@ -240,5 +242,13 @@ export default class Acao {
 
   public get usuario_alteracao(): UsuarioAlteracaoAcao | undefined {
     return this.props.usuario_alteracao;
+  }
+
+  public get tipo_publico() {
+    return this.props.tipo_publico;
+  }
+
+  public get orientacao_divulgacao() {
+    return this.props.orientacao_divulgacao;
   }
 }
