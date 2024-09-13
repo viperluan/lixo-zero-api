@@ -12,6 +12,8 @@ export type CriarAcaoEntradaDTO = {
   local_acao: string;
   numero_organizadores_acao: number;
   situacao_acao: string;
+  tipo_publico: string;
+  orientacao_divulgacao: string;
   data_acao: string;
   id_categoria: string;
   id_usuario_responsavel: string;
