@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lixo Zero - Caxias do Sul</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #121212;
+      background-color: #f4f4f4;
+    }
+
+    table {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    p,
+    span {
+      line-height: 1.5;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 40px 0;
+    }
+
+    .tags {
+      color: #5f91b1;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .footer,
+    .header {
+      color: #fff;
+      text-align: center;
+    }
+
+    .header {
+      background-color: #5f91b1;
+    }
+
+    .footer {
+      background-color: #5f91b1;
+    }
+  </style>
+</head>
+
+<body>
+  <table>
+    <!-- Cabeçalho do email -->
+    <thead class="header">
+      <tr>
+        <td>
+          <h1>Olá, <span style="font-weight: bold;">
+              <%= nome_usuario %>
+            </span>!!!</h1>
+
+          <p style="font-size: 18px;">Muito obrigado por ter se inscrito na
+            <span style="font-weight: 700;">5ª Semana Lixo Zero de Caxias do Sul!</span>
+          </p>
+
+          <p>Estamos muito felizes com a sua participação! :)</p>
+        </td>
+      </tr>
+    </thead>
+
+    <!-- Conteúdo principal -->
+    <tbody>
+      <tr>
+        <td>
+          <p style="font-style: italic; font-size: 20px; text-align: center;">Vamos te passar algumas informações super
+            importantes aqui.
+            <span style="font-weight: bold;">Por favor, leia com atenção para que possamos confirmar a sua
+              inscrição!</span>
+          </p>
+
+          <hr>
+
+          <p style="text-align: center; font-size: 24px;">
+            <span style="background-color: #fffb11; ">Sua inscrição foi cadastrada e assim que nossa equipe aprovar,
+              você receberá
+              um email informando sobre!
+            </span>
+          </p>
+
+          <ol>
+            <li>
+              <span style="background-color: #b6d7a8;">
+                Antes de prosseguir, gostaríamos de
+                <span style="font-weight: bold;">
+                  confirmar as informações que você cadastrou
+                </span>
+                em nosso formulário:
+              </span>
+
+              <ul>
+                <li>
+                  <span style="font-weight: bold;">Organizador da ação:</span>
+                  <%= nome_organizador %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Título da ação:</span>
+                  <%= titulo_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Data:</span>
+                  <%= data_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Horário:</span>
+                  <%= horario_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Forma de realização:</span>
+                  <%= forma_realizacao_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Evento para público:</span>
+                  <%= tipo_publico_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Link de divulgação de acesso:</span>
+                  <%= link_divulgacao_acesso_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Nome do local:</span>
+                  <%= nome_local_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Endereço do local:</span>
+                  <%= endereco_local_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Informações:</span>
+                  <%= informacoes_acao %>
+                </li>
+                <li>
+                  <span style="font-weight: bold;">Link para inscrição:</span>
+                  <%= link_para_inscricao_acao %>
+                </li>
+              </ul>
+
+              <p>
+                <span style="font-weight: bold;">Era isso mesmo?</span>
+                Se algo está diferente do que você planejou, ou se em algum momento houver qualquer alteração nas
+                informações acima, por favor, nos informe pelo email
+                <a target="_blank" href="mailto:caxiaslixozero@gmail.com">caxiaslixozero@gmail.com</a> até dia 02/10.
+              </p>
+            </li>
+
+            <li>
+              <p>Lembre-se:
+                <span style="font-weight: bold;">
+                  você é responsável pela organização e execução da atividade cadastrada
+                </span>, ok? Nós estamos aqui para tirar qualquer dúvida e te ajudar na divulgação ;)
+              </p>
+            </li>
+
+            <li>
+              <p>
+                <span style="font-weight: bold; background-color: #b6d7a8;">
+                  Temos alguns cards e templates prontos para você divulgar a sua ação!
+                </span>
+                Eles servem para ajudar na
+                identificação
+                das ações que fazem parte da Semana Lixo Zero e você pode editá-los para incluir as informações da sua
+                atividade!
+
+                <span style="font-weight: bold; background-color: #b6d7a8;">
+                  Dá uma olhadinha nessa pasta:
+                  <a target="_blank"
+                    href="https://drive.google.com/drive/folders/17eu3rl9PLkHWazUiWCtOGXAuMpBh-52T?usp=drive_link">Templates
+                    para ações - SLZ 24</a>
+                </span>
+              </p>
+
+              <p>Quanto antes você começar a divulgar seu evento, melhor!</p>
+            </li>
+
+            <li>
+              <p>
+                <span style="font-weight: bold; background-color: #b6d7a8;">
+                  Ah, não esquece de marcar a gente
+                </span>
+                para que possamos encontrar o seu post e compartilhar nas nossas redes
+                também!
+              </p>
+
+              <p style="font-weight: bold;">Essas são as tags do nosso evento, anota aí:</p>
+
+              <p>
+                <span class="tags">@caxiaslixozero</span>
+                <br>
+                <span class="tags">#semanalixozerocaxias</span>
+                <br>
+                <span class="tags">#slzcxs</span>
+              </p>
+            </li>
+
+            <li>
+              <p>
+                <span style="background-color: #b6d7a8;">
+                  Fica ligado nas nossas redes sociais
+                </span>
+
+                para
+
+                <span style="font-weight: bold;">
+                  acompanhar a divulgação da programação (você vai estar lá!!)
+                </span>
+
+                Também estaremos divulgando o cronograma completo do evento,
+
+                <span style="font-weight: bold; background-color: #fffb11;">
+                  a partir do dia 04/10,
+                </span>
+
+                pelo site
+                <a target="_blank" href="https://www.caxiaslixozero.com.br">www.caxiaslixozero.com.br</a>
+              </p>
+            </li>
+          </ol>
+
+          <hr>
+
+          <p>Muito obrigado por topar essa com a gente!
+            <span style="font-weight: bold;">
+              Vamos juntos construir nossa cidade sustentável!
+            </span>
+          </p>
+
+          <span style="font-size: 20px; background-color: #b6d7a8; font-weight: bold;">Vai ser incrível!</span>
+
+          <p>Um abraço,<br>Equipe Coletivo Lixo Zero Caxias do Sul</p>
+
+          <div>
+            <span>Instagram: <a target="_blank"
+                href="https://www.instagram.com/caxiaslixozero">@caxiaslixozero</a></span>
+            <br>
+            <span>Site: <a target="_blank" href="https://www.caxiaslixozero.com.br">www.caxiaslixozero.com.br</a></span>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+
+    <!-- Rodapé -->
+    <tfoot>
+      <tr>
+        <td class="footer">
+          <p class="text-footer">Se você tiver alguma dúvida, não hesite
+            <a target="_blank" href="mailto:caxiaslixozero@gmail.com">entrar em contato</a>!
+          </p>
+
+          <p class="text-footer">&copy; 2024 Lixo Zero - Caxias do Sul. Todos os direitos reservados.</p>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+
+</html>
