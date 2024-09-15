@@ -6,8 +6,13 @@ import ListarAcoes from '../../../application/usecases/acao/ListarAcoes';
 import AtualizarAcao from '../../../application/usecases/acao/AtualizarAcao';
 import ListarAcoesPorData from '../../../application/usecases/acao/ListarAcoesPorData';
 import ListarAcoesPorIntervaloData from '../../../application/usecases/acao/ListarAcoesPorIntervaloData';
+import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
+import NodemailerService from '../../../application/services/email/NodemailerService';
+import { transportador } from '../../../shared/package/nodemailer';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
+const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
+const nodemailerService = new NodemailerService(transportador);
 
 export async function listarTodasAcoes(request: Request, response: Response) {
   try {
@@ -55,7 +60,12 @@ export async function criarAcao(request: Request, response: Response) {
   try {
     const dados = request.body;
 
-    const criarAcao = new CriarAcao(acaoPrismaRepository);
+    const criarAcao = new CriarAcao(
+      acaoPrismaRepository,
+      usuarioPrismaRepository,
+      nodemailerService
+    );
+
     const acao = await criarAcao.executar(dados);
 
     response.status(201).json(acao);
