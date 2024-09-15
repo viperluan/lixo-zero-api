@@ -257,6 +257,19 @@ export default class Acao {
     return this.props.forma_realizacao_acao;
   }
 
+  public get forma_realizacao_acao_texto() {
+    switch (this.forma_realizacao_acao) {
+      case AcaoFormaRealizacao.Online:
+        return 'Online';
+      case AcaoFormaRealizacao.Hibrida:
+        return 'Hibrida';
+      case AcaoFormaRealizacao.Presencial:
+        return 'Presencial';
+      default:
+        return '';
+    }
+  }
+
   public get nome_local_acao(): string {
     return this.props.nome_local_acao;
   }
@@ -317,12 +330,14 @@ export default class Acao {
     return this.props.tipo_publico_acao;
   }
 
-  public get tipo_publico_texto() {
+  public get tipo_publico_acao_texto() {
     switch (this.tipo_publico_acao) {
       case AcaoTipoPublico.Interno:
         return 'Interno';
       case AcaoTipoPublico.Externo:
         return 'Externo';
+      default:
+        return '';
     }
   }
 
