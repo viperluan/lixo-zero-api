@@ -2,20 +2,10 @@ import { SentMessageInfo, Transporter } from 'nodemailer';
 import Email from '../../../domain/email/entity/Email';
 import IEmailService from '../../../domain/email/service/IEmailService';
 
-export type NodemailerServiceEntrada = {
-  email: Email;
-};
-
-export type NodemailerServiceSaida = void;
-
-export default class NodemailerService
-  implements IEmailService<NodemailerServiceEntrada, NodemailerServiceSaida>
-{
+export default class NodemailerService implements IEmailService {
   constructor(private readonly transportador: Transporter<SentMessageInfo>) {}
 
-  public async enviarEmail({
-    email: { from, to, subject, html },
-  }: NodemailerServiceEntrada): Promise<NodemailerServiceSaida> {
+  public async enviarEmail({ from, html, subject, to }: Email): Promise<void> {
     try {
       await this.transportador.sendMail({
         from,
