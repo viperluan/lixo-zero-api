@@ -1,3 +1,5 @@
-export default interface IEmailService<EmailEntradaDto, EmailSaidaDto> {
-  enviarEmail(entrada: EmailEntradaDto): Promise<EmailSaidaDto>;
+import Email from '../entity/Email';
+
+export default interface IEmailService {
+  enviarEmail(entrada: Email): Promise<void>;
 }
