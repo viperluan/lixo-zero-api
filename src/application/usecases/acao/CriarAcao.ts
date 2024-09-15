@@ -1,13 +1,12 @@
 import path from 'path';
-import Acao from '../../../domain/acao/entity/Acao';
-import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
-import Email from '../../../domain/email/entity/Email';
-import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
-import { Usecase } from '../usecase';
-import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
-import NodemailerService from '../../services/email/NodemailerService';
-import { transportador } from '../../../shared/package/nodemailer';
 import { adicionaZeroAEsquerda } from '../../../shared/utils/adicionaZeroAEsquerda';
+import { Usecase } from '../usecase';
+import Acao from '../../../domain/acao/entity/Acao';
+import Email from '../../../domain/email/entity/Email';
+import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
+import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
+import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
+import IEmailService from '../../../domain/email/service/IEmailService';
 
 export type CriarAcaoEntradaDTO = {
   id: string;
@@ -37,7 +36,8 @@ export type CriarAcaoSaidaDTO = {
 export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcaoSaidaDTO> {
   constructor(
     private readonly acaoRepository: IAcaoRepository,
-    private readonly usuarioRepository: IUsuarioRepository
+    private readonly usuarioRepository: IUsuarioRepository,
+    private readonly emailService: IEmailService
   ) {}
 
   public async executar(entrada: CriarAcaoEntradaDTO): Promise<CriarAcaoSaidaDTO> {
@@ -97,8 +97,7 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
       html: template,
     });
 
-    const nodemailerService = new NodemailerService(transportador);
-    await nodemailerService.enviarEmail({ email });
+    await this.emailService.enviarEmail(email);
 
     return { id: acao.id };
   }
