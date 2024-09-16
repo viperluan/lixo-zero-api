@@ -7,12 +7,12 @@
   "author": "Tecnomago",
   "license": "ISC",
   "scripts": {
-    "build": "npx tsc && npm run copy-ejs",
+    "build": "tsup && npm run copy-ejs",
     "start": "tsx src/server.ts",
     "start:dev": "tsx watch src/server.ts",
     "start:debug": "tsx --inspect-brk src/server.ts",
     "lint": "eslint --report-unused-disable-directives --max-warnings 0",
-    "copy-ejs": "copyfiles -u 1 src/infrastructure/smtp/templates/**/*.ejs dist/src/infrastructure/smtp/templates/",
+    "copy-ejs": "copyfiles -u 1 src/infrastructure/smtp/templates/**/*.ejs dist/infrastructure/smtp/templates/",
     "postinstall": "prisma generate",
     "vercel-build": "npx prisma migrate deploy"
   },
@@ -43,6 +43,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.9.0",
     "prettier": "^3.3.3",
+    "tsup": "^8.2.4",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.2.0"
