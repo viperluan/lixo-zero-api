@@ -10,4 +10,4 @@ RUN npm run build
 
 RUN npx prisma generate
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:tsx"]
