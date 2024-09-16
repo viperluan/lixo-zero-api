@@ -1,5 +1,5 @@
 services:
-  db:
+  lixozero_db:
     container_name: lixozero_db
     image: postgres
     restart: always
@@ -14,7 +14,7 @@ services:
     networks:
       - lixozero_network
   
-  api:
+  lixozero_api:
     container_name: lixozero_api
     build:
       context: .
