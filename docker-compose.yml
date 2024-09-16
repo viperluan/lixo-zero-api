@@ -1,16 +1,40 @@
 services:
   db:
-    container_name: lixo_zero_api
+    container_name: lixo_zero_db
     image: postgres
     restart: always
     environment:
       - POSTGRES_USER=lixo_zero
       - POSTGRES_PASSWORD=1234
-      - POSGRES_DB=lixo_zero
+      - POSTGRES_DB=lixo_zero
     ports:
       - 5432:5432
     volumes:
       - ./pg_data:/var/lib/postgresql/data:rw
+    networks:
+      - lixo_zero_network
+  
+  api:
+    container_name: lixo_zero_api
+    build:
+      context: .
+    restart: always
+    environment:
+      - VIRTUAL_HOST=181.215.135.246
+      - VIRTUAL_PROTO=http
+      - VIRTUAL_NETWORK=nginx-proxy
+      - VIRTUAL_PORT=80
+    depends_on:
+      - db
+    networks:
+      - lixo_zero_network
+      - reverse-proxy
+    expose:
+      - 3000
+
 networks:
-  default:
-    name: lixo_zero
+  lixo_zero_network:
+
+  reverse-proxy:
+    name: nginx-proxy
+    external: true

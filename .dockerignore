@@ -11,7 +11,6 @@ Dockerfile
 .dockerignore
 
 # Ignore enviroment files
-*.env
 *.local
 
 # Ignore config files
