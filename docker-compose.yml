@@ -19,22 +19,12 @@ services:
     build:
       context: .
     restart: always
-    environment:
-      - VIRTUAL_HOST=181.215.135.246
-      - VIRTUAL_PROTO=http
-      - VIRTUAL_NETWORK=nginx-proxy
-      - VIRTUAL_PORT=80
     depends_on:
       - db
     networks:
       - lixo_zero_network
-      - reverse-proxy
-    expose:
-      - 3000
+    ports:
+      - 3000:3000
 
 networks:
   lixo_zero_network:
-
-  reverse-proxy:
-    name: nginx-proxy
-    external: true
