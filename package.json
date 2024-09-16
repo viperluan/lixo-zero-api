@@ -14,7 +14,7 @@
     "lint": "eslint --report-unused-disable-directives --max-warnings 0",
     "copy-ejs": "copyfiles -u 1 src/infrastructure/smtp/templates/**/*.ejs dist/src/",
     "postinstall": "prisma generate",
-    "vercel-build": "npx prisma migrate deploy"
+    "vercel-build": "npx prisma migrate deploy && npm run build"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
