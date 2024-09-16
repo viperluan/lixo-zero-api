@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: lixo_zero_db
+    container_name: lixozero_db
     image: postgres
     restart: always
     environment:
@@ -12,19 +12,23 @@ services:
     volumes:
       - ./pg_data:/var/lib/postgresql/data:rw
     networks:
-      - lixo_zero_network
+      - lixozero_network
   
   api:
-    container_name: lixo_zero_api
+    container_name: lixozero_api
     build:
       context: .
     restart: always
     depends_on:
       - db
     networks:
-      - lixo_zero_network
-    ports:
-      - 3000:3000
+      - proxy_manager
+      - lixozero_network
+    expose:
+      - 3000
 
 networks:
-  lixo_zero_network:
+  lixozero_network:
+
+  proxy_manager:
+    name: proxy_manager
