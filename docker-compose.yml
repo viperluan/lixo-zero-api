@@ -30,6 +30,7 @@ services:
 networks:
   lixozero_network:
     name: lixozero_network
-
+    
   proxy_manager:
     name: proxy_manager
+    external: true
