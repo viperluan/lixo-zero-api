@@ -7,8 +7,8 @@ services:
       - POSTGRES_USER=lixo_zero
       - POSTGRES_PASSWORD=1234
       - POSTGRES_DB=lixo_zero
-    ports:
-      - 5432:5432
+    expose:
+      - 5432
     volumes:
       - ./pg_data:/var/lib/postgresql/data:rw
     networks:
