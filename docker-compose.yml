@@ -20,7 +20,7 @@ services:
       context: .
     restart: always
     depends_on:
-      - db
+      - lixozero_db
     networks:
       - proxy_manager
       - lixozero_network
@@ -29,6 +29,7 @@ services:
 
 networks:
   lixozero_network:
+    name: lixozero_network
 
   proxy_manager:
     name: proxy_manager
