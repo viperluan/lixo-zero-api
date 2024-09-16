@@ -2,7 +2,7 @@
   "name": "lixo-zero-api",
   "version": "1.0.0",
   "description": "API para aplicação do lixo zero.",
-  "type": "module",
+  "type": "commonjs",
   "main": "./src/server.ts",
   "author": "Tecnomago",
   "license": "ISC",
