@@ -1,36 +1,50 @@
 import { v4 as gerarUuid } from 'uuid';
 import { AcaoSituacao } from '../enum/AcaoSituacao';
 import { AcaoFormaRealizacao } from '../enum/AcaoFormaRealizacao';
+import { AcaoTipoPublico } from '../enum/AcaoTipoPublico';
+
+export type CategoriaAcao = {
+  descricao?: string;
+};
+
+export type UsuarioResponsavelAcao = {
+  nome?: string;
+  email?: string;
+};
+
+export type UsuarioAlteracaoAcao = {
+  nome?: string;
+  email?: string;
+};
 
 export type AcaoProps = {
   id: string;
-  celular: string;
   nome_organizador: string;
-  link_organizador: string;
+  celular: string;
   titulo_acao: string;
   descricao_acao: string;
-  forma_realizacao_acao: string;
-  local_acao: string;
-  numero_organizadores_acao: number;
-  receber_informacao_patrocinio: boolean;
-  situacao_acao: string;
+  id_categoria: string;
   data_acao: Date;
+  forma_realizacao_acao: string;
+  link_divulgacao_acesso_acao: string;
+  nome_local_acao: string;
+  endereco_local_acao: string;
+  informacoes_acao: string;
+  link_para_inscricao_acao: string;
+  tipo_publico_acao: string;
+  orientacao_divulgacao_acao: string;
+  numero_organizadores_acao: number;
+
+  situacao_acao: string;
+  receber_informacao_patrocinio: boolean;
   data_cadastro: Date;
   data_atualizacao: Date;
-  id_categoria: string;
   id_usuario_responsavel: string;
   id_usuario_alteracao: string;
-  categoria?: {
-    descricao?: string;
-  };
-  usuario_responsavel?: {
-    nome?: string;
-    email?: string;
-  };
-  usuario_alteracao?: {
-    nome?: string;
-    email?: string;
-  };
+
+  categoria?: CategoriaAcao;
+  usuario_responsavel?: UsuarioResponsavelAcao;
+  usuario_alteracao?: UsuarioAlteracaoAcao;
 };
 
 type OmitirDadosNovaAcaoProps =
@@ -69,30 +83,52 @@ export default class Acao {
 
   private static validacao(dadosParaValidar: NovaAcaoProps) {
     const {
-      celular,
-      data_acao,
-      descricao_acao,
-      forma_realizacao_acao,
-      id_categoria,
-      id_usuario_responsavel,
-      link_organizador,
-      local_acao,
       nome_organizador,
-      numero_organizadores_acao,
+      celular,
       titulo_acao,
+      descricao_acao,
+      id_categoria,
+      data_acao,
+      forma_realizacao_acao,
+      link_divulgacao_acesso_acao,
+      nome_local_acao,
+      endereco_local_acao,
+      informacoes_acao,
+      tipo_publico_acao,
+      orientacao_divulgacao_acao,
+      numero_organizadores_acao,
+      id_usuario_responsavel,
     } = dadosParaValidar;
 
-    this.validarTituloAcao(titulo_acao);
-    this.validarCelular(celular);
-    this.validarDataAcao(data_acao);
-    this.validarDescricaoAcao(descricao_acao);
-    this.validarFormaRealizacaoAcao(forma_realizacao_acao);
-    this.validarIdCategoria(id_categoria);
-    this.validarIdUsuarioResponsavel(id_usuario_responsavel);
-    this.validarLinkOrganizador(link_organizador);
-    this.validarLocalAcao(local_acao);
+    const realizacaoOnline = forma_realizacao_acao === AcaoFormaRealizacao.Online;
+    const realizacaoHibrida = forma_realizacao_acao === AcaoFormaRealizacao.Hibrida;
+    const realizacaoPresencial = forma_realizacao_acao === AcaoFormaRealizacao.Presencial;
+
     this.validarNomeOrganizador(nome_organizador);
+    this.validarCelular(celular);
+    this.validarTituloAcao(titulo_acao);
+    this.validarDescricaoAcao(descricao_acao);
+    this.validarIdCategoria(id_categoria);
+    this.validarDataAcao(data_acao);
+    this.validarFormaRealizacaoAcao(forma_realizacao_acao);
+
+    if (realizacaoOnline || realizacaoHibrida) {
+      this.validarLinkDivulgacaoAcessoAcao(link_divulgacao_acesso_acao);
+    }
+
+    if (realizacaoHibrida || realizacaoPresencial) {
+      this.validarNomeLocalAcao(nome_local_acao);
+      this.validarEnderecoLocalAcao(endereco_local_acao);
+    }
+
+    if (realizacaoHibrida) {
+      this.validarInformacoesAcao(informacoes_acao);
+    }
+
+    this.validarTipoPublicoAcao(tipo_publico_acao);
+    this.validarIdUsuarioResponsavel(id_usuario_responsavel);
     this.validarNumeroOrganizadoresAcao(numero_organizadores_acao);
+    this.validarOrientacaoDivulgacao(orientacao_divulgacao_acao);
   }
 
   private static validarTituloAcao(tituloAcao: string) {
@@ -139,7 +175,7 @@ export default class Acao {
     if (!idUsuarioResponsavel) throw new Error('A ação deve possuir um usuário responsável.');
   }
 
-  private static validarLinkOrganizador(linkOrganizador: string) {
+  private static validarLinkDivulgacaoAcessoAcao(linkOrganizador: string) {
     if (!linkOrganizador) throw new Error('A ação deve possuir um link de organizador.');
   }
 
@@ -156,6 +192,39 @@ export default class Acao {
       throw new Error('A ação deve possuir o número aproximado de organizadores');
   }
 
+  private static validarTipoPublicoAcao(tipo_publico_acao: string) {
+    if (!tipo_publico_acao)
+      throw new Error('A ação deve possuir a informação de tipo de público externo ou interno.');
+
+    const formaAcaoValida = Object.values(AcaoTipoPublico).includes(
+      tipo_publico_acao as AcaoTipoPublico
+    );
+
+    if (!formaAcaoValida) throw new Error('Tipo de público inválido.');
+  }
+
+  private static validarOrientacaoDivulgacao(orientacaoDivulgacao: string) {
+    if (!orientacaoDivulgacao)
+      throw new Error(
+        'A ação deve possuir uma descrição contendo orientações de como será divulgada.'
+      );
+  }
+
+  private static validarNomeLocalAcao(nome_local_acao: string) {
+    if (!nome_local_acao)
+      throw new Error('A ação deve possuir o nome do local onde será realizada.');
+  }
+
+  private static validarEnderecoLocalAcao(endereco_local_acao: string) {
+    if (!endereco_local_acao)
+      throw new Error('A ação deve possuir o endereço do local onde será realizada.');
+  }
+
+  private static validarInformacoesAcao(informacoes_acao: string) {
+    if (!informacoes_acao)
+      throw new Error('A ação deve possuir informações de como a ação será realizada.');
+  }
+
   public get id(): string {
     return this.props.id;
   }
@@ -168,8 +237,12 @@ export default class Acao {
     return this.props.nome_organizador;
   }
 
-  public get link_organizador(): string {
-    return this.props.link_organizador;
+  public get link_divulgacao_acesso_acao(): string {
+    return this.props.link_divulgacao_acesso_acao;
+  }
+
+  public get link_para_inscricao_acao(): string {
+    return this.props.link_para_inscricao_acao;
   }
 
   public get titulo_acao(): string {
@@ -184,8 +257,25 @@ export default class Acao {
     return this.props.forma_realizacao_acao;
   }
 
-  public get local_acao(): string {
-    return this.props.local_acao;
+  public get forma_realizacao_acao_texto() {
+    switch (this.forma_realizacao_acao) {
+      case AcaoFormaRealizacao.Online:
+        return 'Online';
+      case AcaoFormaRealizacao.Hibrida:
+        return 'Hibrida';
+      case AcaoFormaRealizacao.Presencial:
+        return 'Presencial';
+      default:
+        return '';
+    }
+  }
+
+  public get nome_local_acao(): string {
+    return this.props.nome_local_acao;
+  }
+
+  public get endereco_local_acao(): string {
+    return this.props.endereco_local_acao;
   }
 
   public get numero_organizadores_acao(): number {
@@ -224,23 +314,38 @@ export default class Acao {
     return this.props.id_usuario_alteracao;
   }
 
-  public get categoria() {
-    return {
-      descricao: this.props.categoria?.descricao,
-    };
+  public get categoria(): CategoriaAcao | undefined {
+    return this.props.categoria;
   }
 
-  public get usuario_responsavel() {
-    return {
-      nome: this.props.usuario_responsavel?.nome,
-      email: this.props.usuario_responsavel?.email,
-    };
+  public get usuario_responsavel(): UsuarioResponsavelAcao | undefined {
+    return this.props.usuario_responsavel;
   }
 
-  public get usuario_alteracao() {
-    return {
-      nome: this.props.usuario_alteracao?.nome,
-      email: this.props.usuario_alteracao?.email,
-    };
+  public get usuario_alteracao(): UsuarioAlteracaoAcao | undefined {
+    return this.props.usuario_alteracao;
+  }
+
+  public get tipo_publico_acao() {
+    return this.props.tipo_publico_acao;
+  }
+
+  public get tipo_publico_acao_texto() {
+    switch (this.tipo_publico_acao) {
+      case AcaoTipoPublico.Interno:
+        return 'Interno';
+      case AcaoTipoPublico.Externo:
+        return 'Externo';
+      default:
+        return '';
+    }
+  }
+
+  public get orientacao_divulgacao_acao() {
+    return this.props.orientacao_divulgacao_acao;
+  }
+
+  public get informacoes_acao() {
+    return this.props.informacoes_acao;
   }
 }

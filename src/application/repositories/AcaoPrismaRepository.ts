@@ -61,7 +61,7 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
         { titulo_acao: { contains: filtros.search, mode: 'insensitive' } },
         { descricao_acao: { contains: filtros.search, mode: 'insensitive' } },
         { nome_organizador: { contains: filtros.search, mode: 'insensitive' } },
-        { local_acao: { contains: filtros.search, mode: 'insensitive' } },
+        { nome_local_acao: { contains: filtros.search, mode: 'insensitive' } },
       ];
     }
 
@@ -149,13 +149,18 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     id_categoria,
     id_usuario_alteracao,
     id_usuario_responsavel,
-    link_organizador,
-    local_acao,
+    link_divulgacao_acesso_acao,
+    link_para_inscricao_acao,
+    endereco_local_acao,
+    informacoes_acao,
+    nome_local_acao,
+    tipo_publico_acao,
     nome_organizador,
     numero_organizadores_acao,
     receber_informacao_patrocinio,
     situacao_acao,
     titulo_acao,
+    orientacao_divulgacao_acao,
   }: Acao): Promise<void> {
     const data = {
       celular,
@@ -168,13 +173,18 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
       id_categoria,
       id_usuario_alteracao,
       id_usuario_responsavel,
-      link_organizador,
-      local_acao,
+      link_divulgacao_acesso_acao,
+      link_para_inscricao_acao,
+      endereco_local_acao,
+      informacoes_acao,
+      nome_local_acao,
+      tipo_publico_acao,
       nome_organizador,
       numero_organizadores_acao,
       receber_informacao_patrocinio,
       situacao_acao,
       titulo_acao,
+      orientacao_divulgacao_acao,
     };
 
     await this.prisma.acao.create({ data });

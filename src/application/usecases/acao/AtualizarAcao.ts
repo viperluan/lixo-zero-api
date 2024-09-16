@@ -1,6 +1,13 @@
+import path from 'path';
 import { Usecase } from '../usecase';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
 import Acao from '../../../domain/acao/entity/Acao';
+import { AcaoSituacao } from '../../../domain/acao/enum/AcaoSituacao';
+import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
+import IEmailService from '../../../domain/email/service/IEmailService';
+import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
+import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
+import Email from '../../../domain/email/entity/Email';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;
@@ -9,75 +16,139 @@ export type AtualizarAcaoEntradaDTO = {
 
 export type AtualizarAcaoSaidaDTO = {
   id: string;
-  celular: string;
   nome_organizador: string;
-  link_organizador: string;
+  celular: string;
   titulo_acao: string;
   descricao_acao: string;
+  id_categoria: string;
   data_acao: Date;
   forma_realizacao_acao: string;
-  local_acao: string;
+  link_divulgacao_acesso_acao: string;
+  nome_local_acao: string;
+  endereco_local_acao: string;
+  informacoes_acao: string;
+  link_para_inscricao_acao: string;
+  tipo_publico_acao: string;
+  orientacao_divulgacao_acao: string;
   numero_organizadores_acao: number;
-  receber_informacao_patrocinio: boolean;
-  data_cadastro: Date;
-  data_atualizacao: Date;
-  situacao_acao: string;
   id_usuario_responsavel: string;
-  id_categoria: string;
   id_usuario_alteracao: string;
 };
 
 export default class AtualizarAcao
   implements Usecase<AtualizarAcaoEntradaDTO, AtualizarAcaoSaidaDTO>
 {
-  constructor(private readonly acaoRepository: IAcaoRepository) {}
+  constructor(
+    private readonly acaoRepository: IAcaoRepository,
+    private readonly usuarioRepository: IUsuarioRepository,
+    private readonly emailService: IEmailService
+  ) {}
 
   async executar({ id, campos }: AtualizarAcaoEntradaDTO): Promise<AtualizarAcaoSaidaDTO> {
     const acao = await this.acaoRepository.buscarPorId(id);
-
     if (!acao) throw new Error('Ação não encontrada!');
 
+    const usuario = await this.usuarioRepository.buscarPorId(acao.id_usuario_responsavel);
+    if (!usuario) throw new Error('Usuário não encontrado!');
+
+    const aprovacao = campos.situacao_acao === AcaoSituacao.Confirmada;
+    const reprovacao = campos.situacao_acao === AcaoSituacao.Cancelada;
+
     const acaoAtualizada = await this.acaoRepository.atualizar(id, campos);
+
+    let caminhoTemplate;
+    let template;
+    let subjectMessage;
+    const dados = {
+      nome_usuario: usuario.nome,
+    };
+
+    if (aprovacao) {
+      caminhoTemplate = path.join(
+        import.meta.dirname,
+        '..',
+        '..',
+        '..',
+        'infrastructure',
+        'smtp',
+        'templates',
+        'NotificacaoAcaoAprovada.ejs'
+      );
+
+      const gerarTemplateAcaoAprovada = new GerarTemplateAcaoAprovada();
+      template = await gerarTemplateAcaoAprovada.executar({ caminhoTemplate, dados });
+      subjectMessage = 'aprovada';
+    }
+
+    if (reprovacao) {
+      caminhoTemplate = path.join(
+        import.meta.dirname,
+        '..',
+        '..',
+        '..',
+        'infrastructure',
+        'smtp',
+        'templates',
+        'NotificacaoAcaoReprovada.ejs'
+      );
+
+      const gerarTemplateAcaoReprovada = new GerarTemplateAcaoReprovada();
+      template = await gerarTemplateAcaoReprovada.executar({ caminhoTemplate, dados });
+      subjectMessage = 'reprovada';
+    }
+
+    if (!template) throw new Error('Erro ao gerar template.');
+
+    const email = Email.criarNovoEmail({
+      from: 'caxiaslixozero@gmail.com',
+      to: usuario.email,
+      subject: `CaxiasLixoZero ${new Date().getFullYear()} - Informação de ação ${subjectMessage}!`,
+      html: template,
+    });
+
+    await this.emailService.enviarEmail(email);
 
     return this.objetoDeSaida(acaoAtualizada);
   }
 
   private objetoDeSaida({
     id,
-    celular,
     nome_organizador,
-    link_organizador,
+    celular,
     titulo_acao,
     descricao_acao,
+    id_categoria,
     data_acao,
     forma_realizacao_acao,
-    local_acao,
+    link_divulgacao_acesso_acao,
+    nome_local_acao,
+    endereco_local_acao,
+    informacoes_acao,
+    link_para_inscricao_acao,
+    tipo_publico_acao,
+    orientacao_divulgacao_acao,
     numero_organizadores_acao,
-    receber_informacao_patrocinio,
-    data_cadastro,
-    data_atualizacao,
-    situacao_acao,
     id_usuario_responsavel,
-    id_categoria,
     id_usuario_alteracao,
   }: Acao): AtualizarAcaoSaidaDTO {
     return {
       id,
-      celular,
       nome_organizador,
-      link_organizador,
+      celular,
       titulo_acao,
       descricao_acao,
+      id_categoria,
       data_acao,
       forma_realizacao_acao,
-      local_acao,
+      link_divulgacao_acesso_acao,
+      nome_local_acao,
+      endereco_local_acao,
+      informacoes_acao,
+      link_para_inscricao_acao,
+      tipo_publico_acao,
+      orientacao_divulgacao_acao,
       numero_organizadores_acao,
-      receber_informacao_patrocinio,
-      data_cadastro,
-      data_atualizacao,
-      situacao_acao,
       id_usuario_responsavel,
-      id_categoria,
       id_usuario_alteracao,
     };
   }

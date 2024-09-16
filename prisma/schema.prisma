@@ -29,14 +29,19 @@ model Usuario {
 
 model Acao {
   id                            String    @id @unique @default(uuid())
-  celular                       String    @db.VarChar(11)
   nome_organizador              String    @db.VarChar(60)
-  link_organizador              String
+  celular                       String    @db.VarChar(11)
   titulo_acao                   String
   descricao_acao                String
   data_acao                     DateTime
   forma_realizacao_acao         String    @db.VarChar(2)
-  local_acao                    String
+  link_divulgacao_acesso_acao   String
+  nome_local_acao               String
+  endereco_local_acao           String
+  informacoes_acao              String
+  link_para_inscricao_acao      String
+  tipo_publico_acao             String    @db.VarChar(2)
+  orientacao_divulgacao_acao    String
   numero_organizadores_acao     Int
   receber_informacao_patrocinio Boolean   @default(false)
   data_cadastro                 DateTime  @default(now())
