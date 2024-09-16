@@ -5,27 +5,35 @@ import { Usecase } from '../usecase';
 
 type ListarAcoesDTO = {
   id: string;
+  nome_organizador: string;
+  celular: string;
   titulo_acao: string;
   descricao_acao: string;
-  nome_organizador: string;
-  link_organizador: string;
+  id_categoria: string;
   data_acao: Date;
   forma_realizacao_acao: string;
-  local_acao: string;
-  situacao_acao: string;
+  link_divulgacao_acesso_acao: string;
+  nome_local_acao: string;
+  endereco_local_acao: string;
+  informacoes_acao: string;
+  link_para_inscricao_acao: string;
+  tipo_publico_acao: string;
+  orientacao_divulgacao_acao: string;
   numero_organizadores_acao: number;
-  celular: string;
+
+  situacao_acao: string;
   receber_informacao_patrocinio: boolean;
   data_cadastro: Date;
   data_atualizacao: Date;
-  categoria: {
+
+  categoria?: {
     descricao?: string;
   };
-  usuario_responsavel: {
+  usuario_responsavel?: {
     nome?: string;
     email?: string;
   };
-  usuario_alteracao: {
+  usuario_alteracao?: {
     nome?: string;
     email?: string;
   };
@@ -78,16 +86,22 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
     const acoesSaidaDto: ListarAcoesDTO[] = acoes.map(
       ({
         id,
+        nome_organizador,
+        celular,
         titulo_acao,
         descricao_acao,
-        nome_organizador,
-        link_organizador,
+        id_categoria,
         data_acao,
         forma_realizacao_acao,
-        local_acao,
-        situacao_acao,
+        link_divulgacao_acesso_acao,
+        nome_local_acao,
+        endereco_local_acao,
+        informacoes_acao,
+        link_para_inscricao_acao,
+        tipo_publico_acao,
+        orientacao_divulgacao_acao,
         numero_organizadores_acao,
-        celular,
+        situacao_acao,
         receber_informacao_patrocinio,
         data_cadastro,
         data_atualizacao,
@@ -97,16 +111,22 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
       }) => {
         return {
           id,
+          nome_organizador,
+          celular,
           titulo_acao,
           descricao_acao,
-          nome_organizador,
-          link_organizador,
+          id_categoria,
           data_acao,
           forma_realizacao_acao,
-          local_acao,
-          situacao_acao,
+          link_divulgacao_acesso_acao,
+          nome_local_acao,
+          endereco_local_acao,
+          informacoes_acao,
+          link_para_inscricao_acao,
+          tipo_publico_acao,
+          orientacao_divulgacao_acao,
           numero_organizadores_acao,
-          celular,
+          situacao_acao,
           receber_informacao_patrocinio,
           data_cadastro,
           data_atualizacao,
