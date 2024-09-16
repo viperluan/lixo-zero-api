@@ -11,7 +11,8 @@
     "start": "tsx src/server.ts",
     "start:dev": "tsx watch src/server.ts",
     "start:debug": "tsx --inspect-brk src/server.ts",
-    "lint": "eslint --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint --report-unused-disable-directives --max-warnings 0",
+    "vercel-build": "npx prisma migrate deploy"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
