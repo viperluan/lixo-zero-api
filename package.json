@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "build": "rimraf dist && tsup && npm run copy-ejs",
-    "start": "tsx src/server.ts",
+    "start": "node dist/server.cjs",
     "start:dev": "tsx watch src/server.ts",
     "start:debug": "tsx --inspect-brk src/server.ts",
     "lint": "eslint --report-unused-disable-directives --max-warnings 0",
