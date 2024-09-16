@@ -79,7 +79,11 @@ export async function atualizarAcao(request: Request, response: Response) {
     const { id } = request.params;
     const campos = request.body;
 
-    const atualizarAcao = new AtualizarAcao(acaoPrismaRepository);
+    const atualizarAcao = new AtualizarAcao(
+      acaoPrismaRepository,
+      usuarioPrismaRepository,
+      nodemailerService
+    );
     const acao = await atualizarAcao.executar({ id, campos });
 
     response.status(200).json(acao);
