@@ -12,6 +12,7 @@
     "start:dev": "tsx watch src/server.ts",
     "start:debug": "tsx --inspect-brk src/server.ts",
     "lint": "eslint --report-unused-disable-directives --max-warnings 0",
+    "postinstall": "prisma generate",
     "vercel-build": "npx prisma migrate deploy"
   },
   "dependencies": {
