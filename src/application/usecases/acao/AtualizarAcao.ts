@@ -20,19 +20,8 @@ export type AtualizarAcaoSaidaDTO = {
   celular: string;
   titulo_acao: string;
   descricao_acao: string;
-  id_categoria: string;
   data_acao: Date;
-  forma_realizacao_acao: string;
-  link_divulgacao_acesso_acao: string;
-  nome_local_acao: string;
-  endereco_local_acao: string;
-  informacoes_acao: string;
-  link_para_inscricao_acao: string;
-  tipo_publico_acao: string;
-  orientacao_divulgacao_acao: string;
   numero_organizadores_acao: number;
-  id_usuario_responsavel: string;
-  id_usuario_alteracao: string;
 };
 
 export default class AtualizarAcao
@@ -117,19 +106,8 @@ export default class AtualizarAcao
     celular,
     titulo_acao,
     descricao_acao,
-    id_categoria,
     data_acao,
-    forma_realizacao_acao,
-    link_divulgacao_acesso_acao,
-    nome_local_acao,
-    endereco_local_acao,
-    informacoes_acao,
-    link_para_inscricao_acao,
-    tipo_publico_acao,
-    orientacao_divulgacao_acao,
     numero_organizadores_acao,
-    id_usuario_responsavel,
-    id_usuario_alteracao,
   }: Acao): AtualizarAcaoSaidaDTO {
     return {
       id,
@@ -137,19 +115,8 @@ export default class AtualizarAcao
       celular,
       titulo_acao,
       descricao_acao,
-      id_categoria,
       data_acao,
-      forma_realizacao_acao,
-      link_divulgacao_acesso_acao,
-      nome_local_acao,
-      endereco_local_acao,
-      informacoes_acao,
-      link_para_inscricao_acao,
-      tipo_publico_acao,
-      orientacao_divulgacao_acao,
       numero_organizadores_acao,
-      id_usuario_responsavel,
-      id_usuario_alteracao,
     };
   }
 }
