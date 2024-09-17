@@ -52,9 +52,12 @@ export default class AtualizarAcao
       nome_usuario: usuario.nome,
     };
 
+    const diretorio = new URL(import.meta.url).pathname;
+
     if (aprovacao) {
       caminhoTemplate = path.join(
-        import.meta.dirname,
+        diretorio,
+        '..',
         '..',
         '..',
         '..',
@@ -71,7 +74,8 @@ export default class AtualizarAcao
 
     if (reprovacao) {
       caminhoTemplate = path.join(
-        import.meta.dirname,
+        diretorio,
+        '..',
         '..',
         '..',
         '..',

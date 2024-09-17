@@ -75,8 +75,11 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
       informacoes_acao: acao.informacoes_acao,
     };
 
+    const diretorio = new URL(import.meta.url).pathname;
+
     const caminhoTemplate = path.join(
-      import.meta.dirname,
+      diretorio,
+      '..',
       '..',
       '..',
       '..',
