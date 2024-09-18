@@ -26,7 +26,6 @@ export type ListarAcoesPorDataSaidaDTO = {
   celular: string;
   titulo_acao: string;
   descricao_acao: string;
-  id_categoria: string;
   data_acao: Date;
   forma_realizacao_acao: string;
   link_divulgacao_acesso_acao: string;
@@ -81,15 +80,14 @@ export default class ListarAcoesPorData
         celular,
         titulo_acao,
         descricao_acao,
-        id_categoria,
         data_acao,
-        forma_realizacao_acao,
+        forma_realizacao_acao_texto,
         link_divulgacao_acesso_acao,
         nome_local_acao,
         endereco_local_acao,
         informacoes_acao,
         link_para_inscricao_acao,
-        tipo_publico_acao,
+        tipo_publico_acao_texto,
         orientacao_divulgacao_acao,
         numero_organizadores_acao,
         situacao_acao,
@@ -97,23 +95,22 @@ export default class ListarAcoesPorData
         data_cadastro,
         data_atualizacao,
         categoria,
-        usuario_alteracao,
         usuario_responsavel,
+        usuario_alteracao,
       }) => ({
         id,
         nome_organizador,
         celular,
         titulo_acao,
         descricao_acao,
-        id_categoria,
         data_acao,
-        forma_realizacao_acao,
+        forma_realizacao_acao: forma_realizacao_acao_texto,
         link_divulgacao_acesso_acao,
         nome_local_acao,
         endereco_local_acao,
         informacoes_acao,
         link_para_inscricao_acao,
-        tipo_publico_acao,
+        tipo_publico_acao: tipo_publico_acao_texto,
         orientacao_divulgacao_acao,
         numero_organizadores_acao,
         situacao_acao,
@@ -121,8 +118,8 @@ export default class ListarAcoesPorData
         data_cadastro,
         data_atualizacao,
         categoria,
-        usuario_alteracao,
         usuario_responsavel,
+        usuario_alteracao,
       })
     );
 
