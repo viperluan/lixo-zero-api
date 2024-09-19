@@ -9,12 +9,13 @@ import ListarAcoesPorIntervaloData from '../../../application/usecases/acao/List
 import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
 import NodemailerService from '../../../application/services/email/NodemailerService';
 import { transportador } from '../../../shared/package/nodemailer';
+import { UsuarioRequest } from '../middlewares/AutenticacaoMiddleware';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 const nodemailerService = new NodemailerService(transportador);
 
-export async function listarTodasAcoes(request: Request, response: Response) {
+export async function listarTodasAcoes(request: UsuarioRequest, response: Response) {
   try {
     const {
       page = 1,
@@ -30,12 +31,14 @@ export async function listarTodasAcoes(request: Request, response: Response) {
     const paginaAtual = Number(page);
     const limiteDeAcoesPorPagina = Number(limit);
 
+    const usuarioComum = request.usuario?.tipo !== '0';
+
     const filtros = {
       id_categoria: (id_categoria as string) || '',
       id_usuario: (id_usuario as string) || '',
       data_acao: (data_acao as string) || '',
       search: (search as string) || '',
-      situacao: (situacao as string) || '',
+      situacao: usuarioComum ? '1' : (situacao as string) || '',
       forma_realizacao_acao: (forma_realizacao_acao as string) || '',
     };
 
@@ -84,6 +87,7 @@ export async function atualizarAcao(request: Request, response: Response) {
       usuarioPrismaRepository,
       nodemailerService
     );
+
     const acao = await atualizarAcao.executar({ id, campos });
 
     response.status(200).json(acao);
