@@ -8,7 +8,7 @@ const usuarioRouter = Router();
 
 usuarioRouter.post('/', usuarioController.criar);
 usuarioRouter.get('/', AutenticacaoMiddleware, AdminMiddleware, usuarioController.buscarTodos);
-usuarioRouter.delete('/:id', AutenticacaoMiddleware, usuarioController.remover);
+usuarioRouter.delete('/:id', AutenticacaoMiddleware, AdminMiddleware, usuarioController.remover);
 usuarioRouter.post('/autenticar', usuarioController.autenticar);
 
 export default usuarioRouter;
