@@ -25,7 +25,7 @@ export async function criar(request: Request, response: Response) {
 
 export async function buscarTodos(request: Request, response: Response) {
   try {
-    const { page, limit } = request.query;
+    const { page = 1, limit = 10 } = request.query;
 
     const paginaAtualRequest = Number(page);
     const limiteRequest = Number(limit);
