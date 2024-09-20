@@ -19,7 +19,6 @@ type ListarAcoesDTO = {
   tipo_publico_acao: string;
   orientacao_divulgacao_acao: string;
   numero_organizadores_acao: number;
-
   situacao_acao: string;
   receber_informacao_patrocinio: boolean;
   data_cadastro: Date;
@@ -99,7 +98,7 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
         tipo_publico_acao_texto,
         orientacao_divulgacao_acao,
         numero_organizadores_acao,
-        situacao_acao,
+        situacao_acao_texto,
         receber_informacao_patrocinio,
         data_cadastro,
         data_atualizacao,
@@ -123,7 +122,7 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
           tipo_publico_acao: tipo_publico_acao_texto,
           orientacao_divulgacao_acao,
           numero_organizadores_acao,
-          situacao_acao,
+          situacao_acao: situacao_acao_texto,
           receber_informacao_patrocinio,
           data_cadastro,
           data_atualizacao,

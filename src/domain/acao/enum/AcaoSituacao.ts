@@ -1,5 +1,5 @@
 export enum AcaoSituacao {
-  AguardandoConfirmacao = '0',
-  Confirmada = '1',
-  Cancelada = '2',
+  Pendente = '0',
+  Aprovada = '1',
+  Reprovada = '2',
 }

@@ -22,6 +22,7 @@ export type AtualizarAcaoSaidaDTO = {
   descricao_acao: string;
   data_acao: Date;
   numero_organizadores_acao: number;
+  situacao_acao: string;
 };
 
 export default class AtualizarAcao
@@ -40,8 +41,8 @@ export default class AtualizarAcao
     const usuario = await this.usuarioRepository.buscarPorId(acao.id_usuario_responsavel);
     if (!usuario) throw new Error('Usuário não encontrado!');
 
-    const aprovacao = campos.situacao_acao === AcaoSituacao.Confirmada;
-    const reprovacao = campos.situacao_acao === AcaoSituacao.Cancelada;
+    const aprovacao = campos.situacao_acao === AcaoSituacao.Aprovada;
+    const reprovacao = campos.situacao_acao === AcaoSituacao.Reprovada;
 
     const acaoAtualizada = await this.acaoRepository.atualizar(id, campos);
 
@@ -112,6 +113,7 @@ export default class AtualizarAcao
     descricao_acao,
     data_acao,
     numero_organizadores_acao,
+    situacao_acao_texto,
   }: Acao): AtualizarAcaoSaidaDTO {
     return {
       id,
@@ -121,6 +123,7 @@ export default class AtualizarAcao
       descricao_acao,
       data_acao,
       numero_organizadores_acao,
+      situacao_acao: situacao_acao_texto,
     };
   }
 }

@@ -70,7 +70,7 @@ export default class Acao {
       id: gerarUuid(),
       id_usuario_alteracao: acao.id_usuario_responsavel,
       receber_informacao_patrocinio: false,
-      situacao_acao: AcaoSituacao.AguardandoConfirmacao,
+      situacao_acao: AcaoSituacao.Pendente,
       data_acao: new Date(acao.data_acao),
       data_cadastro: new Date(),
       data_atualizacao: new Date(),
@@ -288,6 +288,19 @@ export default class Acao {
 
   public get situacao_acao(): string {
     return this.props.situacao_acao;
+  }
+
+  public get situacao_acao_texto(): string {
+    switch (this.situacao_acao) {
+      case AcaoSituacao.Pendente:
+        return 'Pendente';
+      case AcaoSituacao.Reprovada:
+        return 'Reprovada';
+      case AcaoSituacao.Aprovada:
+        return 'Aprovada';
+      default:
+        return '';
+    }
   }
 
   public get data_acao(): Date {
