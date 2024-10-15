@@ -7,6 +7,6 @@ import AdminMiddleware from '../middlewares/AdminMiddleware';
 const categoriaRouter = Router();
 
 categoriaRouter.post('/', AutenticacaoMiddleware, AdminMiddleware, categoriaController.criar);
-categoriaRouter.get('/', AutenticacaoMiddleware, categoriaController.buscarTodas);
+categoriaRouter.get('/', categoriaController.buscarTodas);
 
 export default categoriaRouter;

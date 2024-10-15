@@ -7,7 +7,7 @@ import AdminMiddleware from '../middlewares/AdminMiddleware';
 const acaoRouter = Router();
 
 acaoRouter.post('/', AutenticacaoMiddleware, acaoController.criarAcao);
-acaoRouter.get('/', AutenticacaoMiddleware, acaoController.listarTodasAcoes);
+acaoRouter.get('/', acaoController.listarTodasAcoes);
 acaoRouter.get('/:data', AutenticacaoMiddleware, acaoController.listarPorData);
 acaoRouter.get(
   '/:dataInicial/:dataFinal',
