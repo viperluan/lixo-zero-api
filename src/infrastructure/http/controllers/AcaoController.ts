@@ -31,14 +31,12 @@ export async function listarTodasAcoes(request: UsuarioRequest, response: Respon
     const paginaAtual = Number(page);
     const limiteDeAcoesPorPagina = Number(limit);
 
-    const usuarioComum = request.usuario?.tipo !== '0';
-
     const filtros = {
       id_categoria: (id_categoria as string) || '',
       id_usuario: (id_usuario as string) || '',
       data_acao: (data_acao as string) || '',
       search: (search as string) || '',
-      situacao: usuarioComum ? '1' : (situacao as string) || '',
+      situacao: (situacao as string) || '',
       forma_realizacao_acao: (forma_realizacao_acao as string) || '',
     };
 
