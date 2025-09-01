@@ -19,6 +19,7 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
           SSH_USER: ${{ secrets.VPS_SSH_USER }}
           PROJECT_DIR: ${{ secrets.PROJECT_DIR }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "
             cd ${PROJECT_DIR}
