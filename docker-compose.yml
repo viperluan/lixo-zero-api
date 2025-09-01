@@ -5,10 +5,10 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=lixo-zero
-      - POSTGRES_PASSWORD=1234
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=lixo-zero
-    expose:
-      - 5432
+    ports:
+      - "5432:5432"
     volumes:
       - ./pg_data:/var/lib/postgresql/data:rw
     networks:
