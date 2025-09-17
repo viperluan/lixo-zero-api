@@ -8,6 +8,7 @@ import IEmailService from '../../../domain/email/service/IEmailService';
 import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
 import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
 import Email from '../../../domain/email/entity/Email';
+import { fileURLToPath } from 'url';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;
@@ -53,7 +54,7 @@ export default class AtualizarAcao
       nome_usuario: usuario.nome,
     };
 
-    const diretorio = new URL(import.meta.url).pathname;
+    const diretorio = fileURLToPath(new URL(import.meta.url));
 
     if (aprovacao) {
       caminhoTemplate = path.join(
