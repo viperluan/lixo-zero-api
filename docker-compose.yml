@@ -22,6 +22,7 @@ services:
     depends_on:
       - lixozero-db
     environment:
+      - PORT=${PORT}
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
       - GMAIL_USER=${GMAIL_USER}
@@ -29,8 +30,8 @@ services:
     networks:
       - proxy-manager
       - lixozero-network
-    expose:
-      - 3000
+    ports:
+      - 3000:3000
 
 networks:
   lixozero-network:
