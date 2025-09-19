@@ -19,7 +19,12 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
           SSH_USER: ${{ secrets.VPS_SSH_USER }}
           PROJECT_DIR: ${{ secrets.PROJECT_DIR }}
+          PORT: ${{ secrets.PORT }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
         run: |
           ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "
             cd ${PROJECT_DIR}
