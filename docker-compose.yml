@@ -21,6 +21,11 @@ services:
     restart: always
     depends_on:
       - lixozero-db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_PASS=${GMAIL_PASS}
     networks:
       - proxy-manager
       - lixozero-network
