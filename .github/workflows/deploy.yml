@@ -27,13 +27,9 @@ jobs:
           GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
         run: |
           ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} "
-            
             cd ${PROJECT_DIR}
-            
             git pull origin main
-            
             docker compose down
-            
             PORT=${{ secrets.PORT }} \
             DATABASE_URL=${{ secrets.DATABASE_URL }} \
             DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
