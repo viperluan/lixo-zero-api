@@ -2,15 +2,15 @@
   "name": "lixo-zero-api",
   "version": "1.0.0",
   "description": "API para aplicação do lixo zero.",
-  "type": "module",
+  "type": "commonjs",
   "main": "./src/server.ts",
   "author": "Tecnomago",
   "license": "ISC",
   "scripts": {
     "build": "rimraf dist && tsup && npm run copy-ejs",
-    "start": "prisma migrate deploy && node dist/server.cjs",
+    "start": "prisma migrate deploy && cross-env NODE_ENV=production node dist/server.js",
     "start:tsx": "prisma migrate deploy && tsx src/server.ts",
-    "start:dev": "tsx watch src/server.ts",
+    "start:dev": "cross-env NODE_ENV=development tsx watch src/server.ts",
     "start:debug": "tsx --inspect-brk src/server.ts",
     "lint": "eslint --report-unused-disable-directives --max-warnings 0",
     "copy-ejs": "copyfiles -u 1 src/infrastructure/smtp/templates/**/*.ejs dist/"
@@ -18,6 +18,7 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "cross-env": "^10.0.0",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
