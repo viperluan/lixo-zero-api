@@ -1,4 +1,3 @@
-import path from 'path';
 import { Usecase } from '../usecase';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
 import Acao from '../../../domain/acao/entity/Acao';
@@ -8,7 +7,7 @@ import IEmailService from '../../../domain/email/service/IEmailService';
 import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
 import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
 import Email from '../../../domain/email/entity/Email';
-import { fileURLToPath } from 'url';
+import { resolveCaminhoArquivoTemplate } from 'src/shared/utils/resolveCaminhoArquivoTemplate';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;
@@ -54,20 +53,8 @@ export default class AtualizarAcao
       nome_usuario: usuario.nome,
     };
 
-    const diretorio = fileURLToPath(new URL(import.meta.url));
-
     if (aprovacao) {
-      caminhoTemplate = path.join(
-        diretorio,
-        '..',
-        '..',
-        '..',
-        '..',
-        'infrastructure',
-        'smtp',
-        'templates',
-        'NotificacaoAcaoAprovada.ejs'
-      );
+      caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoAprovada.ejs');
 
       const gerarTemplateAcaoAprovada = new GerarTemplateAcaoAprovada();
       template = await gerarTemplateAcaoAprovada.executar({ caminhoTemplate, dados });
@@ -75,17 +62,7 @@ export default class AtualizarAcao
     }
 
     if (reprovacao) {
-      caminhoTemplate = path.join(
-        diretorio,
-        '..',
-        '..',
-        '..',
-        '..',
-        'infrastructure',
-        'smtp',
-        'templates',
-        'NotificacaoAcaoReprovada.ejs'
-      );
+      caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoReprovada.ejs');
 
       const gerarTemplateAcaoReprovada = new GerarTemplateAcaoReprovada();
       template = await gerarTemplateAcaoReprovada.executar({ caminhoTemplate, dados });

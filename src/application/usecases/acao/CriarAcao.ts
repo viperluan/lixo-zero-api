@@ -1,4 +1,3 @@
-import path from 'path';
 import { adicionaZeroAEsquerda } from '../../../shared/utils/adicionaZeroAEsquerda';
 import { Usecase } from '../usecase';
 import Acao from '../../../domain/acao/entity/Acao';
@@ -7,7 +6,7 @@ import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
 import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
 import IEmailService from '../../../domain/email/service/IEmailService';
-import { fileURLToPath } from 'url';
+import { resolveCaminhoArquivoTemplate } from 'src/shared/utils/resolveCaminhoArquivoTemplate';
 
 export type CriarAcaoEntradaDTO = {
   id: string;
@@ -76,19 +75,7 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
       informacoes_acao: acao.informacoes_acao,
     };
 
-    const diretorio = fileURLToPath(new URL(import.meta.url));
-
-    const caminhoTemplate = path.join(
-      diretorio,
-      '..',
-      '..',
-      '..',
-      '..',
-      'infrastructure',
-      'smtp',
-      'templates',
-      'NotificacaoAcaoCriada.ejs'
-    );
+    const caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoCriada.ejs');
 
     const gerarTemplateAcaoCadastrada = new GerarTemplateAcaoCadastrada();
     const template = await gerarTemplateAcaoCadastrada.executar({ caminhoTemplate, dados });
