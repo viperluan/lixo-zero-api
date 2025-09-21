@@ -30,12 +30,5 @@ jobs:
             cd ${PROJECT_DIR}
             git pull origin main
             docker compose down
-
-            echo \"PORT=${PORT}\" > .env
-            echo \"DATABASE_URL=${DATABASE_URL}\" >> .env
-            echo \"DB_PASSWORD=${DB_PASSWORD}\" >> .env
-            echo \"SECRET_KEY=${SECRET_KEY}\" >> .env
-            echo \"GMAIL_USER=${GMAIL_USER}\" >> .env
-            echo \"GMAIL_PASS=${GMAIL_PASS}\" >> .env
-            docker compose --env-file .env up -d --build
+            docker compose --env-file .env up -d --build --force-recreate --remove-orphans
           "
