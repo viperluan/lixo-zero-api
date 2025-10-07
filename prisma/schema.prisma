@@ -29,7 +29,7 @@ model Usuario {
 
 model Acao {
   id                            String    @id @unique @default(uuid())
-  nome_organizador              String    @db.VarChar(60)
+  nome_organizador              String    
   celular                       String    @db.VarChar(11)
   titulo_acao                   String
   descricao_acao                String
