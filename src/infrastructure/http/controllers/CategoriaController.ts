@@ -3,6 +3,8 @@ import { prisma } from '../../../shared/package/prisma';
 import CriarCategoria from '../../../application/usecases/categoria/CriarCategoria';
 import CategoriaPrismaRepository from '../../../application/repositories/CategoriaPrismaRepository';
 import ListarCategorias from '../../../application/usecases/categoria/ListarCategorias';
+import { normalizarPaginacao } from '../../../shared/utils/normalizarPaginacao';
+import { responderErroInterno } from '../../../shared/utils/responderErroInterno';
 
 const categoriaPrismaRepository = new CategoriaPrismaRepository(prisma);
 
@@ -22,9 +24,7 @@ export async function criar(request: Request, response: Response) {
 export async function buscarTodas(request: Request, response: Response) {
   try {
     const { page = 1, limit = 10 } = request.query;
-
-    const paginaAtual = Number(page);
-    const limiteDeCategoriasPorPagina = Number(limit);
+    const { paginaAtual, limite: limiteDeCategoriasPorPagina } = normalizarPaginacao(page, limit);
 
     const listarCategorias = new ListarCategorias(categoriaPrismaRepository);
     const { categorias, totalDePaginas } = await listarCategorias.executar({
@@ -38,6 +38,6 @@ export async function buscarTodas(request: Request, response: Response) {
       currentPage: paginaAtual,
     });
   } catch (error) {
-    response.status(500).json({ error: (error as Error).message });
+    responderErroInterno(response, error);
   }
 }

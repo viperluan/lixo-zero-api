@@ -7,6 +7,7 @@ import AutenticarUsuario from '../../../application/usecases/usuario/AutenticarU
 import DeletarUsuario from '../../../application/usecases/usuario/DeletarUsuario';
 import ListarUsuarios from '../../../application/usecases/usuario/ListarUsuarios';
 import GerarTokenUsuario from '../../../application/usecases/usuario/GerarTokenUsuario';
+import { normalizarPaginacao } from '../../../shared/utils/normalizarPaginacao';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 
@@ -26,21 +27,23 @@ export async function criar(request: Request, response: Response) {
 export async function buscarTodos(request: Request, response: Response) {
   try {
     const { page = 1, limit = 10 } = request.query;
-
-    const paginaAtualRequest = Number(page);
-    const limiteRequest = Number(limit);
+    const { paginaAtual, limite: limiteDeUsuariosPorPagina } = normalizarPaginacao(page, limit);
 
     const listarUsuarios = new ListarUsuarios(usuarioPrismaRepository);
 
-    const { usuarios, paginaAtual, totalDePaginas } = await listarUsuarios.executar({
-      paginaAtual: paginaAtualRequest,
-      limiteDeUsuariosPorPagina: limiteRequest,
+    const {
+      usuarios,
+      paginaAtual: paginaRetornada,
+      totalDePaginas,
+    } = await listarUsuarios.executar({
+      paginaAtual,
+      limiteDeUsuariosPorPagina,
     });
 
     response.status(200).json({
       users: usuarios,
       totalPages: totalDePaginas,
-      currentPage: paginaAtual,
+      currentPage: paginaRetornada,
     });
   } catch (error) {
     response.status(400).json({ error: (error as Error).message });
@@ -70,6 +73,12 @@ export async function autenticar(request: Request, response: Response) {
 
     response.status(200).json(usuario);
   } catch (error) {
-    response.status(400).json({ error: (error as Error).message });
+    const mensagem = (error as Error).message;
+
+    if (mensagem === 'Email ou senha incorretos') {
+      return response.status(401).json({ error: mensagem });
+    }
+
+    response.status(400).json({ error: mensagem });
   }
 }

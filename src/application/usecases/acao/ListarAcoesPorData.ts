@@ -1,9 +1,12 @@
 import Acao from '../../../domain/acao/entity/Acao';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
+import { sanitizarListaAcoesResposta } from '../../../shared/utils/sanitizarAcaoResposta';
 import { Usecase } from '../usecase';
 
 export type ListarAcoesPorDataEntradaDTO = {
   data: string;
+  situacao?: string;
+  sanitizarSaida?: boolean;
 };
 
 type CategoriaSaidaType = {
@@ -51,14 +54,16 @@ export default class ListarAcoesPorData
 
   public async executar({
     data,
+    situacao,
+    sanitizarSaida = false,
   }: ListarAcoesPorDataEntradaDTO): Promise<ListarAcoesPorDataSaidaDTO[]> {
     const objetoData = new Date(data);
 
     this.validarData(objetoData);
 
-    const acoes = await this.acaoRepository.listarPorData(objetoData);
+    const acoes = await this.acaoRepository.listarPorData(objetoData, situacao);
 
-    return this.objetoDeSaida(acoes);
+    return this.objetoDeSaida(acoes, sanitizarSaida);
   }
 
   private validarData(data: Date) {
@@ -67,7 +72,10 @@ export default class ListarAcoesPorData
     }
   }
 
-  private objetoDeSaida(acoes: Acao[] | null): ListarAcoesPorDataSaidaDTO[] {
+  private objetoDeSaida(
+    acoes: Acao[] | null,
+    sanitizarSaida: boolean
+  ): ListarAcoesPorDataSaidaDTO[] {
     if (!acoes) {
       return [];
     }
@@ -120,6 +128,6 @@ export default class ListarAcoesPorData
       })
     );
 
-    return saida;
+    return sanitizarSaida ? sanitizarListaAcoesResposta(saida) : saida;
   }
 }

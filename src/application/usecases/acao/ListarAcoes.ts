@@ -1,6 +1,7 @@
 import Acao from '../../../domain/acao/entity/Acao';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
 import { FiltrosListarComPaginacaoType } from '../../repositories/AcaoPrismaRepository';
+import { sanitizarAcaoResposta } from '../../../shared/utils/sanitizarAcaoResposta';
 import { Usecase } from '../usecase';
 
 type ListarAcoesDTO = {
@@ -47,6 +48,7 @@ export type ListarAcoesEntradaDTO = {
   filtros: FiltrosListarComPaginacaoType;
   paginaAtual: number;
   limiteDeAcoesPorPagina: number;
+  sanitizarSaida?: boolean;
 };
 
 export type ListarAcoesSaidaDTO = {
@@ -61,6 +63,7 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
     filtros,
     limiteDeAcoesPorPagina,
     paginaAtual,
+    sanitizarSaida = false,
   }: ListarAcoesEntradaDTO): Promise<ListarAcoesSaidaDTO> {
     const acoes = await this.acaoRepository.listarComPaginacao(
       filtros,
@@ -69,10 +72,21 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
     );
     const totalAcoes = await this.acaoRepository.contarComFiltros(filtros);
 
-    return this.objetoDeSaida({ acoes, totalAcoes, paginaAtual, limiteDeAcoesPorPagina });
+    return this.objetoDeSaida({
+      acoes,
+      totalAcoes,
+      paginaAtual,
+      limiteDeAcoesPorPagina,
+      sanitizarSaida,
+    });
   }
 
-  private objetoDeSaida({ acoes, totalAcoes, limiteDeAcoesPorPagina }: ObjetoSaidaProps) {
+  private objetoDeSaida({
+    acoes,
+    totalAcoes,
+    limiteDeAcoesPorPagina,
+    sanitizarSaida,
+  }: ObjetoSaidaProps & { sanitizarSaida: boolean }) {
     if (!acoes) {
       return {
         acoes: [],
@@ -104,7 +118,7 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
         usuario_responsavel,
         usuario_alteracao,
       }) => {
-        return {
+        const acao = {
           id,
           nome_organizador,
           celular,
@@ -127,6 +141,8 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
           usuario_responsavel,
           usuario_alteracao,
         };
+
+        return sanitizarSaida ? sanitizarAcaoResposta(acao) : acao;
       }
     );
 

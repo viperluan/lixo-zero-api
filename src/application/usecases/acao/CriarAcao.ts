@@ -8,8 +8,7 @@ import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepos
 import IEmailService from '../../../domain/email/service/IEmailService';
 import { resolveCaminhoArquivoTemplate } from 'src/shared/utils/resolveCaminhoArquivoTemplate';
 
-export type CriarAcaoEntradaDTO = {
-  id: string;
+export type CriarAcaoDadosDTO = {
   nome_organizador: string;
   celular: string;
   titulo_acao: string;
@@ -25,8 +24,10 @@ export type CriarAcaoEntradaDTO = {
   tipo_publico_acao: string;
   orientacao_divulgacao_acao: string;
   numero_organizadores_acao: number;
+};
+
+export type CriarAcaoEntradaDTO = CriarAcaoDadosDTO & {
   id_usuario_responsavel: string;
-  id_usuario_alteracao: string;
 };
 
 export type CriarAcaoSaidaDTO = {

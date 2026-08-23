@@ -36,6 +36,8 @@ export default class AutenticarUsuario
     const senhasSaoIguais = Usuario.compararSenha(senha, usuario.senha);
     if (!senhasSaoIguais) throw new Error('Email ou senha incorretos');
 
+    if (!usuario.status) throw new Error('Email ou senha incorretos');
+
     return await this.objetoSaida(usuario);
   }
 

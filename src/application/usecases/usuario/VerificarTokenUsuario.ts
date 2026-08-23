@@ -28,10 +28,9 @@ export default class VerificarTokenUsuario
   public async executar({
     token,
   }: VerificarTokenUsuarioEntradaDTO): Promise<VerificarTokenUsuarioSaidaDTO> {
-    const tokenDecodificado = jwt.verify(
-      token,
-      process.env.SECRET_KEY as string
-    ) as TokenDecodificado;
+    const tokenDecodificado = jwt.verify(token, process.env.SECRET_KEY as string, {
+      algorithms: ['HS256'],
+    }) as TokenDecodificado;
 
     return tokenDecodificado;
   }
