@@ -35,6 +35,8 @@ A API sobe em `http://localhost:3000` (ou na porta definida em `PORT`).
 | `PORT` | Porta do servidor (padrão: `3000`) |
 | `DATABASE_URL` | Connection string do PostgreSQL |
 | `SECRET_KEY` | Chave para assinatura do JWT |
+| `JWT_EXPIRES_IN` | Expiração do token (padrão: `24h`) |
+| `CORS_ORIGIN` | Origens permitidas (`*` ou vazio libera qualquer origem) |
 | `GMAIL_USER` / `GMAIL_PASS` | Credenciais SMTP (envio de e-mails) |
 | `DB_PASSWORD` | Senha do Postgres no Docker Compose |
 

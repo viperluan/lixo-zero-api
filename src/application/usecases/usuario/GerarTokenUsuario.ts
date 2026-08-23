@@ -17,7 +17,8 @@ export default class GerarTokenUsuario
   implements Usecase<GerarTokenUsuarioEntradaDTO, GerarTokenUsuarioSaidaDTO>
 {
   public async executar(payload: GerarTokenUsuarioEntradaDTO): Promise<GerarTokenUsuarioSaidaDTO> {
-    const token = jwt.sign(payload, process.env.SECRET_KEY!);
+    const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
+    const token = jwt.sign(payload, process.env.SECRET_KEY!, { expiresIn });
 
     return { token };
   }
