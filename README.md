@@ -37,8 +37,11 @@ A API sobe em `http://localhost:3000` (ou na porta definida em `PORT`).
 | `SECRET_KEY` | Chave para assinatura do JWT |
 | `JWT_EXPIRES_IN` | Expiração do token (padrão: `24h`) |
 | `CORS_ORIGIN` | Origens permitidas (`*` ou vazio libera qualquer origem) |
+| `RATE_LIMIT_ENABLED` | `true` ativa rate limiting; `false` desativa |
 | `GMAIL_USER` / `GMAIL_PASS` | Credenciais SMTP (envio de e-mails) |
 | `DB_PASSWORD` | Senha do Postgres no Docker Compose |
+
+Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMIT_GLOBAL_*`, `RATE_LIMIT_AUTH_*`, `RATE_LIMIT_REGISTER_*`, `RATE_LIMIT_PUBLIC_READ_*`.
 
 ## Scripts
 

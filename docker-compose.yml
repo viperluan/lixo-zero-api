@@ -27,6 +27,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_PASS=${GMAIL_PASS}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
     networks:
       - proxy-manager
       - lixozero-network
