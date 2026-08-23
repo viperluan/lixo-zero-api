@@ -67,7 +67,7 @@ export default class ListarAcoes implements Usecase<ListarAcoesEntradaDTO, Lista
       paginaAtual,
       limiteDeAcoesPorPagina
     );
-    const totalAcoes = await this.acaoRepository.buscarQuantidadeDeAcoes();
+    const totalAcoes = await this.acaoRepository.contarComFiltros(filtros);
 
     return this.objetoDeSaida({ acoes, totalAcoes, paginaAtual, limiteDeAcoesPorPagina });
   }

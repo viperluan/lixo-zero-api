@@ -19,7 +19,7 @@ type ObjetoSaidaProps = {
 
 export type ListarUsuariosEntradaDTO = {
   paginaAtual: number;
-  limiteUsuarios: number;
+  limiteDeUsuariosPorPagina: number;
 };
 
 export type ListarUsuariosSaidaDTO = {
@@ -36,7 +36,7 @@ export default class ListarUsuarios
   async executar({
     paginaAtual = 1,
     limiteDeUsuariosPorPagina = 10,
-  }): Promise<ListarUsuariosSaidaDTO> {
+  }: ListarUsuariosEntradaDTO): Promise<ListarUsuariosSaidaDTO> {
     const usuarios = await this.usuarioRepository.buscarComPaginacao(
       paginaAtual,
       limiteDeUsuariosPorPagina

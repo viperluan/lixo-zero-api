@@ -15,33 +15,7 @@ export type FiltrosListarComPaginacaoType = {
 export default class AcaoPrismaRepository implements IAcaoRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async buscarPorId(id: string): Promise<Acao | null> {
-    const acao = await this.prisma.acao.findFirst({ where: { id } });
-
-    if (!acao) return null;
-
-    return Acao.carregarAcaoExistente(acao);
-  }
-
-  async buscarPorTitulo(titulo: string): Promise<Acao | null> {
-    const acao = await this.prisma.acao.findFirst({ where: { titulo_acao: titulo } });
-
-    if (!acao) return null;
-
-    return Acao.carregarAcaoExistente(acao);
-  }
-
-  async buscarQuantidadeDeAcoes(): Promise<number> {
-    const quantidadeDeAcoes = await this.prisma.acao.count();
-
-    return quantidadeDeAcoes;
-  }
-
-  async listarComPaginacao(
-    filtros: FiltrosListarComPaginacaoType,
-    pagina = 1,
-    limiteAcoes = 10
-  ): Promise<Acao[] | null> {
+  private montarWhere(filtros: FiltrosListarComPaginacaoType): Prisma.AcaoWhereInput {
     const where: Prisma.AcaoWhereInput = {};
 
     if (filtros.id_categoria) {
@@ -72,6 +46,42 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     if (filtros.forma_realizacao_acao) {
       where.forma_realizacao_acao = filtros.forma_realizacao_acao;
     }
+
+    return where;
+  }
+
+  async buscarPorId(id: string): Promise<Acao | null> {
+    const acao = await this.prisma.acao.findFirst({ where: { id } });
+
+    if (!acao) return null;
+
+    return Acao.carregarAcaoExistente(acao);
+  }
+
+  async buscarPorTitulo(titulo: string): Promise<Acao | null> {
+    const acao = await this.prisma.acao.findFirst({ where: { titulo_acao: titulo } });
+
+    if (!acao) return null;
+
+    return Acao.carregarAcaoExistente(acao);
+  }
+
+  async buscarQuantidadeDeAcoes(): Promise<number> {
+    const quantidadeDeAcoes = await this.prisma.acao.count();
+
+    return quantidadeDeAcoes;
+  }
+
+  async contarComFiltros(filtros: FiltrosListarComPaginacaoType): Promise<number> {
+    return this.prisma.acao.count({ where: this.montarWhere(filtros) });
+  }
+
+  async listarComPaginacao(
+    filtros: FiltrosListarComPaginacaoType,
+    pagina = 1,
+    limiteAcoes = 10
+  ): Promise<Acao[] | null> {
+    const where = this.montarWhere(filtros);
 
     const listaDeAcoes = await this.prisma.acao.findMany({
       where,
