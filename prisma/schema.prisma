@@ -14,65 +14,40 @@ model Categoria {
 }
 
 model Usuario {
-  id                      String         @id @default(uuid())
-  nome                    String
-  email                   String         @unique
-  senha                   String
-  status                  Boolean        @default(true)
-  tipo                    String         @db.VarChar(2)
-  cpf_cnpj                String         @unique @db.VarChar(14)
-  acao                    Acao[]
-  acao_usuario_alteracao  Acao[]         @relation("usuario_alteracao")
-  patrocinador_alteracao  Patrocinador[] @relation("usuario_alteracao")
-  patrocinador_patrocinio Patrocinador[] @relation("usuario_patrocinio")
+  id                     String  @id @default(uuid())
+  nome                   String
+  email                  String  @unique
+  senha                  String
+  status                 Boolean @default(true)
+  tipo                   String  @db.VarChar(2)
+  cpf_cnpj               String  @unique @db.VarChar(14)
+  acao                   Acao[]
+  acao_usuario_alteracao Acao[]  @relation("usuario_alteracao")
 }
 
 model Acao {
-  id                            String    @id @unique @default(uuid())
-  nome_organizador              String    
-  celular                       String    @db.VarChar(11)
-  titulo_acao                   String
-  descricao_acao                String
-  data_acao                     DateTime
-  forma_realizacao_acao         String    @db.VarChar(2)
-  link_divulgacao_acesso_acao   String
-  nome_local_acao               String
-  endereco_local_acao           String
-  informacoes_acao              String
-  link_para_inscricao_acao      String
-  tipo_publico_acao             String    @db.VarChar(2)
-  orientacao_divulgacao_acao    String
-  numero_organizadores_acao     Int
-  receber_informacao_patrocinio Boolean   @default(false)
-  data_cadastro                 DateTime  @default(now())
-  data_atualizacao              DateTime  @updatedAt
-  situacao_acao                 String    @db.VarChar(2)
-  id_usuario_responsavel        String
-  id_categoria                  String
-  id_usuario_alteracao          String
-  categoria                     Categoria @relation(fields: [id_categoria], references: [id])
-  usuario_alteracao             Usuario   @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
-  usuario_responsavel           Usuario   @relation(fields: [id_usuario_responsavel], references: [id])
-}
-
-model Patrocinador {
-  id                    String   @id @default(uuid())
-  celular               String   @db.VarChar(11)
-  nome                  String   @db.VarChar(60)
-  descricao             String
-  data_cadastro         DateTime @default(now())
-  data_atualizacao      DateTime @updatedAt
-  situacao              String   @db.VarChar(2)
-  id_cota               String
-  id_usuario_alteracao  String
-  id_usuario_patrocinio String
-  usuario_alteracao     Usuario  @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
-  usuario_patrocinio    Usuario  @relation("usuario_patrocinio", fields: [id_usuario_patrocinio], references: [id])
-  cota                  Cota     @relation(fields: [id_cota], references: [id])
-}
-
-model Cota {
-  id            String         @id @default(uuid())
-  descricao     String
-  patrocionador Patrocinador[]
+  id                          String    @id @unique @default(uuid())
+  nome_organizador            String
+  celular                     String    @db.VarChar(11)
+  titulo_acao                 String
+  descricao_acao              String
+  data_acao                   DateTime
+  forma_realizacao_acao       String    @db.VarChar(2)
+  link_divulgacao_acesso_acao String
+  nome_local_acao             String
+  endereco_local_acao         String
+  informacoes_acao            String
+  link_para_inscricao_acao    String
+  tipo_publico_acao           String    @db.VarChar(2)
+  orientacao_divulgacao_acao  String
+  numero_organizadores_acao   Int
+  data_cadastro               DateTime  @default(now())
+  data_atualizacao            DateTime  @updatedAt
+  situacao_acao               String    @db.VarChar(2)
+  id_usuario_responsavel      String
+  id_categoria                String
+  id_usuario_alteracao        String
+  categoria                   Categoria @relation(fields: [id_categoria], references: [id])
+  usuario_alteracao           Usuario   @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
+  usuario_responsavel         Usuario   @relation(fields: [id_usuario_responsavel], references: [id])
 }

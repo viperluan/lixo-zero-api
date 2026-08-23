@@ -36,7 +36,6 @@ export type AcaoProps = {
   numero_organizadores_acao: number;
 
   situacao_acao: string;
-  receber_informacao_patrocinio: boolean;
   data_cadastro: Date;
   data_atualizacao: Date;
   id_usuario_responsavel: string;
@@ -52,7 +51,6 @@ type OmitirDadosNovaAcaoProps =
   | 'data_cadastro'
   | 'data_atualizacao'
   | 'data_acao'
-  | 'receber_informacao_patrocinio'
   | 'situacao_acao';
 
 type NovaAcaoProps = Omit<AcaoProps, OmitirDadosNovaAcaoProps> & {
@@ -69,7 +67,6 @@ export default class Acao {
       ...acao,
       id: gerarUuid(),
       id_usuario_alteracao: acao.id_usuario_responsavel,
-      receber_informacao_patrocinio: false,
       situacao_acao: AcaoSituacao.Pendente,
       data_acao: new Date(acao.data_acao),
       data_cadastro: new Date(),
@@ -280,10 +277,6 @@ export default class Acao {
 
   public get numero_organizadores_acao(): number {
     return this.props.numero_organizadores_acao;
-  }
-
-  public get receber_informacao_patrocinio(): boolean {
-    return this.props.receber_informacao_patrocinio;
   }
 
   public get situacao_acao(): string {
