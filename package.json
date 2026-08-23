@@ -4,7 +4,7 @@
   "description": "API para aplicação do lixo zero.",
   "type": "commonjs",
   "main": "./src/server.ts",
-  "author": "Tecnomago",
+  "author": "Zerium",
   "license": "ISC",
   "scripts": {
     "build": "rimraf dist && tsup && npm run copy-ejs",
