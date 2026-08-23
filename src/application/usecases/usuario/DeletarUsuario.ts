@@ -1,6 +1,10 @@
 import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
 import { Usecase } from '../usecase';
 
+export const ERRO_USUARIO_NAO_EXISTE = 'Usuário não existe.';
+export const ERRO_USUARIO_VINCULADO_A_ACOES =
+  'Não é possível excluir um usuário vinculado a ações.';
+
 export type DeletarUsuarioEntradaDTO = {
   id: string;
 };
@@ -14,7 +18,10 @@ export default class DeletarUsuario
 
   async executar({ id }: DeletarUsuarioEntradaDTO): Promise<void> {
     const idExiste = await this.usuarioRepository.buscarPorId(id);
-    if (!idExiste) throw new Error('Usuário não existe.');
+    if (!idExiste) throw new Error(ERRO_USUARIO_NAO_EXISTE);
+
+    const possuiAcaoVinculada = await this.usuarioRepository.possuiAcaoVinculada(id);
+    if (possuiAcaoVinculada) throw new Error(ERRO_USUARIO_VINCULADO_A_ACOES);
 
     await this.usuarioRepository.deletar(id);
   }

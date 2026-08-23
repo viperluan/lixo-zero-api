@@ -4,10 +4,14 @@ import { Request, Response } from 'express';
 import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
 import CriarUsuario from '../../../application/usecases/usuario/CriarUsuario';
 import AutenticarUsuario from '../../../application/usecases/usuario/AutenticarUsuario';
-import DeletarUsuario from '../../../application/usecases/usuario/DeletarUsuario';
+import DeletarUsuario, {
+  ERRO_USUARIO_NAO_EXISTE,
+  ERRO_USUARIO_VINCULADO_A_ACOES,
+} from '../../../application/usecases/usuario/DeletarUsuario';
 import ListarUsuarios from '../../../application/usecases/usuario/ListarUsuarios';
 import GerarTokenUsuario from '../../../application/usecases/usuario/GerarTokenUsuario';
 import { normalizarPaginacao } from '../../../shared/utils/normalizarPaginacao';
+import { responderErroInterno } from '../../../shared/utils/responderErroInterno';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 
@@ -59,7 +63,17 @@ export async function remover(request: Request, response: Response) {
 
     response.status(200).end();
   } catch (error) {
-    response.status(400).json({ error: (error as Error).message });
+    const mensagem = (error as Error).message;
+
+    if (mensagem === ERRO_USUARIO_NAO_EXISTE) {
+      return response.status(404).json({ error: mensagem });
+    }
+
+    if (mensagem === ERRO_USUARIO_VINCULADO_A_ACOES) {
+      return response.status(409).json({ error: mensagem });
+    }
+
+    responderErroInterno(response, error);
   }
 }
 

@@ -8,5 +8,6 @@ export default interface IUsuarioRepository {
   buscarQuantidadeUsuarios(): Promise<number>;
   salvar(usuario: Usuario): Promise<void>;
   atualizar(usuario: Usuario): Promise<void>;
+  possuiAcaoVinculada(id: string): Promise<boolean>;
   deletar(id: string): Promise<void>;
 }
