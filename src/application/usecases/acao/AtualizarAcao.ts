@@ -35,52 +35,54 @@ export default class AtualizarAcao
   ) {}
 
   async executar({ id, campos }: AtualizarAcaoEntradaDTO): Promise<AtualizarAcaoSaidaDTO> {
+    const aprovacao = this.validarSituacao(campos.situacao_acao);
+
     const acao = await this.acaoRepository.buscarPorId(id);
     if (!acao) throw new Error('Ação não encontrada!');
 
     const usuario = await this.usuarioRepository.buscarPorId(acao.id_usuario_responsavel);
     if (!usuario) throw new Error('Usuário não encontrado!');
 
-    const aprovacao = campos.situacao_acao === AcaoSituacao.Aprovada;
-    const reprovacao = campos.situacao_acao === AcaoSituacao.Reprovada;
+    const template = await this.gerarTemplate(aprovacao, usuario.nome);
 
     const acaoAtualizada = await this.acaoRepository.atualizar(id, campos);
 
-    let caminhoTemplate;
-    let template;
-    let subjectMessage;
-    const dados = {
-      nome_usuario: usuario.nome,
-    };
-
-    if (aprovacao) {
-      caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoAprovada.ejs');
-
-      const gerarTemplateAcaoAprovada = new GerarTemplateAcaoAprovada();
-      template = await gerarTemplateAcaoAprovada.executar({ caminhoTemplate, dados });
-      subjectMessage = 'aprovada';
-    }
-
-    if (reprovacao) {
-      caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoReprovada.ejs');
-
-      const gerarTemplateAcaoReprovada = new GerarTemplateAcaoReprovada();
-      template = await gerarTemplateAcaoReprovada.executar({ caminhoTemplate, dados });
-      subjectMessage = 'reprovada';
-    }
-
-    if (!template) throw new Error('Erro ao gerar template.');
-
+    const situacaoTexto = aprovacao ? 'aprovada' : 'reprovada';
     const email = Email.criarNovoEmail({
       from: 'caxiaslixozero@gmail.com',
       to: usuario.email,
-      subject: `CaxiasLixoZero ${new Date().getFullYear()} - Informação de ação ${subjectMessage}!`,
+      subject: `CaxiasLixoZero ${new Date().getFullYear()} - Informação de ação ${situacaoTexto}!`,
       html: template,
     });
 
     await this.emailService.enviarEmail(email);
 
     return this.objetoDeSaida(acaoAtualizada);
+  }
+
+  /** Retorna `true` para aprovação e `false` para reprovação. */
+  private validarSituacao(situacao: string): boolean {
+    if (situacao === AcaoSituacao.Aprovada) return true;
+    if (situacao === AcaoSituacao.Reprovada) return false;
+
+    throw new Error(
+      `Situação inválida. Use "${AcaoSituacao.Aprovada}" para aprovar ou "${AcaoSituacao.Reprovada}" para reprovar.`
+    );
+  }
+
+  private async gerarTemplate(aprovacao: boolean, nomeUsuario: string): Promise<string> {
+    const dados = { nome_usuario: nomeUsuario };
+    const caminhoTemplate = resolveCaminhoArquivoTemplate(
+      aprovacao ? 'NotificacaoAcaoAprovada.ejs' : 'NotificacaoAcaoReprovada.ejs'
+    );
+
+    const template = aprovacao
+      ? await new GerarTemplateAcaoAprovada().executar({ caminhoTemplate, dados })
+      : await new GerarTemplateAcaoReprovada().executar({ caminhoTemplate, dados });
+
+    if (!template) throw new Error('Erro ao gerar template.');
+
+    return template;
   }
 
   private objetoDeSaida({

@@ -101,8 +101,14 @@ export async function criarAcao(request: UsuarioRequest, response: Response) {
 
 export async function atualizarAcao(request: UsuarioRequest, response: Response) {
   try {
+    if (!request.usuario) {
+      return response
+        .status(401)
+        .json({ message: 'Autenticação necessária para acessar o recurso.' });
+    }
+
     const { id } = request.params;
-    const campos = request.body;
+    const { situacao_acao } = request.body;
 
     const atualizarAcao = new AtualizarAcao(
       acaoPrismaRepository,
@@ -110,7 +116,13 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
       nodemailerService
     );
 
-    const acao = await atualizarAcao.executar({ id, campos });
+    const acao = await atualizarAcao.executar({
+      id,
+      campos: {
+        situacao_acao,
+        id_usuario_alteracao: request.usuario.id,
+      },
+    });
 
     response.status(200).json(acao);
   } catch (error) {

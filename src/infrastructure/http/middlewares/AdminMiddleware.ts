@@ -1,4 +1,5 @@
 import { NextFunction, Response } from 'express';
+import { usuarioEhAdmin } from 'src/shared/utils/usuarioEhAdmin';
 import { UsuarioRequest } from './AutenticacaoMiddleware';
 
 const AdminMiddleware = (request: UsuarioRequest, response: Response, next: NextFunction) => {
@@ -6,7 +7,7 @@ const AdminMiddleware = (request: UsuarioRequest, response: Response, next: Next
     return response.status(401).json({ message: 'Usuário não autenticado' });
   }
 
-  if (request.usuario.tipo !== '0') {
+  if (!usuarioEhAdmin(request.usuario)) {
     return response.status(403).json({ message: 'Acesso negado.' });
   }
 

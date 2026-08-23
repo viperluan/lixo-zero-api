@@ -1,6 +1,5 @@
 import { NextFunction, Response } from 'express';
-import VerificarTokenUsuario from 'src/application/usecases/usuario/VerificarTokenUsuario';
-import { UsuarioRequest } from './AutenticacaoMiddleware';
+import { carregarUsuarioAutenticado, UsuarioRequest } from './AutenticacaoMiddleware';
 
 const AutenticacaoOpcionalMiddleware = async (
   request: UsuarioRequest,
@@ -13,15 +12,13 @@ const AutenticacaoOpcionalMiddleware = async (
     return next();
   }
 
-  try {
-    const verificarTokenUsuario = new VerificarTokenUsuario();
-    const tokenDecodificado = await verificarTokenUsuario.executar({ token });
+  const usuario = await carregarUsuarioAutenticado(token).catch(() => null);
 
-    request.usuario = tokenDecodificado;
-    next();
-  } catch {
-    next();
+  if (usuario) {
+    request.usuario = usuario;
   }
+
+  next();
 };
 
 export default AutenticacaoOpcionalMiddleware;

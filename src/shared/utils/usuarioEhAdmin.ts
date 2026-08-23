@@ -1,5 +1,5 @@
-import { TokenDecodificado } from '../../application/usecases/usuario/VerificarTokenUsuario';
+import { UsuarioAutenticado } from '../types/UsuarioAutenticado';
 
-export function usuarioEhAdmin(usuario?: TokenDecodificado): boolean {
+export function usuarioEhAdmin(usuario?: UsuarioAutenticado): boolean {
   return usuario?.tipo === '0';
 }

@@ -51,7 +51,8 @@ type OmitirDadosNovaAcaoProps =
   | 'data_cadastro'
   | 'data_atualizacao'
   | 'data_acao'
-  | 'situacao_acao';
+  | 'situacao_acao'
+  | 'id_usuario_alteracao';
 
 type NovaAcaoProps = Omit<AcaoProps, OmitirDadosNovaAcaoProps> & {
   data_acao: string;

@@ -1,12 +1,48 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express';
-import VerificarTokenUsuario, {
-  TokenDecodificado,
-} from 'src/application/usecases/usuario/VerificarTokenUsuario';
+import VerificarTokenUsuario from 'src/application/usecases/usuario/VerificarTokenUsuario';
+import UsuarioPrismaRepository from 'src/application/repositories/UsuarioPrismaRepository';
+import { prisma } from 'src/shared/package/prisma';
+import { UsuarioAutenticado } from 'src/shared/types/UsuarioAutenticado';
+import { responderErroInterno } from 'src/shared/utils/responderErroInterno';
 
 export type UsuarioRequest = Request & {
-  usuario?: TokenDecodificado;
+  usuario?: UsuarioAutenticado;
 };
+
+const usuarioRepository = new UsuarioPrismaRepository(prisma);
+
+/**
+ * Resolve o usuário a partir do token consultando o banco, de modo que
+ * desativação, rebaixamento e exclusão tenham efeito imediato.
+ *
+ * Retorna `null` quando o token é inválido ou a conta não pode mais ser usada.
+ * Falhas de infraestrutura são propagadas para não virarem 401.
+ */
+export async function carregarUsuarioAutenticado(
+  token: string
+): Promise<UsuarioAutenticado | null> {
+  let idUsuario: string;
+
+  try {
+    const verificarTokenUsuario = new VerificarTokenUsuario();
+    const tokenDecodificado = await verificarTokenUsuario.executar({ token });
+
+    idUsuario = tokenDecodificado.id;
+  } catch {
+    return null;
+  }
+
+  const usuario = await usuarioRepository.buscarPorId(idUsuario);
+
+  if (!usuario || !usuario.status) return null;
+
+  return {
+    id: usuario.id,
+    nome: usuario.nome,
+    email: usuario.email,
+    tipo: usuario.tipo,
+  };
+}
 
 const AutenticacaoMiddleware = async (
   request: UsuarioRequest,
@@ -22,14 +58,17 @@ const AutenticacaoMiddleware = async (
   }
 
   try {
-    const verificarTokenUsuario = new VerificarTokenUsuario();
-    const tokenDecodificado = await verificarTokenUsuario.executar({ token });
+    const usuario = await carregarUsuarioAutenticado(token);
 
-    if (token) request.usuario = tokenDecodificado;
+    if (!usuario) {
+      return response.status(401).json({ message: 'Sessão inválida.' });
+    }
+
+    request.usuario = usuario;
 
     next();
   } catch (error) {
-    return response.status(401).json({ message: 'Token inválido.' });
+    responderErroInterno(response, error);
   }
 };
 
