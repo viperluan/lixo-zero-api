@@ -1,12 +1,12 @@
-import { adicionaZeroAEsquerda } from '../../../shared/utils/adicionaZeroAEsquerda';
+import { adicionaZeroAEsquerda } from '@/shared/utils/adicionaZeroAEsquerda';
 import { Usecase } from '../usecase';
-import Acao from '../../../domain/acao/entity/Acao';
-import Email from '../../../domain/email/entity/Email';
+import Acao from '@/domain/acao/entity/Acao';
+import Email from '@/domain/email/entity/Email';
 import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
-import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
-import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
-import IEmailService from '../../../domain/email/service/IEmailService';
-import { resolveCaminhoArquivoTemplate } from '../../../shared/utils/resolveCaminhoArquivoTemplate';
+import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
+import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
+import IEmailService from '@/domain/email/service/IEmailService';
+import { resolveCaminhoArquivoTemplate } from '@/shared/utils/resolveCaminhoArquivoTemplate';
 
 export type CriarAcaoDadosDTO = {
   nome_organizador: string;

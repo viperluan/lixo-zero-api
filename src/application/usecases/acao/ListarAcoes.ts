@@ -1,7 +1,7 @@
-import Acao from '../../../domain/acao/entity/Acao';
-import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
+import Acao from '@/domain/acao/entity/Acao';
+import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
 import { FiltrosListarComPaginacaoType } from '../../repositories/AcaoPrismaRepository';
-import { sanitizarAcaoResposta } from '../../../shared/utils/sanitizarAcaoResposta';
+import { sanitizarAcaoResposta } from '@/shared/utils/sanitizarAcaoResposta';
 import { Usecase } from '../usecase';
 
 type ListarAcoesDTO = {

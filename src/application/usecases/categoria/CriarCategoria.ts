@@ -1,5 +1,5 @@
-import Categoria from '../../../domain/categoria/entity/Categoria';
-import ICategoriaRepository from '../../../domain/categoria/repository/ICategoriaRepository';
+import Categoria from '@/domain/categoria/entity/Categoria';
+import ICategoriaRepository from '@/domain/categoria/repository/ICategoriaRepository';
 import { Usecase } from '../usecase';
 
 export type CriarCategoriaEntradaDTO = {

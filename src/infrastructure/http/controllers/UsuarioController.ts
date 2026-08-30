@@ -1,17 +1,17 @@
-import { prisma } from '../../../shared/package/prisma';
+import { prisma } from '@/shared/package/prisma';
 import { Request, Response } from 'express';
 
-import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
-import CriarUsuario from '../../../application/usecases/usuario/CriarUsuario';
-import AutenticarUsuario from '../../../application/usecases/usuario/AutenticarUsuario';
+import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
+import CriarUsuario from '@/application/usecases/usuario/CriarUsuario';
+import AutenticarUsuario from '@/application/usecases/usuario/AutenticarUsuario';
 import DeletarUsuario, {
   ERRO_USUARIO_NAO_EXISTE,
   ERRO_USUARIO_VINCULADO_A_ACOES,
-} from '../../../application/usecases/usuario/DeletarUsuario';
-import ListarUsuarios from '../../../application/usecases/usuario/ListarUsuarios';
-import GerarTokenUsuario from '../../../application/usecases/usuario/GerarTokenUsuario';
-import { normalizarPaginacao } from '../../../shared/utils/normalizarPaginacao';
-import { responderErroInterno } from '../../../shared/utils/responderErroInterno';
+} from '@/application/usecases/usuario/DeletarUsuario';
+import ListarUsuarios from '@/application/usecases/usuario/ListarUsuarios';
+import GerarTokenUsuario from '@/application/usecases/usuario/GerarTokenUsuario';
+import { normalizarPaginacao } from '@/shared/utils/normalizarPaginacao';
+import { responderErroInterno } from '@/shared/utils/responderErroInterno';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 

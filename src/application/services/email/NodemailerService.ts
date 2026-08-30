@@ -1,6 +1,6 @@
 import { SentMessageInfo, Transporter } from 'nodemailer';
-import Email from '../../../domain/email/entity/Email';
-import IEmailService from '../../../domain/email/service/IEmailService';
+import Email from '@/domain/email/entity/Email';
+import IEmailService from '@/domain/email/service/IEmailService';
 
 export default class NodemailerService implements IEmailService {
   constructor(private readonly transportador: Transporter<SentMessageInfo>) {}

@@ -1,5 +1,5 @@
 import Acao from '../entity/Acao';
-import { FiltrosListarComPaginacaoType } from '../../../application/repositories/AcaoPrismaRepository';
+import { FiltrosListarComPaginacaoType } from '@/application/repositories/AcaoPrismaRepository';
 
 export default interface IAcaoRepository {
   buscarPorId(id: string): Promise<Acao | null>;

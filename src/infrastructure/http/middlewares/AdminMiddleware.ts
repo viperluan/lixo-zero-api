@@ -1,5 +1,5 @@
 import { NextFunction, Response } from 'express';
-import { usuarioEhAdmin } from '../../../shared/utils/usuarioEhAdmin';
+import { usuarioEhAdmin } from '@/shared/utils/usuarioEhAdmin';
 import { UsuarioRequest } from './AutenticacaoMiddleware';
 
 const AdminMiddleware = (request: UsuarioRequest, response: Response, next: NextFunction) => {

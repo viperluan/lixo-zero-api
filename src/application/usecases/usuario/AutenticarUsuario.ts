@@ -1,5 +1,5 @@
-import Usuario from '../../../domain/usuario/entity/Usuario';
-import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
+import Usuario from '@/domain/usuario/entity/Usuario';
+import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
 import { Usecase } from '../usecase';
 import GerarTokenUsuario from './GerarTokenUsuario';
 

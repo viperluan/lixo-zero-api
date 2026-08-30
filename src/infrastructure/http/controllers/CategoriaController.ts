@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { prisma } from '../../../shared/package/prisma';
-import CriarCategoria from '../../../application/usecases/categoria/CriarCategoria';
-import CategoriaPrismaRepository from '../../../application/repositories/CategoriaPrismaRepository';
-import ListarCategorias from '../../../application/usecases/categoria/ListarCategorias';
-import { normalizarPaginacao } from '../../../shared/utils/normalizarPaginacao';
-import { responderErroInterno } from '../../../shared/utils/responderErroInterno';
+import { prisma } from '@/shared/package/prisma';
+import CriarCategoria from '@/application/usecases/categoria/CriarCategoria';
+import CategoriaPrismaRepository from '@/application/repositories/CategoriaPrismaRepository';
+import ListarCategorias from '@/application/usecases/categoria/ListarCategorias';
+import { normalizarPaginacao } from '@/shared/utils/normalizarPaginacao';
+import { responderErroInterno } from '@/shared/utils/responderErroInterno';
 
 const categoriaPrismaRepository = new CategoriaPrismaRepository(prisma);
 

@@ -1,4 +1,4 @@
-import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
+import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
 import { Usecase } from '../usecase';
 
 export const ERRO_USUARIO_NAO_EXISTE = 'Usuário não existe.';

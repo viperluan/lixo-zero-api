@@ -140,12 +140,13 @@ HTTP Request
 
 | Pacote | Uso |
 |--------|-----|
-| `tsx` | Execução TypeScript em desenvolvimento (`watch`) |
-| `typescript` (`tsc`) | Typecheck e build de produção (CommonJS em `dist/`) |
+| `tsx` | Execução TypeScript em desenvolvimento (`watch`); honra `paths` (`@/`) |
+| `typescript` (`tsc`) | Typecheck e emit CommonJS em `dist/` |
+| `tsc-alias` | Reescreve `@/` para caminhos relativos no `dist/` após o `tsc` |
 | `eslint` + `prettier` | Lint e formatação |
 | `copyfiles` | Copia templates `.ejs` para `dist/` no build |
 
-O `tsc` não reescreve aliases (`@/` / `baseUrl`) no JavaScript emitido. Os imports do código-fonte são relativos para o `node dist/server.js` resolver os módulos sem ferramenta extra.
+No fonte, imports que cruzam camada usam `@/` (`@/` = `src/`). Vizinhos continuam `./` e `../`. O `tsc` não reescreve alias; o `tsc-alias` faz isso no `dist/` para o `node dist/server.js`.
 
 ### Scripts npm
 
@@ -155,7 +156,7 @@ O `tsc` não reescreve aliases (`@/` / `baseUrl`) no JavaScript emitido. Os impo
 | `start` | `prisma migrate deploy && node dist/server.js` | Produção |
 | `start:tsx` | `prisma migrate deploy && tsx src/server.ts` | Sobe o TypeScript direto, sem `dist/` |
 | `typecheck` | `tsc --noEmit` | Só checagem de tipos |
-| `build` | `tsc && copy-ejs` | Compila para `dist/` e copia templates |
+| `build` | `tsc && tsc-alias && copy-ejs` | Compila, reescreve `@/`, copia templates |
 | `lint` | `eslint` | Verificação estática |
 
 ---
@@ -761,10 +762,10 @@ Rede externa `proxy-manager` para integração com reverse proxy (Nginx Proxy Ma
 ## 13. Build e estrutura de saída
 
 - **Dev:** `tsx watch src/server.ts` — executa TypeScript direto; templates em `src/infrastructure/smtp/templates/`
-- **Build:** `tsc` (`rootDir: src`, `outDir: dist`, `module`/`moduleResolution: Node16`, `noEmitOnError`) — emite CommonJS espelhando `src/`
+- **Build:** `tsc` (`rootDir: src`, `outDir: dist`, `paths`: `@/*` → `./src/*`, `noEmitOnError`) + `tsc-alias`
 - **Templates:** copiados para `dist/infrastructure/smtp/templates/` via `copy-ejs` (necessário porque o `tsc` só emite `.js`)
 - **Produção:** `NODE_ENV=production` + `node dist/server.js`; `resolveCaminhoArquivoTemplate` lê os `.ejs` em `dist/`
-- **Imports:** relativos (sem `baseUrl` / `paths`) — o `tsc` preserva os `require()` que o Node resolve no `dist/`
+- **Imports:** `@/` no TypeScript (sem `baseUrl`); no `dist/` o `tsc-alias` vira `require` relativo. `./` e `../` só para vizinhos
 
 ---
 

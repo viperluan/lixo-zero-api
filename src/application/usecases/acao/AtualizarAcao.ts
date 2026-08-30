@@ -1,13 +1,13 @@
 import { Usecase } from '../usecase';
-import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
-import Acao from '../../../domain/acao/entity/Acao';
-import { AcaoSituacao } from '../../../domain/acao/enum/AcaoSituacao';
-import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
-import IEmailService from '../../../domain/email/service/IEmailService';
+import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
+import Acao from '@/domain/acao/entity/Acao';
+import { AcaoSituacao } from '@/domain/acao/enum/AcaoSituacao';
+import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
+import IEmailService from '@/domain/email/service/IEmailService';
 import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
 import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
-import Email from '../../../domain/email/entity/Email';
-import { resolveCaminhoArquivoTemplate } from '../../../shared/utils/resolveCaminhoArquivoTemplate';
+import Email from '@/domain/email/entity/Email';
+import { resolveCaminhoArquivoTemplate } from '@/shared/utils/resolveCaminhoArquivoTemplate';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;

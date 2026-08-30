@@ -49,7 +49,7 @@ Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMI
 |---------|-----------|
 | `npm run start:dev` | Desenvolvimento com hot reload (`tsx watch`) |
 | `npm run typecheck` | Checagem de tipos (`tsc --noEmit`) |
-| `npm run build` | Compila com `tsc` e copia templates `.ejs` para `dist/` |
+| `npm run build` | Compila com `tsc`, reescreve `@/` (`tsc-alias`) e copia templates `.ejs` |
 | `npm run start` | Produção (migrations + `node dist/server.js`) |
 | `npm run lint` | ESLint |
 

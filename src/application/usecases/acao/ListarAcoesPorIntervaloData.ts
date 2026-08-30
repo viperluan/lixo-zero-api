@@ -1,6 +1,6 @@
-import Acao from '../../../domain/acao/entity/Acao';
-import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
-import { sanitizarListaAcoesResposta } from '../../../shared/utils/sanitizarAcaoResposta';
+import Acao from '@/domain/acao/entity/Acao';
+import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
+import { sanitizarListaAcoesResposta } from '@/shared/utils/sanitizarAcaoResposta';
 import { Usecase } from '../usecase';
 
 export type ListarAcoesPorIntervaloDataEntradaDTO = {

@@ -7,6 +7,9 @@
     "allowSyntheticDefaultImports": true,
     "rootDir": "./src",
     "outDir": "dist",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "noEmitOnError": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
