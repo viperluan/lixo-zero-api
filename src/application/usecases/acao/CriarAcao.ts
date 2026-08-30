@@ -6,7 +6,7 @@ import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
 import IAcaoRepository from '../../../domain/acao/repository/IAcaoRepository';
 import IUsuarioRepository from '../../../domain/usuario/repository/IUsuarioRepository';
 import IEmailService from '../../../domain/email/service/IEmailService';
-import { resolveCaminhoArquivoTemplate } from 'src/shared/utils/resolveCaminhoArquivoTemplate';
+import { resolveCaminhoArquivoTemplate } from '../../../shared/utils/resolveCaminhoArquivoTemplate';
 
 export type CriarAcaoDadosDTO = {
   nome_organizador: string;

@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import VerificarTokenUsuario from 'src/application/usecases/usuario/VerificarTokenUsuario';
-import UsuarioPrismaRepository from 'src/application/repositories/UsuarioPrismaRepository';
-import { prisma } from 'src/shared/package/prisma';
-import { UsuarioAutenticado } from 'src/shared/types/UsuarioAutenticado';
-import { responderErroInterno } from 'src/shared/utils/responderErroInterno';
+import VerificarTokenUsuario from '../../../application/usecases/usuario/VerificarTokenUsuario';
+import UsuarioPrismaRepository from '../../../application/repositories/UsuarioPrismaRepository';
+import { prisma } from '../../../shared/package/prisma';
+import { UsuarioAutenticado } from '../../../shared/types/UsuarioAutenticado';
+import { responderErroInterno } from '../../../shared/utils/responderErroInterno';
 
 export type UsuarioRequest = Request & {
   usuario?: UsuarioAutenticado;

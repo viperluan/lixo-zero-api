@@ -140,20 +140,22 @@ HTTP Request
 
 | Pacote | Uso |
 |--------|-----|
-| `tsx` | Execução TypeScript em dev |
-| `tsup` | Build para produção (CommonJS) |
-| `typescript` | Compilador |
+| `tsx` | Execução TypeScript em desenvolvimento (`watch`) |
+| `typescript` (`tsc`) | Typecheck e build de produção (CommonJS em `dist/`) |
 | `eslint` + `prettier` | Lint e formatação |
 | `copyfiles` | Copia templates `.ejs` para `dist/` no build |
+
+O `tsc` não reescreve aliases (`@/` / `baseUrl`) no JavaScript emitido. Os imports do código-fonte são relativos para o `node dist/server.js` resolver os módulos sem ferramenta extra.
 
 ### Scripts npm
 
 | Script | Comando | Descrição |
 |--------|---------|-----------|
-| `start:dev` | `tsx watch src/server.ts` | Desenvolvimento com hot reload |
+| `start:dev` | `tsx watch src/server.ts` | Desenvolvimento com hot reload (lê templates em `src/`) |
 | `start` | `prisma migrate deploy && node dist/server.js` | Produção |
-| `start:tsx` | `prisma migrate deploy && tsx src/server.ts` | Produção via tsx |
-| `build` | `tsup && copy-ejs` | Compila TS e copia templates |
+| `start:tsx` | `prisma migrate deploy && tsx src/server.ts` | Sobe o TypeScript direto, sem `dist/` |
+| `typecheck` | `tsc --noEmit` | Só checagem de tipos |
+| `build` | `tsc && copy-ejs` | Compila para `dist/` e copia templates |
 | `lint` | `eslint` | Verificação estática |
 
 ---
@@ -743,8 +745,8 @@ Rede externa `proxy-manager` para integração com reverse proxy (Nginx Proxy Ma
 **`Dockerfile`:**
 - Base: `node:20.17.0-alpine3.20`
 - Timezone: `America/Sao_Paulo`
-- Build: `npm install` → `npm run build` → `prisma generate`
-- Start: `npm run start` (aplica migrations + inicia servidor)
+- Build: `npm install` → `prisma generate` → `npm run build` (`tsc` + `copy-ejs`)
+- Start: `prisma migrate deploy && node dist/server.js`
 
 ### CI/CD
 
@@ -758,9 +760,11 @@ Rede externa `proxy-manager` para integração com reverse proxy (Nginx Proxy Ma
 
 ## 13. Build e estrutura de saída
 
-- **Bundler:** `tsup` — compila todos os `.ts` de `src/` para `dist/` em CommonJS
-- **Templates:** copiados para `dist/infrastructure/smtp/templates/` via `copy-ejs`
-- **Path alias:** `baseUrl: "."` no tsconfig — imports como `src/application/...` funcionam em runtime com tsx
+- **Dev:** `tsx watch src/server.ts` — executa TypeScript direto; templates em `src/infrastructure/smtp/templates/`
+- **Build:** `tsc` (`rootDir: src`, `outDir: dist`, `module`/`moduleResolution: Node16`, `noEmitOnError`) — emite CommonJS espelhando `src/`
+- **Templates:** copiados para `dist/infrastructure/smtp/templates/` via `copy-ejs` (necessário porque o `tsc` só emite `.js`)
+- **Produção:** `NODE_ENV=production` + `node dist/server.js`; `resolveCaminhoArquivoTemplate` lê os `.ejs` em `dist/`
+- **Imports:** relativos (sem `baseUrl` / `paths`) — o `tsc` preserva os `require()` que o Node resolve no `dist/`
 
 ---
 
@@ -814,6 +818,7 @@ Itens pendentes que podem impactar manutenção ou novas features:
 - Privilégio e status revalidados no banco a cada requisição (revogação imediata)
 - IDOR em `PUT /acoes/:id` corrigido — `id_usuario_alteracao` vem do token
 - `situacao_acao` validada antes da gravação, eliminando corrupção silenciosa
+- Build de produção com `tsc` (typecheck no compile) + `tsx` no watch; `typecheck` via `tsc --noEmit`
 
 ---
 
@@ -859,4 +864,4 @@ API disponível em `http://localhost:3000` (ou `PORT` configurada).
 
 ---
 
-*Última atualização: agosto/2026 — revisada após implementação de rate limiting.*
+*Última atualização: agosto/2026 — toolchain `tsx` (dev) + `tsc` (build).*

@@ -286,9 +286,9 @@ Descoberto ao rodar `npx tsc --noEmit`: `CriarAcaoEntradaDTO` não satisfazia `N
 
 **Não era bug de runtime** — `Acao.criarNovaAcao` sobrescreve o campo com `id_usuario_responsavel`, então `POST /acoes` sempre funcionou. Mas o tipo estava mentindo sobre o contrato.
 
-Passou despercebido porque **`npm run build` usa tsup/esbuild, que transpila sem checar tipos**. Corrigido incluindo `id_usuario_alteracao` em `OmitirDadosNovaAcaoProps`, alinhando o tipo ao comportamento real da fábrica: o campo é derivado, nunca fornecido por quem chama.
+Passou despercebido porque, na época, **`npm run build` usava tsup/esbuild**, que transpila sem checar tipos. Corrigido incluindo `id_usuario_alteracao` em `OmitirDadosNovaAcaoProps`, alinhando o tipo ao comportamento real da fábrica: o campo é derivado, nunca fornecido por quem chama.
 
-**Recomendação:** adicionar `"typecheck": "tsc --noEmit"` ao `package.json` e rodar no CI. Sem isso, erros de tipo continuarão passando silenciosamente.
+**Atualização posterior (agosto/2026):** o build passou a `tsc` (`noEmitOnError`) e existe `"typecheck": "tsc --noEmit"`. Erro de tipo volta a falhar o compile.
 
 ---
 
@@ -329,6 +329,5 @@ npm run build     # ✅ compilação OK
 | Prioridade | Item |
 |------------|------|
 | **Alta** | Validar `SECRET_KEY` no boot — com a revalidação no banco, a assinatura do token virou o único elo de identidade; chave fraca é escalada de privilégio direta |
-| Média | Script `typecheck` no CI |
 | Média | CORS obrigatório em produção; remover porta pública do Postgres |
 | Baixa | Política de senha; mascarar CPF em `GET /usuarios`; enumeração no cadastro; itens de robustez (exclusão de usuário, FK de categoria, consistência de `ListarAcoesPorData`) |

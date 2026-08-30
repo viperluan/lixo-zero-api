@@ -271,15 +271,15 @@ jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'] });
 
 ### 2.11 — Build não executa checagem de tipos ✅ Corrigido pontualmente
 
-**Problema:** `npm run build` usa `tsup`/esbuild, que transpila sem checar tipos. Erros de tipagem passam despercebidos e chegam a produção.
+**Problema:** `npm run build` usava `tsup`/esbuild, que transpila sem checar tipos. Erros de tipagem passavam despercebidos e chegavam a produção.
 
-**Onde:** `package.json`, `tsup.config.ts`
+**Onde:** `package.json` (script `build`); o `tsup.config.ts` foi removido.
 
 **Impacto:** Um erro real ficou latente desde a sprint anterior — `CriarAcaoEntradaDTO` não satisfazia `NovaAcaoProps` porque `id_usuario_alteracao` fora removido do DTO mas continuava obrigatório na entidade. Não quebrou em runtime apenas porque `Acao.criarNovaAcao` sobrescreve o campo, mas o contrato de tipo estava mentindo.
 
 **Correção aplicada (agosto/2026):** `id_usuario_alteracao` incluído em `OmitirDadosNovaAcaoProps`, alinhando o tipo ao comportamento real da fábrica (o campo é derivado, nunca fornecido por quem chama).
 
-**Recomendação em aberto:** adicionar script `"typecheck": "tsc --noEmit"` e executá-lo no CI, para que essa classe de erro não volte a passar.
+**Build (agosto/2026):** `npm run build` passou a usar `tsc` (`noEmitOnError`) em vez de tsup/esbuild — erros de tipo falham o compile. Script `"typecheck": "tsc --noEmit"` disponível no `package.json`.
 
 ---
 
@@ -374,7 +374,7 @@ Ordem recomendada para máximo impacto com mínimo esforço:
 | 13 | Revalidar privilégio/status no banco | Médio | 1.6 | ✅ Feito |
 | 14 | IDOR em `PUT /acoes/:id` | Baixo | 1.7 | ✅ Feito |
 | 15 | Validar situação antes de gravar | Baixo | 2.9 | ✅ Feito |
-| 16 | Script de `typecheck` no CI | Baixo | 2.11 | Pendente |
+| 16 | Script de `typecheck` (`tsc --noEmit`) | Baixo | 2.11 | ✅ Feito (build também é `tsc`) |
 
 **Próximo item recomendado:** #4 (validar `SECRET_KEY` no boot) — ver nota de prioridade elevada em 2.5.
 

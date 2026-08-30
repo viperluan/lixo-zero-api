@@ -7,7 +7,7 @@ import IEmailService from '../../../domain/email/service/IEmailService';
 import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
 import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
 import Email from '../../../domain/email/entity/Email';
-import { resolveCaminhoArquivoTemplate } from 'src/shared/utils/resolveCaminhoArquivoTemplate';
+import { resolveCaminhoArquivoTemplate } from '../../../shared/utils/resolveCaminhoArquivoTemplate';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;

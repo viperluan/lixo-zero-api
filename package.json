@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "API para aplicação do lixo zero.",
   "type": "commonjs",
-  "main": "./src/server.ts",
+  "main": "./dist/server.js",
   "author": "Zerium",
   "license": "ISC",
   "scripts": {
-    "build": "rimraf dist && tsup && npm run copy-ejs",
+    "build": "rimraf dist && tsc && npm run copy-ejs",
+    "typecheck": "tsc --noEmit",
     "start": "prisma migrate deploy && cross-env NODE_ENV=production node dist/server.js",
     "start:tsx": "prisma migrate deploy && tsx src/server.ts",
     "start:dev": "cross-env NODE_ENV=development tsx watch src/server.ts",
@@ -47,7 +48,6 @@
     "globals": "^15.9.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
-    "tsup": "^8.2.4",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.2.0"
