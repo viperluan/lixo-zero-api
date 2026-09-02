@@ -53,6 +53,25 @@ Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMI
 | `npm run start` | Produção (migrations + `node dist/server.js`) |
 | `npm run lint` | ESLint |
 
+## Primeiro administrador
+
+Todo cadastro pela API nasce como usuário comum (`tipo = '1'`). Não existe endpoint para promover alguém, então em um ambiente novo é preciso criar o primeiro admin manualmente:
+
+```sql
+UPDATE "Usuario" SET tipo = '0' WHERE email = 'admin@exemplo.com';
+```
+
+Sem esse passo a fila de moderação de ações fica inacessível.
+
 ## Documentação
 
-Para arquitetura, endpoints e detalhes técnicos, veja [`docs/DOCUMENTACAO_TECNICA.md`](docs/DOCUMENTACAO_TECNICA.md).
+Comece por [`AGENTS.md`](AGENTS.md) — é o resumo do projeto e o ponto de entrada, tanto para pessoas quanto para agentes de IA.
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) | O que o sistema resolve, papéis, ciclo de vida da ação, regras de validação, e-mails |
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Camadas, fluxo de uma requisição, casos de uso, build, Docker |
+| [`docs/API.md`](docs/API.md) | Todos os endpoints com payloads, filtros, respostas e códigos de erro |
+| [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) | Schema Prisma, enums, relacionamentos, migrations |
+| [`docs/SEGURANCA.md`](docs/SEGURANCA.md) | JWT, autorização, rate limiting, CORS, sanitização de saída |
+| [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) | Bugs conhecidos, dívidas técnicas, código morto, armadilhas |
