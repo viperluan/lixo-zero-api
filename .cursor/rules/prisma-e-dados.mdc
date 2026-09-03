@@ -1,0 +1,16 @@
+---
+description: Schema Prisma, migrations e repositórios — índices, unicidade e o que não copiar da skill de Postgres
+globs: prisma/**,src/application/repositories/**/*.ts
+alwaysApply: false
+---
+
+# Prisma e dados
+
+Carregue `.agents/skills/supabase-postgres-best-practices/SKILL.md` só para tipos de coluna, índices de FK, unicidade no banco, paginação e N+1. Não introduza RLS: autorização é na aplicação (`usuarioEhAdmin`, middlewares). Não carregue `prisma-postgres` (produto hosted).
+
+## Schema e migrations
+
+- Unicidade de negócio em campo **novo**: unique no schema, não só SELECT+INSERT (ver `docs/PONTOS_DE_ATENCAO.md`).
+- Novo campo em `Acao`: os pontos listados em `AGENTS.md` (schema, migration, entidade, DTO, repositório, listagens, templates). Atualize `docs/MODELO_DE_DADOS.md` e `docs/API.md`.
+- Migration com nome em português, no mesmo estilo das existentes.
+- Pastas `prisma/` e `repositories/` não se traduzem.

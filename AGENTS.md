@@ -54,7 +54,8 @@ Descrição completa do fluxo de uma requisição: [`docs/ARQUITETURA.md`](docs/
 
 ## Convenções de código
 
-- **Todo o código é em português**: nomes de arquivos, classes, variáveis, mensagens de erro e comentários. Mantenha assim.
+- **Domínio em português**: classes, métodos, variáveis internas, mensagens de erro, comentários e arquivos de caso de uso/entidade (`CriarAcao`, `executar`, `usuarioEhAdmin`). Siga o arquivo vizinho.
+- **Inglês de convenção permanece**: não traduza nem reorganize pastas e papéis já usados (`src/`, `dist/`, `test/`, `prisma/`, `docs/`, `domain/`, `application/`, `infrastructure/`, `shared/`, `repositories/`, `controllers/`, `routes/`, `middlewares/`, `usecases/`, `services/`). Tampouco scripts npm (`typecheck`, `lint`, `start:dev`) nem sufixos do padrão atual (`*Repository.ts`, `*Controller.ts`, `*EntradaDTO`). Em dúvida, copie o nome que já está no disco.
 - Casos de uso: `executar()`. Tipos de entrada/saída: `XEntradaDTO` / `XSaidaDTO` (alguns usam `...Type`).
 - Colunas e campos de payload em `snake_case` (`titulo_acao`, `id_usuario_responsavel`) porque espelham o schema Prisma. Variáveis TypeScript internas em `camelCase`.
 - **Chaves de resposta em inglês**: as listagens devolvem `actions` / `users` / `categories`, `totalPages`, `currentPage` — embora os campos internos de cada item sejam em português. É inconsistente, mas o front depende disso; não renomeie sem alinhar.
@@ -87,11 +88,49 @@ Atenção à inversão: em `Usuario.tipo`, `'0'` é admin e `'1'` é usuário co
 
 Não há suíte de testes executável. Valide mudanças com `npm run typecheck` e `npm run lint`.
 
+## Fluxo obrigatório de implementação
+
+Antes de codar e antes de encerrar qualquer alteração pedida à IA:
+
+1. Leia o doc relevante em `docs/` (tabela em Documentação, mais o mapa abaixo).
+2. Se for “consertar” comportamento estranho, leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) — vários itens são intencionais.
+3. Carregue skill só pela tabela abaixo. Skill genérica **não** sobrescreve este arquivo nem o código existente.
+4. Implemente no padrão vizinho: controller fino, caso de uso com `executar()`, entidade com factories, DI no topo do controller.
+5. Não expanda o escopo: sem refatoração, lib nova, “melhoria” não pedida, nem rename de pasta/arquivo de convenção.
+6. Autoreview nos cinco eixos de `.agents/skills/code-review-and-quality/SKILL.md` (correção, legibilidade, arquitetura, segurança, performance). Ignore links dessa skill para arquivos que não existem neste repo.
+7. Atualize os docs afetados (mapa abaixo).
+8. Rode `npm run typecheck` e `npm run lint`.
+9. Na resposta final: o que mudou, docs tocados, skills usadas e o que ficou de fora.
+
+### Skills do projeto (quando usar / o que ignorar)
+
+Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a skill.
+
+| Situação | Usar | Não fazer |
+|----------|------|-----------|
+| Depois de qualquer código | `code-review-and-quality` | Seguir referências a skills ausentes (`security-and-hardening`, `performance-optimization`) |
+| HTTP, auth ou rota nova | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) + `typescript-security-review` + checklist mental OWASP de `api-security-review` (BOLA, mass assignment, over-exposure, rate limit) | Exigir Zod/Joi, NestJS/Next.js ou o agente `typescript-security-expert`. Não rodar ZAP/Burp nem escrever exploits/PoCs. Não inventar OpenAPI |
+| Schema, migration ou query | `supabase-postgres-best-practices` (tipos, índices, FK, unicidade, paginação, N+1) | Introduzir RLS — autorização é na aplicação |
+| Async, shutdown ou erros de processo | `node`: só `rules/async-patterns.md`, `error-handling.md`, `graceful-shutdown.md` | Type stripping, Node 22, extensão `.ts` em imports, trocar enums por const objects |
+| Auditoria de segurança pedida explicitamente | `security-review` | Usar como passo padrão de toda feature |
+| Provisionar banco Prisma Cloud | — | Carregar `prisma-postgres` (produto hosted; irrelevante aqui) |
+
+### Quando atualizar a documentação
+
+| Tipo de mudança | Atualizar |
+|-----------------|-----------|
+| Endpoint, payload, filtro ou status HTTP | [`docs/API.md`](docs/API.md) |
+| Camada, caso de uso ou fluxo de request | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) |
+| Regra de negócio, papel ou e-mail | [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) |
+| Schema ou migration | [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) |
+| Auth, sanitização, rate limit ou CORS | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) |
+| Bug conhecido ou decisão consciente | [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) |
+
 ## Ao mexer em cada área
 
-- **Novo endpoint**: crie o caso de uso em `application/usecases/`, a função no controller, e registre a rota em `infrastructure/http/routes/`. Decida explicitamente os middlewares (`AutenticacaoMiddleware`, `AutenticacaoOpcionalMiddleware`, `AdminMiddleware`) e se precisa de rate limit próprio.
-- **Novo campo em `Acao`**: são pelo menos 8 pontos a tocar — `prisma/schema.prisma` + migration, `AcaoProps`, validação na entidade, getter, `CriarAcaoDadosDTO`, `AcaoPrismaRepository.salvar()`, os DTOs de saída dos três casos de uso de listagem, e possivelmente os templates `.ejs`. Não esqueça de nenhum.
-- **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua.
+- **Novo endpoint**: crie o caso de uso em `application/usecases/`, a função no controller, e registre a rota em `infrastructure/http/routes/`. Decida explicitamente os middlewares (`AutenticacaoMiddleware`, `AutenticacaoOpcionalMiddleware`, `AdminMiddleware`) e se precisa de rate limit próprio. Atualize [`docs/API.md`](docs/API.md) e, se mudar o fluxo, [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+- **Novo campo em `Acao`**: são pelo menos 8 pontos a tocar — `prisma/schema.prisma` + migration, `AcaoProps`, validação na entidade, getter, `CriarAcaoDadosDTO`, `AcaoPrismaRepository.salvar()`, os DTOs de saída dos três casos de uso de listagem, e possivelmente os templates `.ejs`. Não esqueça de nenhum. Atualize [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) e [`docs/API.md`](docs/API.md).
+- **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua. Atualize [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) se o disparo ou o conteúdo mudar.
 - **Segurança**: leia [`docs/SEGURANCA.md`](docs/SEGURANCA.md) antes. O middleware de autenticação recarrega o usuário do banco a cada requisição de propósito — não substitua isso pelo payload do JWT.
 - **Resposta pública de ações**: usuários não-admin recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. Qualquer campo sensível novo precisa entrar nessa função.
 

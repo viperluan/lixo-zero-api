@@ -1,0 +1,34 @@
+---
+description: Fluxo obrigatório ao implementar ou alterar código neste repositório
+alwaysApply: true
+---
+
+# Workflow de implementação
+
+Siga o fluxo em `AGENTS.md` (seção Fluxo obrigatório). Docs e código deste repo vencem qualquer skill genérica.
+
+## Não encerrar a tarefa sem
+
+1. Ter lido o doc relevante em `docs/` e, se for “consertar” algo estranho, `docs/PONTOS_DE_ATENCAO.md`.
+2. Ter implementado no padrão vizinho, sem expandir escopo (sem lib nova, refatoração ou rename não pedidos).
+3. Autoreview nos eixos de `.agents/skills/code-review-and-quality/SKILL.md`.
+4. Docs afetados atualizados (mapa em `AGENTS.md`).
+5. `npm run typecheck` e `npm run lint` ok.
+6. Resposta final com o que mudou, docs tocados, skills usadas e o que ficou de fora.
+
+## Qualidade
+
+- Nomes de domínio em português, iguais ao vizinho (`criarNovaX`, `carregarXExistente`, `usuarioEhAdmin`).
+- Não traduzir estrutura: `src`, `dist`, `test`, `repositories`, `controllers`, `routes`, `middlewares`, `prisma`, scripts npm, nem chaves HTTP `actions` / `users` / `categories`.
+- Em dúvida de nome: copie o que já está no disco.
+- Legível: intenção no nome; sem `temp`/`data`/`result` soltos; sem comentário que narra o óbvio.
+- Sem código morto, helper “para o futuro” ou abstração na primeira ocorrência.
+- Preferir alterar arquivo existente a criar camada nova.
+- Não “corrigir” itens de `docs/PONTOS_DE_ATENCAO.md` sem pedido explícito.
+
+## Skills — não aplicar
+
+- `prisma-postgres` (produto hosted).
+- Type stripping / Node 22 / `.ts` em imports da skill `node`.
+- RLS da skill de Postgres (auth é na aplicação).
+- Zod/Joi, scanners ZAP/Burp ou exploits/PoCs.
