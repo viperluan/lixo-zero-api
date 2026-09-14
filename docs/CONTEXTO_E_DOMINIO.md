@@ -137,9 +137,11 @@ Três templates EJS em `src/infrastructure/smtp/templates/`, todos enviados para
 | `NotificacaoAcaoAprovada.ejs` | `AtualizarAcao` com `'1'` | `CaxiasLixoZero <ano> - Informação de ação aprovada!` |
 | `NotificacaoAcaoReprovada.ejs` | `AtualizarAcao` com `'2'` | `CaxiasLixoZero <ano> - Informação de ação reprovada!` |
 
-O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos dois casos de uso, e o transporte é Gmail SMTP autenticado por `GMAIL_USER`/`GMAIL_PASS`. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário.
+O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos dois casos de uso. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário.
 
-`NodemailerService.enviarEmail()` captura qualquer exceção e apenas registra no console — uma falha de SMTP não impede a resposta de sucesso da requisição, e não há fila nem retentativa.
+Os casos de uso renderizam o template EJS e chamam `IEmailService.enviarEmail()`; a implementação injetada na API (`FilaEmailService`) publica o e-mail já montado na fila Redis `emails`. O worker (`src/worker.ts`) consome o job e envia via Gmail SMTP (`GMAIL_USER`/`GMAIL_PASS`), com até 5 tentativas e backoff exponencial.
+
+Se o Redis estiver indisponível no `queue.add`, a falha é só logada: a ação já foi persistida e a API ainda responde sucesso. Falha de SMTP no worker relança o erro para o BullMQ retentar; jobs esgotados ficam em `failed` no Redis. Retry pode reenviar o mesmo e-mail. Não há transactional outbox.
 
 ## O que o modelo de domínio não cobre
 

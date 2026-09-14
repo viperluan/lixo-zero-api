@@ -6,15 +6,11 @@ export default class NodemailerService implements IEmailService {
   constructor(private readonly transportador: Transporter<SentMessageInfo>) {}
 
   public async enviarEmail({ from, html, subject, to }: Email): Promise<void> {
-    try {
-      await this.transportador.sendMail({
-        from,
-        to,
-        subject,
-        html,
-      });
-    } catch (error) {
-      console.log((error as Error).message);
-    }
+    await this.transportador.sendMail({
+      from,
+      to,
+      subject,
+      html,
+    });
   }
 }

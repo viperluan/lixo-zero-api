@@ -133,9 +133,13 @@ Casos de uso são construídos a cada requisição dentro do handler. É barato 
 
 ## Operacional
 
-### Falhas de e-mail são silenciosas
+### Enfileirar e-mail pode falhar depois da ação salva
 
-`NodemailerService.enviarEmail()` captura qualquer exceção e faz `console.log`. Uma credencial SMTP errada não causa nenhum erro visível — a API responde `201`/`200` normalmente e o organizador simplesmente nunca recebe o e-mail. Não há fila, retentativa nem métrica.
+Não há transactional outbox. `CriarAcao` e `AtualizarAcao` persistem no Postgres e só então publicam o job na fila Redis. Se o Redis estiver fora, `FilaEmailService` registra o erro e não relança — a API responde `201`/`200` e o e-mail não entra na fila. O mesmo vale para timeout de conexão no `queue.add`.
+
+SMTP com erro **é** relançado no worker (`NodemailerService` não engole mais a exceção), então o BullMQ retenta. Depois de esgotar as tentativas o job fica em `failed` no Redis. Retry bem-sucedido após um envio parcial (SMTP aceitou e a conexão caiu) pode duplicar o e-mail; para estes avisos transacionais isso é aceitável.
+
+Para inspecionar: `docker exec -it lixozero-redis redis-cli -a "$REDIS_PASSWORD"` e as chaves BullMQ da fila `emails`.
 
 ### Templates dependem de `process.cwd()` e de `NODE_ENV`
 
@@ -151,7 +155,7 @@ Responde `200` mesmo com o Postgres fora do ar — foi uma decisão explícita (
 
 ### `CORS_ORIGIN` ausente do `docker-compose.yml`
 
-O serviço `lixozero-api` repassa `PORT`, `DATABASE_URL`, `SECRET_KEY`, `GMAIL_USER`, `GMAIL_PASS` e `RATE_LIMIT_ENABLED`, mas não `CORS_ORIGIN` nem `JWT_EXPIRES_IN`. Um deploy por compose sobe com CORS liberado para qualquer origem e expiração de token no padrão de 24h.
+O serviço `lixozero-api` repassa `PORT`, `DATABASE_URL`, `SECRET_KEY`, `REDIS_URL`, `RATE_LIMIT_ENABLED`, `FILA_EMAIL_TENTATIVAS` e `FILA_EMAIL_BACKOFF_MS`, mas não `CORS_ORIGIN` nem `JWT_EXPIRES_IN`. Um deploy por compose sobe com CORS liberado para qualquer origem e expiração de token no padrão de 24h. `GMAIL_USER`/`GMAIL_PASS` e `FILA_EMAIL_CONCORRENCIA` ficam só no `lixozero-worker`.
 
 ### Rate limit em memória
 

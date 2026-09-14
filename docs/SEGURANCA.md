@@ -144,11 +144,13 @@ Isso depende de `NODE_ENV=production` estar setado. O `Dockerfile` o define, e `
 
 ## Segredos
 
-Todos vêm de variáveis de ambiente, sem valores padrão no código. `.env` está no `.gitignore` e `.env.example` tem só as chaves, sem valores.
+Todos vêm de variáveis de ambiente, sem valores padrão no código. `.env` está no `.gitignore`. `.env.example` documenta todas as chaves: defaults não-secretos (`PORT`, `NODE_ENV`, `JWT_EXPIRES_IN`, fila e rate limit) e segredos vazios (`SECRET_KEY`, `DB_PASSWORD`, `DATABASE_URL`, `REDIS_URL`, `REDIS_PASSWORD`, `GMAIL_USER`, `GMAIL_PASS`).
 
 `SECRET_KEY` não tem fallback: se estiver ausente, `jwt.sign` lança e a autenticação falha inteira — falha fechada, que é o comportamento desejado. Não adicione um valor padrão.
 
-O remetente `caxiaslixozero@gmail.com` está hardcoded em `CriarAcao` e `AtualizarAcao`, mas isso é um endereço público, não um segredo. As credenciais SMTP (`GMAIL_USER`/`GMAIL_PASS`) vêm do ambiente e devem ser uma senha de app do Google, não a senha da conta.
+O remetente `caxiaslixozero@gmail.com` está hardcoded em `CriarAcao` e `AtualizarAcao`, mas isso é um endereço público, não um segredo. As credenciais SMTP (`GMAIL_USER`/`GMAIL_PASS`) vêm do ambiente, devem ser uma senha de app do Google e existem **somente no worker** — a API não as recebe no Compose.
+
+O Redis da fila exige senha (`REDIS_PASSWORD` / `REDIS_URL`) e não é publicado na interface pública (só `127.0.0.1:6379` para desenvolvimento no host). Worker e Redis ficam fora da rede `proxy-manager`. Jobs na fila carregam o HTML do e-mail (incluindo dados da ação); quem tem acesso ao Redis lê essa fila. Não exponha a porta nem deixe `REDIS_PASSWORD` vazio.
 
 ## O que não está implementado
 

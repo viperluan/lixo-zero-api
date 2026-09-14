@@ -12,13 +12,14 @@ Detalhes de negócio, glossário e regras de validação: [`docs/CONTEXTO_E_DOMI
 
 ## Stack
 
-Node.js 20 · TypeScript (strict) · Express 4 · Prisma 5 + PostgreSQL · JWT (`jsonwebtoken`) · bcrypt · Nodemailer + EJS · Helmet · CORS · `express-rate-limit`. Sem framework de testes instalado.
+Node.js 20 · TypeScript (strict) · Express 4 · Prisma 5 + PostgreSQL · Redis + BullMQ · JWT (`jsonwebtoken`) · bcrypt · Nodemailer + EJS · Helmet · CORS · `express-rate-limit`. Sem framework de testes instalado.
 
 ## Mapa do repositório
 
 ```
 src/
   server.ts                      # bootstrap: app.listen(PORT)
+  worker.ts                      # bootstrap do worker BullMQ (e-mails)
   app.ts                         # middlewares globais + montagem das rotas
   domain/                        # entidades, enums e interfaces de repositório (sem dependências externas)
     acao/ categoria/ usuario/ email/
@@ -26,11 +27,13 @@ src/
     usecases/<contexto>/<Acao>.ts
     repositories/<Entidade>PrismaRepository.ts
     services/email/NodemailerService.ts
+    services/email/FilaEmailService.ts
   infrastructure/
     http/routes/                 # roteadores Express por recurso
     http/controllers/            # funções exportadas (não classes)
     http/middlewares/            # autenticação, autenticação opcional, admin
     http/config/                 # cors.ts, rateLimit.ts
+    fila/                        # Redis, Queue BullMQ e processor do job de e-mail
     smtp/templates/*.ejs         # 3 templates de e-mail
   shared/                        # utils, tipos e instâncias de pacotes (prisma, nodemailer)
 prisma/schema.prisma             # 3 modelos: Categoria, Usuario, Acao
@@ -79,6 +82,8 @@ Atenção à inversão: em `Usuario.tipo`, `'0'` é admin e `'1'` é usuário co
 | Comando | Uso |
 |---------|-----|
 | `npm run start:dev` | Desenvolvimento com hot reload (`tsx watch`) |
+| `npm run start:worker:dev` | Worker de e-mail em desenvolvimento (`tsx watch`) |
+| `npm run start:worker` | Worker de e-mail em produção (`node dist/worker.js`) |
 | `npm run typecheck` | `tsc --noEmit` — **rode sempre após editar TypeScript** |
 | `npm run lint` | ESLint com `--max-warnings 0` |
 | `npm run build` | `tsc` + `tsc-alias` + cópia dos `.ejs` para `dist/` |
@@ -130,7 +135,8 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 
 - **Novo endpoint**: crie o caso de uso em `application/usecases/`, a função no controller, e registre a rota em `infrastructure/http/routes/`. Decida explicitamente os middlewares (`AutenticacaoMiddleware`, `AutenticacaoOpcionalMiddleware`, `AdminMiddleware`) e se precisa de rate limit próprio. Atualize [`docs/API.md`](docs/API.md) e, se mudar o fluxo, [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 - **Novo campo em `Acao`**: são pelo menos 8 pontos a tocar — `prisma/schema.prisma` + migration, `AcaoProps`, validação na entidade, getter, `CriarAcaoDadosDTO`, `AcaoPrismaRepository.salvar()`, os DTOs de saída dos três casos de uso de listagem, e possivelmente os templates `.ejs`. Não esqueça de nenhum. Atualize [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) e [`docs/API.md`](docs/API.md).
-- **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua. Atualize [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) se o disparo ou o conteúdo mudar.
+- **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua. Atualize [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) se o disparo ou o conteúdo mudar. O SMTP em si roda no worker (`src/worker.ts`); a API só enfileira o HTML já renderizado.
+- **Fila de e-mail**: `FilaEmailService` implementa `IEmailService` e publica na fila BullMQ `emails`. Não coloque BullMQ no `domain/`. Credenciais SMTP (`GMAIL_*`) pertencem só ao worker; a API usa `REDIS_URL`.
 - **Segurança**: leia [`docs/SEGURANCA.md`](docs/SEGURANCA.md) antes. O middleware de autenticação recarrega o usuário do banco a cada requisição de propósito — não substitua isso pelo payload do JWT.
 - **Resposta pública de ações**: usuários não-admin recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. Qualquer campo sensível novo precisa entrar nessa função.
 
@@ -153,4 +159,4 @@ Leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) para a lista compl
 2. `situacao_acao` volta como texto (`"Aprovada"`) em `GET /acoes` e `PUT /acoes/:id`, mas como código (`"1"`) em `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal`.
 3. `PUT /acoes/:id` não é um update genérico: só aceita `situacao_acao` com valor `'1'` ou `'2'`. É o endpoint de aprovar/reprovar.
 4. Não existe entidade de "edição"/"ano" do evento. O ano é implícito em `data_acao`, e títulos de ação são únicos globalmente — inclusive entre anos diferentes.
-5. Falhas no envio de e-mail são engolidas por `NodemailerService` (só `console.log`). A requisição responde sucesso mesmo sem e-mail enviado.
+5. Falha ao enfileirar o e-mail (Redis fora) é só logada: a ação já foi salva e a API ainda responde sucesso. SMTP com erro é relançado no worker para o BullMQ retentar.

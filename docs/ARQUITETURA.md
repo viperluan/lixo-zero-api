@@ -8,14 +8,14 @@ O projeto segue Clean Architecture com três camadas e uma camada transversal de
 ┌─────────────────────────────────────────────────────────┐
 │ infrastructure/                                         │
 │   http/routes → http/controllers → http/middlewares     │
-│   http/config (cors, rateLimit) · smtp/templates        │
+│   http/config (cors, rateLimit) · smtp/templates · fila (BullMQ)        │
 └───────────────────────┬─────────────────────────────────┘
                         │ instancia e chama
 ┌───────────────────────▼─────────────────────────────────┐
 │ application/                                            │
 │   usecases/    (regra de aplicação, orquestração)       │
 │   repositories/ (implementações Prisma)                 │
-│   services/     (NodemailerService)                     │
+│   services/     (FilaEmailService · NodemailerService)  │
 └───────────────────────┬─────────────────────────────────┘
                         │ depende de abstrações
 ┌───────────────────────▼─────────────────────────────────┐
@@ -47,15 +47,16 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
                          recarrega o usuário do banco, popula request.usuario
 5. controllers/AcaoController.criarAcao
                          lê request.body, injeta id_usuario_responsavel do token,
-                         instancia CriarAcao com repositórios e serviço de e-mail
+                         instancia CriarAcao com repositórios e FilaEmailService
 6. usecases/acao/CriarAcao.executar
                          verifica título duplicado
                          Acao.criarNovaAcao() → valida e gera o UUID
                          acaoRepository.salvar()
                          busca o usuário, formata data/hora
                          renderiza o template EJS
-                         emailService.enviarEmail()
+                         emailService.enviarEmail() → publica job na fila Redis
 7. controller            responde 201 { id }  |  catch → 400 { error: mensagem }
+8. worker.ts             consome a fila `emails` e envia via Nodemailer/Gmail SMTP
 ```
 
 Os middlewares globais são aplicados na ordem exata declarada em `src/app.ts`:
@@ -81,10 +82,10 @@ Manual, sem container. Cada controller instancia os repositórios uma única vez
 // src/infrastructure/http/controllers/AcaoController.ts
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
-const nodemailerService = new NodemailerService(transportador);
+const filaEmailService = new FilaEmailService(filaEmail);
 ```
 
-Os repositórios recebem o `PrismaClient` singleton de `src/shared/package/prisma`. Os casos de uso, por sua vez, dependem apenas das **interfaces** de domínio, o que permitiria trocar Prisma por outra persistência sem tocar em `application/usecases/`.
+Os repositórios recebem o `PrismaClient` singleton de `src/shared/package/prisma`. Os casos de uso de ação recebem `IEmailService`: o controller injeta `FilaEmailService` (publica o job) e o worker injeta `NodemailerService` (SMTP). Os casos de uso dependem apenas das **interfaces** de domínio, o que permitiria trocar Prisma por outra persistência sem tocar em `application/usecases/`.
 
 ## Padrão das entidades
 
@@ -153,7 +154,7 @@ Exportar a mensagem como constante e comparar contra ela, como em `DeletarUsuari
 | `shared/utils/adicionaZeroAEsquerda.ts` | Formatação de data/hora nos e-mails |
 | `shared/types/UsuarioAutenticado.ts` | Formato de `request.usuario` |
 | `shared/package/prisma/index.ts` | Singleton do `PrismaClient` |
-| `shared/package/nodemailer/index.ts` | Transporter Gmail SMTP |
+| `shared/package/nodemailer/index.ts` | Transporter Gmail SMTP (usado pelo worker) |
 
 ## Build e execução
 
@@ -169,7 +170,11 @@ npm run build
 
 O passo `copy-ejs` é obrigatório porque `tsc` ignora arquivos não-TypeScript e os templates são lidos do disco em runtime. Se um e-mail parar de sair em produção com erro de template, é aqui que se investiga primeiro.
 
-Em produção, `npm start` roda `prisma migrate deploy` antes de subir o processo — as migrations são aplicadas automaticamente no boot.
+Em produção, `npm start` roda `prisma migrate deploy` antes de subir o processo — as migrations são aplicadas automaticamente no boot. O worker sobe à parte com `npm run start:worker` (`node dist/worker.js`) e não aplica migrations.
+
+## Worker de e-mail
+
+Processo separado em `src/worker.ts`. Consome a fila BullMQ `emails`, monta a entidade `Email` a partir do payload e chama `NodemailerService`. Concorrência padrão 1 (`FILA_EMAIL_CONCORRENCIA`, só no worker), no máximo 5 envios por minuto (limite do Gmail). Tentativas e backoff (`FILA_EMAIL_TENTATIVAS` / `FILA_EMAIL_BACKOFF_MS`) são gravados pela API no `queue.add`, não pelo worker. `SIGTERM`/`SIGINT` esperam o job corrente (`worker.close()`) antes de encerrar a conexão Redis.
 
 ## Docker
 
@@ -177,4 +182,6 @@ Em produção, `npm start` roda `prisma migrate deploy` antes de subir o process
 
 O timezone importa: `data_acao` é comparada com `new Date()` na validação e formatada para os e-mails sem conversão de fuso, então o fuso do container influencia diretamente o comportamento.
 
-`docker-compose.yml` sobe dois serviços — `lixozero-db` (Postgres, volume em `./pg_data`) e `lixozero-api` — em duas redes: `lixozero-network` (interna) e `proxy-manager` (externa, para o proxy reverso). O `app.set('trust proxy', 1)` existe por causa desse proxy: sem ele o rate limiting enxergaria o IP do proxy em vez do IP real do cliente.
+`docker-compose.yml` sobe quatro serviços — `lixozero-db` (Postgres, volume em `./pg_data`), `lixozero-redis` (fila, volume nomeado), `lixozero-api` e `lixozero-worker` (mesma imagem, `CMD` `node dist/worker.js`). API e banco usam as redes `lixozero-network` (interna) e a API também entra em `proxy-manager` (externa, para o proxy reverso). Redis e worker ficam só na rede interna; o Redis publica `127.0.0.1:6379` para o `start:dev` no host, sem expor a porta na interface pública. O worker desliga o `HEALTHCHECK` da imagem (não há HTTP). O `app.set('trust proxy', 1)` existe por causa do proxy: sem ele o rate limiting enxergaria o IP do proxy em vez do IP real do cliente.
+
+O worker **não** executa `prisma migrate deploy` — só a API faz isso no boot, para os dois containers não disputarem a migration.

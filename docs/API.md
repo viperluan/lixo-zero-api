@@ -264,7 +264,7 @@ Quais campos são obrigatórios depende de `forma_realizacao_acao`; a matriz com
 | `400` | `{ "error": "<mensagem de validação>" }`, incluindo `"Título já cadastrado."` |
 | `401` | `{ "message": "Autenticação necessária para acessar o recurso." }` |
 
-A ação nasce `Pendente` e um e-mail de confirmação é disparado para o usuário autenticado. Se o envio falhar, a resposta ainda é `201`.
+A ação nasce `Pendente` e um e-mail de confirmação é enfileirado para o usuário autenticado. A resposta `201` não espera o SMTP; se o Redis estiver fora, a ação já foi salva e a falha de enqueue só é logada.
 
 ### `PUT /acoes/:id`
 
@@ -276,8 +276,8 @@ Requer admin. Apesar do verbo, **não é um update genérico**: é o endpoint de
 
 | Valor | Efeito |
 |-------|--------|
-| `"1"` | Aprova e envia o e-mail de aprovação |
-| `"2"` | Reprova e envia o e-mail de reprovação |
+| `"1"` | Aprova e enfileira o e-mail de aprovação |
+| `"2"` | Reprova e enfileira o e-mail de reprovação |
 | qualquer outro | `400` |
 
 **200:**

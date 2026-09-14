@@ -7,8 +7,8 @@ import AtualizarAcao from '@/application/usecases/acao/AtualizarAcao';
 import ListarAcoesPorData from '@/application/usecases/acao/ListarAcoesPorData';
 import ListarAcoesPorIntervaloData from '@/application/usecases/acao/ListarAcoesPorIntervaloData';
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
-import NodemailerService from '@/application/services/email/NodemailerService';
-import { transportador } from '@/shared/package/nodemailer';
+import FilaEmailService from '@/application/services/email/FilaEmailService';
+import { filaEmail } from '@/infrastructure/fila/filaEmail';
 import { UsuarioRequest } from '../middlewares/AutenticacaoMiddleware';
 import { AcaoSituacao } from '@/domain/acao/enum/AcaoSituacao';
 import { normalizarPaginacao } from '@/shared/utils/normalizarPaginacao';
@@ -17,7 +17,7 @@ import { usuarioEhAdmin } from '@/shared/utils/usuarioEhAdmin';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
-const nodemailerService = new NodemailerService(transportador);
+const filaEmailService = new FilaEmailService(filaEmail);
 
 function montarOpcoesListagemAcoes(request: UsuarioRequest) {
   const admin = usuarioEhAdmin(request.usuario);
@@ -85,7 +85,7 @@ export async function criarAcao(request: UsuarioRequest, response: Response) {
     const criarAcao = new CriarAcao(
       acaoPrismaRepository,
       usuarioPrismaRepository,
-      nodemailerService
+      filaEmailService
     );
 
     const acao = await criarAcao.executar({
@@ -113,7 +113,7 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
     const atualizarAcao = new AtualizarAcao(
       acaoPrismaRepository,
       usuarioPrismaRepository,
-      nodemailerService
+      filaEmailService
     );
 
     const acao = await atualizarAcao.executar({
