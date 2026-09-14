@@ -1,0 +1,22 @@
+---
+description: Padrões HTTP, autorização e sanitização ao mexer em rotas, controllers e casos de uso
+globs: src/infrastructure/http/**/*.ts,src/application/usecases/**/*.ts,src/shared/utils/usuarioEhAdmin.ts
+alwaysApply: false
+---
+
+# HTTP e segurança
+
+Leia `docs/SEGURANCA.md` e `.agents/skills/typescript-security-review/SKILL.md` (adaptada a este Express). Checklist mental OWASP de `api-security-review`: BOLA, mass assignment, over-exposure, rate limit. Não exigir Zod/Joi; não escrever exploits/PoCs.
+
+## Camadas
+
+- Controller só lê `request`, instancia o caso de uso e traduz HTTP. Regra de negócio fica no caso de uso ou na entidade.
+- Rota nova: decidir middleware (`AutenticacaoMiddleware`, `AutenticacaoOpcionalMiddleware`, `AdminMiddleware`) e se precisa de rate limit próprio.
+- Atualizar `docs/API.md` (e `docs/ARQUITETURA.md` se o fluxo mudar).
+
+## Autorização e dados
+
+- Não montar o usuário a partir do payload do JWT; o middleware recarrega do banco de propósito.
+- Comparar admin só com `usuarioEhAdmin` — não use `tipo === '0'` solto.
+- Campo sensível novo em ação entra em `sanitizarAcaoResposta()`.
+- Mass assignment: em criação de ação, `id_usuario_responsavel` vem do token. Não aceitar `tipo` nem `status` do body no cadastro de usuário.

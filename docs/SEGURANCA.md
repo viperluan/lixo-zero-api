@@ -1,429 +1,165 @@
-# Análise de Segurança — Lixo Zero API
+# Segurança
 
-> Documento gerado a partir da análise do código-fonte (agosto/2026).  
-> Foco em problemas **atuais** com soluções **viáveis de implementar** sem grandes refatorações.  
-> **Atualizado em agosto/2026** após duas rodadas de hardening — itens marcados como **✅ Corrigido** já foram implementados.
+Este documento descreve os controles implementados, as decisões por trás deles e o que ainda não está coberto. O histórico de commits mostra que a API passou por um trabalho dedicado de hardening (`feat: adiciona rate limit`, `chore: adiciona helmet para mais segurança`, `refactor: adiciona expiração de token e cors`), então boa parte do que está aqui é intencional.
 
----
+## Autenticação
 
-## Legenda
+JWT assinado com **HS256** usando `SECRET_KEY`, com expiração de `JWT_EXPIRES_IN` (padrão `24h`).
 
-| Prioridade | Significado |
-|------------|-------------|
-| **Alta** | Risco relevante; corrigir antes ou logo após ir para produção no Dokploy |
-| **Média** | Risco moderado; vale corrigir em sprint curta |
-| **Baixa** | Endurecimento recomendado; não é urgente |
+O payload carrega `id`, `nome`, `email` e `tipo`. A assinatura é gerada em `GerarTokenUsuario` e verificada em `VerificarTokenUsuario`, sempre com o algoritmo fixado explicitamente:
 
-| Esforço | Significado |
-|---------|-------------|
-| **Baixo** | Horas, poucos arquivos |
-| **Médio** | 1–2 dias, pode tocar use cases/controllers |
-| **Alto** | Mudança arquitetural ou de produto |
-
----
-
-## Resumo executivo
-
-| Prioridade | Quantidade |
-|------------|------------|
-| Alta | 5 |
-| Média | 8 |
-| Baixa | 5 |
-
-**Já mitigado no projeto:** hash de senha (bcrypt), ORM parametrizado (Prisma — sem SQL injection clássico), JWT com expiração (24h) e algoritmo explícito HS256, revalidação de privilégio e status no banco a cada requisição, rate limiting por rota, `.env` no `.gitignore`, middleware de autenticação/admin, Helmet, limite de body JSON (500kb), paginação com teto de 100 itens, erros 500 genéricos em produção.
-
-**Maiores gaps restantes:** validação de `SECRET_KEY` no boot (prioridade elevada — ver 2.5), CORS permissivo por default quando `CORS_ORIGIN` está vazio, Postgres exposto no Docker Compose, política de senha fraca.
-
----
-
-## 1. Problemas de alta prioridade
-
-### 1.1 — IDOR na criação de ações ✅ Corrigido
-
-**Problema:** `POST /acoes` exige autenticação, mas o body aceita `id_usuario_responsavel` vindo do cliente. Um usuário autenticado pode criar ações em nome de outro usuário.
-
-**Onde:** `AcaoController.criarAcao`, `CriarAcao` — não usa `request.usuario.id`.
-
-**Impacto:** Ações e e-mails de notificação associados ao usuário errado; violação de integridade e privacidade.
-
-**Correção aplicada (agosto/2026):**
-- `criarAcao` usa `UsuarioRequest` e define `id_usuario_responsavel` a partir de `request.usuario.id`.
-- `id_usuario_responsavel` e `id_usuario_alteracao` removidos do contrato público do body (`CriarAcaoDadosDTO`).
-
----
-
-### 1.2 — Listagem pública expõe ações pendentes e dados sensíveis ✅ Corrigido
-
-**Problema:** `GET /acoes` é público e, sem filtro de `situacao`, retorna ações **pendentes**, **reprovadas** e **aprovadas**, incluindo e-mail do responsável, celular, endereço etc.
-
-**Onde:** `acaoRoutes.ts` (rota pública), `ListarAcoes`, `AcaoPrismaRepository.listarComPaginacao`.
-
-**Impacto:** Vazamento de PII e de ações ainda não moderadas antes da aprovação administrativa.
-
-**Correção aplicada (agosto/2026):**
-- `GET /acoes` usa `AutenticacaoOpcionalMiddleware` — sem token ou usuário comum: apenas ações **aprovadas**; parâmetro `situacao` ignorado.
-- Admin (`tipo === '0'`) com token pode filtrar por `situacao` e recebe resposta completa.
-- Resposta pública sanitizada via `sanitizarAcaoResposta` — omite `celular` e e-mails de `usuario_responsavel` / `usuario_alteracao`.
-- Mesma lógica aplicada em `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` para usuários não admin.
-
----
-
-### 1.3 — CORS permissivo quando `CORS_ORIGIN` está vazio
-
-**Problema:** Se `CORS_ORIGIN` não for definido (como no `.env` atual), `obterOpcoesCors()` retorna `{}` e o `cors()` aceita **qualquer origem**.
-
-**Onde:** `src/infrastructure/http/config/cors.ts`
-
-**Impacto:** Em produção no Dokploy, qualquer site pode fazer requests cross-origin à API (com credenciais limitadas pelo browser, mas ainda é risco para APIs sem cookie — ex.: token no header via frontend malicioso induzindo usuário).
-
-**Solução (esforço baixo):**
-- Em `NODE_ENV=production`, exigir `CORS_ORIGIN` definido; falhar no boot se ausente.
-- Em desenvolvimento, manter comportamento permissivo.
-- Documentar URL do frontend no Dokploy.
-
----
-
-### 1.4 — PostgreSQL com porta exposta no Docker Compose
-
-**Problema:** `lixozero-db` publica `5432:5432` no host. Se a VPS não tiver firewall restritivo, o banco fica acessível na internet.
-
-**Onde:** `docker-compose.yml`
-
-**Impacto:** Ataque de força bruta ao Postgres, acesso direto aos dados se credenciais vazarem.
-
-**Solução (esforço baixo):**
-- Remover `ports` do serviço `lixozero-db` (comunicação só pela rede interna `lixozero-network`).
-- No Dokploy, usar serviço de banco interno sem exposição pública.
-- Garantir firewall na VPS (só 80/443).
-
----
-
-### 1.5 — JWT sem algoritmo explícito na verificação ✅ Corrigido
-
-**Problema:** `jwt.verify(token, SECRET_KEY)` não restringe `algorithms`. Em cenários com chaves mal configuradas, há risco histórico de **algorithm confusion** (`none` / RS256 vs HS256).
-
-**Onde:** `VerificarTokenUsuario.ts`, `GerarTokenUsuario.ts`
-
-**Impacto:** Bypass de autenticação (baixa probabilidade com setup atual, mas correção é trivial).
-
-**Correção aplicada (agosto/2026):**
-```typescript
-jwt.sign(payload, SECRET_KEY, { expiresIn, algorithm: 'HS256' });
-jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'] });
+```ts
+jwt.verify(token, process.env.SECRET_KEY as string, { algorithms: ['HS256'] });
 ```
 
----
+Fixar `algorithms` é o que impede o ataque de confusão de algoritmo (um token forjado com `alg: none` ou `alg: RS256`). Não remova esse parâmetro.
 
-### 1.6 — Privilégio e status confiados exclusivamente ao JWT ✅ Corrigido
+### A decisão mais importante: o token não é a fonte de verdade
 
-**Problema:** `tipo` e `status` eram lidos do banco uma única vez, no login, e congelados dentro do token por 24h. Nenhum ponto da aplicação reconsultava o banco depois disso — `AdminMiddleware` e `usuarioEhAdmin` liam `request.usuario.tipo`, que vinha do payload do JWT.
+`AutenticacaoMiddleware` verifica a assinatura e, em seguida, **recarrega o usuário do banco** a cada requisição:
 
-**Onde:** `AutenticacaoMiddleware.ts`, `AutenticacaoOpcionalMiddleware.ts`, `AdminMiddleware.ts`, `usuarioEhAdmin.ts`
+```ts
+const usuario = await usuarioRepository.buscarPorId(idUsuario);
+if (!usuario || !usuario.status) return null;
+```
 
-**Impacto:** Janela de até 24h em que:
-- Conta desativada (`status: false`) continuava com acesso total — anulando na prática a correção 2.1, que só cobre novos logins.
-- Admin rebaixado para `tipo: '1'` continuava aprovando ações e listando usuários com CPF/CNPJ.
-- Usuário excluído mantinha token válido.
-- Não havia forma de revogar sessão (logout real).
+Isso existe porque `tipo` e `status` mudam sem invalidar tokens já emitidos. Sem essa consulta, um admin rebaixado continuaria administrador até o token expirar, e um usuário desativado ou excluído continuaria autenticado por até 24 horas. O tipo `UsuarioAutenticado` traz esse aviso escrito no próprio arquivo:
 
-**Correção aplicada (agosto/2026):**
-- Novo tipo `UsuarioAutenticado` representando o usuário conforme o banco.
-- `carregarUsuarioAutenticado(token)` resolve o `id` do token e busca o usuário no banco a cada requisição; devolve `null` se o token for inválido, o usuário não existir ou `status === false`.
-- `request.usuario` passa a ser preenchido com dados do banco, nunca do payload.
-- Falha de infraestrutura propaga como `500`, separada do `401` de sessão inválida.
-- `UsuarioRequest` e `usuarioEhAdmin` passam a exigir `UsuarioAutenticado`, tornando erro de compilação qualquer tentativa de voltar a ler o `tipo` do token.
+> Nunca deve ser montado a partir do payload do JWT: `tipo` e `status` mudam sem invalidar tokens já emitidos.
 
-> O payload do JWT ainda carrega `nome`, `email` e `tipo` por decisão de projeto, mas a aplicação os ignora. `TokenDecodificado` ficou restrito ao interior de `VerificarTokenUsuario`.
+O custo é uma consulta por requisição autenticada. É um trade-off deliberado — se for otimizar isso algum dia, faça com cache invalidável, não voltando a confiar no payload.
 
----
+Outro detalhe do middleware: falhas de verificação do JWT viram `null` (→ `401`), mas falhas de **infraestrutura** (banco indisponível) são propagadas e viram `500`. Um banco fora do ar não deve se disfarçar de credencial inválida.
 
-### 1.7 — IDOR remanescente em `PUT /acoes/:id` ✅ Corrigido
+### Os três middlewares
 
-**Problema:** A correção 1.1 cobriu a criação, mas o update continuava repassando `request.body` cru até o repositório, que gravava `id_usuario_alteracao` com o valor enviado pelo cliente.
+| Middleware | Comportamento sem token | Comportamento com token inválido |
+|------------|-------------------------|----------------------------------|
+| `AutenticacaoMiddleware` | `401 Autenticação necessária...` | `401 Sessão inválida.` |
+| `AutenticacaoOpcionalMiddleware` | Segue adiante como anônimo | Segue adiante como anônimo |
+| `AdminMiddleware` | `401 Usuário não autenticado` | — |
 
-**Onde:** `AcaoController.atualizarAcao`, `AcaoPrismaRepository.atualizar`
+`AutenticacaoOpcionalMiddleware` é usado só em `GET /acoes` e nunca rejeita ninguém: ele apenas popula `request.usuario` quando o token é válido, para que a listagem possa decidir o nível de detalhe. `AdminMiddleware` sempre vem **depois** de `AutenticacaoMiddleware` na cadeia da rota, e responde `403 Acesso negado.` para quem está autenticado mas não é admin.
 
-**Impacto:** O admin que aprova ou reprova podia atribuir a alteração a qualquer outro usuário, forjando a trilha de auditoria. Omitir o campo fazia o Prisma ignorar a coluna e manter silenciosamente o valor anterior.
+### Senhas
 
-**Correção aplicada (agosto/2026):** O controller monta os campos explicitamente — `situacao_acao` vem do body e `id_usuario_alteracao` de `request.usuario.id`. Guard de `401` adicionado.
+bcrypt com custo 10, hasheadas dentro de `Usuario.criarNovoUsuario()` — nunca no controller. A comparação usa `bcrypt.compareSync`, que é resistente a timing attack.
 
----
+Ambas as operações são **síncronas** e bloqueiam o event loop por algumas dezenas de milissegundos. É aceitável no volume atual e o rate limit de autenticação limita o abuso, mas é um vetor de DoS teórico.
 
-## 2. Problemas de média prioridade
+`AutenticarUsuario` devolve a mesma mensagem `'Email ou senha incorretos'` para e-mail inexistente, senha errada e conta desativada, evitando enumeração de usuários. Note que a checagem de `status` acontece **depois** da comparação de senha, então o custo de tempo é o mesmo nos três casos.
 
-### 2.1 — Usuário desativado ainda autentica ✅ Corrigido
+## Autorização
 
-**Problema:** `AutenticarUsuario` não verifica `usuario.status`. Conta com `status: false` continua logando.
+Modelo binário, sem RBAC ou permissões granulares. A única verificação é `usuario?.tipo === '0'`, centralizada em `src/shared/utils/usuarioEhAdmin.ts`. Use essa função — não compare `tipo` diretamente em código novo.
 
-**Onde:** `AutenticarUsuario.ts`
+Além do `AdminMiddleware`, a autorização aparece em um segundo lugar: `AcaoController.montarOpcoesListagemAcoes()`, que decide o que cada perfil enxerga na listagem.
 
-**Correção aplicada (agosto/2026):** Após validar senha, checa `usuario.status`; se `false`, lança erro genérico. `UsuarioController` retorna `401`.
+```ts
+function montarOpcoesListagemAcoes(request: UsuarioRequest) {
+  const admin = usuarioEhAdmin(request.usuario);
+  return {
+    admin,
+    situacao: admin ? undefined : AcaoSituacao.Aprovada,
+    sanitizarSaida: !admin,
+  };
+}
+```
 
----
+Não-admin tem a situação **forçada** para `Aprovada`, o que também neutraliza a tentativa de passar `?situacao=0` na query para espiar a fila de moderação.
 
-### 2.2 — Ausência de headers de segurança HTTP (Helmet) ✅ Corrigido
+## Sanitização das respostas públicas
 
-**Problema:** Não há `helmet` nem headers como `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security` (via proxy).
+`sanitizarAcaoResposta()` remove dados pessoais das ações mostradas a quem não é admin:
 
-**Onde:** `app.ts`
+- `celular` é deletado do objeto;
+- `usuario_responsavel` e `usuario_alteracao` são reduzidos a `{ nome }`, sem `email`.
 
-**Impacto:** Endurecimento menor contra XSS clickjacking e MIME sniffing (API JSON tem risco menor, mas é boa prática).
+Aplicada nos três endpoints de listagem de ações sempre que `sanitizarSaida` é verdadeiro. **Qualquer campo sensível novo em `Acao` precisa ser adicionado a essa função** — ela é a única barreira entre o banco e a resposta pública.
 
-**Correção aplicada (agosto/2026):** `helmet` instalado e registrado em `app.ts` com `contentSecurityPolicy: false`.
+Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continuam visíveis: são dados de divulgação do evento, expostos de propósito.
 
----
+## Rate limiting
 
-### 2.3 — Body JSON sem limite de tamanho ✅ Corrigido
+`express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Quatro perfis, todos por IP e todos ajustáveis por variável de ambiente:
 
-**Problema:** `express.json()` sem `limit`. Payloads enormes podem consumir memória (DoS).
+| Perfil | Aplicado em | Padrão | Variáveis |
+|--------|-------------|--------|-----------|
+| Global | Todas as rotas, exceto `/health` | 200 / 15 min | `RATE_LIMIT_GLOBAL_MAX`, `RATE_LIMIT_GLOBAL_WINDOW_MS` |
+| Autenticação | `POST /usuarios/autenticar` | 10 / 15 min | `RATE_LIMIT_AUTH_*` |
+| Cadastro | `POST /usuarios` | 5 / hora | `RATE_LIMIT_REGISTER_*` |
+| Leitura pública | `GET /acoes`, `GET /categorias` | 60 / min | `RATE_LIMIT_PUBLIC_READ_*` |
 
-**Onde:** `app.ts`
+Os limites específicos são cumulativos com o global. `RATE_LIMIT_ENABLED=false` substitui todos os middlewares por um no-op — útil em testes de carga, nunca em produção. Valores não numéricos ou ≤ 0 nas variáveis caem silenciosamente para o padrão.
 
-**Correção aplicada (agosto/2026):** `express.json({ limit: '500kb' })` em `app.ts`.
+`/health` é isento para que o healthcheck do Docker não consuma a cota e não seja bloqueado.
 
----
+O armazenamento é **em memória**, o que traz duas limitações: os contadores zeram a cada restart e não são compartilhados entre réplicas. Escalar horizontalmente exige um store externo (Redis).
 
-### 2.4 — Paginação sem teto máximo (`limit`) ✅ Corrigido
+### `trust proxy`
 
-**Problema:** `limit` na query é convertido com `Number(limit)` sem validação. Cliente pode enviar `limit=100000` e forçar queries pesadas.
+`app.set('trust proxy', 1)` em `src/app.ts` faz o Express confiar em **um** salto de proxy e usar o primeiro IP de `X-Forwarded-For` como IP do cliente. Sem isso, atrás do `proxy-manager` do Docker Compose, todos os clientes apareceriam com o mesmo IP e o rate limit puniria todo mundo junto.
 
-**Onde:** Controllers de `Usuario`, `Categoria`, `Acao`.
+O valor `1` é o correto para a topologia atual (um proxy reverso na frente). Se uma CDN for adicionada, esse número precisa acompanhar — confiar em saltos demais permitiria que um cliente forjasse o próprio IP via header.
 
-**Correção aplicada (agosto/2026):** Utilitário `normalizarPaginacao` com teto silencioso de 100 itens (`LIMITE_MAXIMO`).
+## Cabeçalhos HTTP
 
----
+`helmet()` com `contentSecurityPolicy: false`. O CSP está desligado porque a API só serve JSON, e um CSP restritivo não agrega nada num endpoint sem HTML — mas as demais proteções (`X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, remoção do `X-Powered-By`) continuam ativas.
 
-### 2.5 — `SECRET_KEY` sem validação no startup
+## CORS
 
-**Problema:** Se `SECRET_KEY` estiver ausente ou fraca (ex.: `"batata"`), a API sobe e JWT fica inseguro.
+```ts
+const corsOrigin = process.env.CORS_ORIGIN?.trim();
+if (!corsOrigin || corsOrigin === '*') return {};
+return { origin: corsOrigin.split(',').map((origin) => origin.trim()) };
+```
 
-**Onde:** `GerarTokenUsuario`, `VerificarTokenUsuario`, boot da aplicação.
+Vazio ou `*` libera qualquer origem. Em produção, defina a lista explícita de domínios do front separados por vírgula. Note que `CORS_ORIGIN` **não está no `docker-compose.yml`** — se o deploy for por compose, adicione a variável ao serviço `lixozero-api` ou a API subirá com CORS aberto.
 
-**Solução (esforço baixo):** Módulo `config/env.ts` que valida no startup:
-- `SECRET_KEY` existe e tem ≥ 32 caracteres em produção.
-- Falhar rápido (`process.exit(1)`) com mensagem clara.
+## Superfície de entrada
 
-> **Prioridade elevada após a correção 1.6.** Com a revalidação no banco, a assinatura do token passou a ser o único elo entre a requisição e a identidade do usuário. Uma `SECRET_KEY` fraca deixa de ser endurecimento recomendado e vira escalada de privilégio direta: quem adivinhar a chave forja um `id` de admin e não encontra segunda barreira. Item pendente por decisão de projeto.
+| Controle | Estado |
+|----------|--------|
+| Tamanho do corpo | Limitado a 500 kB em `express.json()` |
+| Injeção de SQL | Mitigada pelo Prisma (queries parametrizadas, sem SQL cru no projeto) |
+| Validação de tipos do payload | **Ausente** — não há Zod, Joi ou class-validator |
+| Sanitização de HTML/XSS | **Ausente** — texto do usuário vai direto para os templates EJS |
 
----
+A ausência de validação de schema é a lacuna mais relevante. As entidades validam presença e regras de negócio, mas não tipos: `numero_organizadores_acao: "abc"` ou um objeto onde se espera string passam pela validação e chegam ao Prisma, que devolve um erro de banco traduzido como `400` genérico.
 
-### 2.6 — Mensagens de erro internas expostas em HTTP 500 ✅ Corrigido
+Sobre XSS: os templates EJS usam interpolação de dados fornecidos pelo usuário em e-mails HTML. O risco é limitado (clientes de e-mail não executam JavaScript), mas convém usar `<%= %>` — que escapa — em vez de `<%- %>` ao editar os templates.
 
-**Problema:** Controllers retornam `(error as Error).message` em respostas 500, podendo vazar detalhes de banco/infra.
+## Vazamento de informação em erros
 
-**Onde:** `AcaoController`, `CategoriaController`, etc.
+`responderErroInterno()` protege detalhes internos em produção:
 
-**Correção aplicada (agosto/2026):** Utilitário `responderErroInterno` — em `NODE_ENV=production` retorna mensagem genérica; em desenvolvimento mantém detalhe. Erro completo logado com `console.error`.
+```ts
+if (process.env.NODE_ENV === 'production') {
+  return response.status(500).json({ error: 'Erro interno do servidor.' });
+}
+return response.status(500).json({ error: (error as Error).message });
+```
 
----
+Isso depende de `NODE_ENV=production` estar setado. O `Dockerfile` o define, e `npm start` também via `cross-env` — mas uma execução manual com `node dist/server.js` sem a variável exporia mensagens internas. Nem todos os controllers usam essa função: `UsuarioController.buscarTodos` e vários outros respondem `400` com a mensagem crua do erro, independentemente do ambiente.
 
-### 2.7 — Cadastro público sem política de senha
+## Segredos
 
-**Problema:** `CriarUsuario` aceita qualquer string como senha (ex.: `"1"`, `"123"`).
+Todos vêm de variáveis de ambiente, sem valores padrão no código. `.env` está no `.gitignore`. `.env.example` documenta todas as chaves: defaults não-secretos (`PORT`, `NODE_ENV`, `JWT_EXPIRES_IN`, fila e rate limit) e segredos vazios (`SECRET_KEY`, `DB_PASSWORD`, `DATABASE_URL`, `REDIS_URL`, `REDIS_PASSWORD`, `GMAIL_USER`, `GMAIL_PASS`).
 
-**Onde:** `CriarUsuario.ts` / entidade `Usuario`.
+`SECRET_KEY` não tem fallback: se estiver ausente, `jwt.sign` lança e a autenticação falha inteira — falha fechada, que é o comportamento desejado. Não adicione um valor padrão.
 
-**Solução (esforço baixo):** Validar mínimo (ex.: 8 caracteres, 1 maiúscula, 1 número) na entidade ou use case.
+O remetente `caxiaslixozero@gmail.com` está hardcoded em `CriarAcao` e `AtualizarAcao`, mas isso é um endereço público, não um segredo. As credenciais SMTP (`GMAIL_USER`/`GMAIL_PASS`) vêm do ambiente, devem ser uma senha de app do Google e existem **somente no worker** — a API não as recebe no Compose.
 
----
+O Redis da fila exige senha (`REDIS_PASSWORD` / `REDIS_URL`) e não é publicado na interface pública (só `127.0.0.1:6379` para desenvolvimento no host). Worker e Redis ficam fora da rede `proxy-manager`. Jobs na fila carregam o HTML do e-mail (incluindo dados da ação); quem tem acesso ao Redis lê essa fila. Não exponha a porta nem deixe `REDIS_PASSWORD` vazio.
 
-### 2.8 — Endpoint `/health` público com detalhe do banco
+## O que não está implementado
 
-**Problema:** `GET /health` retorna `{ database: 'up' | 'down' }` sem autenticação.
+Nenhum destes é bug — são decisões conscientes ou lacunas conhecidas, listadas para que ninguém presuma que existem:
 
-**Impacto:** Information disclosure para reconhecimento de infra.
-
-**Solução (esforço baixo):**
-- **Opção A:** Resposta mínima `{ status: 'ok' }` publicamente; checagem de DB só em rota interna ou com token.
-- **Opção B:** Manter como está (comum em health checks) e restringir acesso por rede no Dokploy.
-
----
-
-### 2.9 — Atualização com situação inválida corrompia o registro ✅ Corrigido
-
-**Problema:** Em `AtualizarAcao`, a gravação acontecia antes da geração do template. Uma `situacao_acao` fora de Aprovada/Reprovada não produzia template, a função lançava `'Erro ao gerar template.'` e a API respondia `400` — **mas o banco já havia sido alterado**. Além disso, o update ia direto ao Prisma sem passar pela entidade `Acao`, então qualquer string era persistida na coluna.
-
-**Onde:** `AtualizarAcao.ts`, `AcaoPrismaRepository.atualizar`
-
-**Impacto:** Corrupção silenciosa de dados combinada com resposta de erro, e ausência total de validação de enum na atualização.
-
-**Correção aplicada (agosto/2026):**
-- `validarSituacao` roda antes de qualquer escrita e aceita apenas `'1'` (aprovar) ou `'2'` (reprovar), com mensagem de erro explícita.
-- Ordem das etapas invertida: gerar template → gravar → enviar e-mail. Falha de template não chega mais ao banco.
-
-> Ordem escolhida deliberadamente: se o envio do e-mail falhar, a ação fica aprovada sem notificação (recuperável). O inverso — notificar sobre uma mudança que não persistiu — seria pior.
-
----
-
-### 2.10 — Enumeração de e-mail e CPF/CNPJ no cadastro ⚠️ Aceito
-
-**Problema:** `CriarUsuario` retorna mensagens distintas para e-mail e CPF/CNPJ duplicados, permitindo sondar quais estão cadastrados.
-
-**Onde:** `CriarUsuario.ts`
-
-**Impacto:** Enumeração de base de usuários; no caso do CPF/CNPJ, exposição indireta de dado sensível sob LGPD.
-
-**Mitigação atual:** Rate limit de 5 cadastros por hora por IP.
-
-**Status:** Risco aceito por decisão de projeto (agosto/2026), priorizando o feedback de cadastro ao usuário. Reavaliar se a base crescer.
-
----
-
-### 2.11 — Build não executa checagem de tipos ✅ Corrigido pontualmente
-
-**Problema:** `npm run build` usava `tsup`/esbuild, que transpila sem checar tipos. Erros de tipagem passavam despercebidos e chegavam a produção.
-
-**Onde:** `package.json` (script `build`); o `tsup.config.ts` foi removido.
-
-**Impacto:** Um erro real ficou latente desde a sprint anterior — `CriarAcaoEntradaDTO` não satisfazia `NovaAcaoProps` porque `id_usuario_alteracao` fora removido do DTO mas continuava obrigatório na entidade. Não quebrou em runtime apenas porque `Acao.criarNovaAcao` sobrescreve o campo, mas o contrato de tipo estava mentindo.
-
-**Correção aplicada (agosto/2026):** `id_usuario_alteracao` incluído em `OmitirDadosNovaAcaoProps`, alinhando o tipo ao comportamento real da fábrica (o campo é derivado, nunca fornecido por quem chama).
-
-**Build (agosto/2026):** `npm run build` passou a usar `tsc` (`noEmitOnError`) em vez de tsup/esbuild — erros de tipo falham o compile. Script `"typecheck": "tsc --noEmit"` disponível no `package.json`.
-
----
-
-## 3. Problemas de baixa prioridade
-
-### 3.1 — Login retorna HTTP 400 em vez de 401 ✅ Corrigido
-
-**Problema:** Credenciais inválidas retornam `400`; semanticamente deveria ser `401 Unauthorized`.
-
-**Onde:** `UsuarioController.autenticar`
-
-**Correção aplicada (agosto/2026):** Falhas de autenticação (credenciais inválidas ou conta desativada) retornam `401`.
-
----
-
-### 3.2 — Listagem de usuários (admin) expõe CPF/CNPJ
-
-**Problema:** `GET /usuarios` retorna `cpf_cnpj` para admins. Pode ser necessário ao negócio, mas é dado sensível (LGPD).
-
-**Solução (esforço médio):** Mascarar na listagem (`***.***.***-**`) e expor completo só em detalhe auditado; registrar acesso.
-
----
-
-### 3.3 — Payload JWT com dados desnecessários
-
-**Problema:** Token carrega `nome` e `email` além de `id` e `tipo`. Aumenta superfície se token vazar.
-
-**Solução (esforço médio):** JWT só com `{ sub: id, tipo }`; frontend busca perfil via endpoint dedicado.
-
----
-
-### 3.4 — Deploy CI com `StrictHostKeyChecking=no`
-
-**Problema:** Workflow SSH desabilita verificação de host key — risco de MITM no deploy.
-
-**Onde:** `.github/workflows/deploy.yml`
-
-**Solução (esforço baixo):** Adicionar host key conhecida aos `known_hosts` do runner ou usar secret `SSH_KNOWN_HOSTS`.
-
----
-
-### 3.5 — Ausência de logging de eventos de segurança
-
-**Problema:** Falhas de login, bloqueios 429 e tentativas admin negadas não são logados de forma estruturada.
-
-**Solução (esforço médio):** Log mínimo com IP, rota, timestamp (sem senha/token).
-
----
-
-## 4. Itens já endereçados (não reabrir)
-
-| Item | Status |
-|------|--------|
-| Senhas em texto puro | Mitigado — bcrypt |
-| SQL Injection | Mitigado — Prisma parametrizado |
-| JWT sem expiração | Corrigido — `JWT_EXPIRES_IN` (24h) |
-| JWT algorithm confusion | Corrigido — HS256 explícito |
-| IDOR em POST /acoes | Corrigido — responsável = usuário do token |
-| Listagem pública de ações | Corrigido — só aprovadas + sanitização |
-| Helmet / headers HTTP | Corrigido |
-| Limite de body JSON | Corrigido — 500kb |
-| Teto de paginação | Corrigido — máx. 100 |
-| Login conta desativada | Corrigido — 401 genérico |
-| Erros 500 em produção | Corrigido — mensagem genérica |
-| Privilégio/status congelados no JWT | Corrigido — revalidação no banco por requisição |
-| IDOR em PUT /acoes/:id | Corrigido — auditoria vem do token |
-| Situação inválida corrompendo registro | Corrigido — valida antes de gravar |
-| Rate limiting | Implementado — ver `config/rateLimit.ts` |
-| `.env` no repositório | Mitigado — `.gitignore` |
-| Autenticação em rotas admin | Implementado — middlewares |
-
----
-
-## 5. Backlog sugerido — correções fáceis primeiro
-
-Ordem recomendada para máximo impacto com mínimo esforço:
-
-| # | Item | Esforço | Seção | Status |
-|---|------|---------|-------|--------|
-| 1 | IDOR em `POST /acoes` | Baixo | 1.1 | ✅ Feito |
-| 2 | Filtrar ações públicas (só aprovadas) | Baixo | 1.2 | ✅ Feito |
-| 3 | JWT `algorithm: 'HS256'` | Baixo | 1.5 | ✅ Feito |
-| 4 | Validar `SECRET_KEY` no boot | Baixo | 2.5 | Pendente |
-| 5 | `express.json({ limit })` | Baixo | 2.3 | ✅ Feito (500kb) |
-| 6 | Helmet | Baixo | 2.2 | ✅ Feito |
-| 7 | CORS obrigatório em produção | Baixo | 1.3 | Pendente |
-| 8 | Remover porta pública do Postgres | Baixo | 1.4 | Pendente |
-| 9 | Checar `usuario.status` no login | Baixo | 2.1 | ✅ Feito |
-| 10 | Teto em `limit` de paginação | Baixo | 2.4 | ✅ Feito |
-| 11 | Política mínima de senha | Baixo | 2.7 | Pendente |
-| 12 | Erros 500 genéricos em produção | Baixo | 2.6 | ✅ Feito |
-| 13 | Revalidar privilégio/status no banco | Médio | 1.6 | ✅ Feito |
-| 14 | IDOR em `PUT /acoes/:id` | Baixo | 1.7 | ✅ Feito |
-| 15 | Validar situação antes de gravar | Baixo | 2.9 | ✅ Feito |
-| 16 | Script de `typecheck` (`tsc --noEmit`) | Baixo | 2.11 | ✅ Feito (build também é `tsc`) |
-
-**Próximo item recomendado:** #4 (validar `SECRET_KEY` no boot) — ver nota de prioridade elevada em 2.5.
-
-> Detalhes da implementação: ver `docs/RELATORIO_HARDENING_SEGURANCA.md`.
-
----
-
-## 6. Considerações para deploy no Dokploy
-
-| Tópico | Recomendação |
-|--------|--------------|
-| **TLS/HTTPS** | Terminar SSL no Dokploy/Traefik; API não precisa lidar com certificado |
-| **Secrets** | `SECRET_KEY`, `DATABASE_URL`, `GMAIL_PASS` só via env do Dokploy — nunca no repositório |
-| **CORS** | Definir `CORS_ORIGIN` com URL exata do frontend antes do go-live |
-| **Rate limit** | Manter `RATE_LIMIT_ENABLED=true`; validar IP real com `trust proxy` |
-| **Banco** | Serviço Postgres interno, sem porta pública |
-| **Health** | Apontar health check do Dokploy para `GET /health` |
-| **Firewall VPS** | Expor apenas 80/443 (e SSH restrito) |
-
----
-
-## 7. O que fica fora do escopo “fácil”
-
-Estes itens foram identificados mas exigem mais planejamento:
-
-| Item | Motivo |
-|------|--------|
-| Fila de e-mail com retry | Arquitetura nova (já planejado) |
-| Revogação de JWT / logout | Exige blacklist ou refresh tokens |
-| 2FA | Feature de produto |
-| Auditoria LGPD completa | Processo + código |
-| WAF / rate limit no Dokploy | Configuração de infra separada |
-| Store Redis para rate limit multi-réplica | Só necessário com escala horizontal |
-
----
-
-## 8. Referências no código
-
-| Arquivo | Relevância |
-|---------|------------|
-| `src/app.ts` | CORS, JSON, rate limit global, trust proxy |
-| `src/infrastructure/http/config/cors.ts` | Política CORS |
-| `src/infrastructure/http/config/rateLimit.ts` | Rate limiting |
-| `src/infrastructure/http/middlewares/AutenticacaoMiddleware.ts` | JWT |
-| `src/application/usecases/usuario/AutenticarUsuario.ts` | Login |
-| `src/infrastructure/http/controllers/AcaoController.ts` | IDOR, exposição de dados |
-| `docker-compose.yml` | Exposição Postgres |
-| `.github/workflows/deploy.yml` | Deploy SSH |
-
----
-
-*Documento para apoio a decisões de segurança. Revisar após cada sprint de hardening.*
+- **Refresh token / revogação.** Um token válido permanece válido até expirar. A mitigação parcial é a recarga do usuário a cada requisição, que cobre desativação e rebaixamento, mas não um token roubado de uma conta ainda ativa.
+- **Verificação de e-mail no cadastro.** Qualquer e-mail é aceito sem confirmação.
+- **Recuperação de senha.** Não há fluxo de "esqueci minha senha".
+- **Política de senha.** Nenhum tamanho mínimo ou requisito de complexidade.
+- **Bloqueio de conta após tentativas falhas.** Só o rate limit por IP protege o login.
+- **Logs de auditoria.** `id_usuario_alteracao` guarda apenas o autor da última alteração; não há trilha de quem aprovou o quê e quando.
+- **Rate limit distribuído.** Contadores em memória, por instância.

@@ -13,31 +13,69 @@ services:
       - ./pg_data:/var/lib/postgresql/data:rw
     networks:
       - lixozero-network
-  
+
+  lixozero-redis:
+    container_name: lixozero-redis
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - lixozero-redis-data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - lixozero-network
+
   lixozero-api:
     container_name: lixozero-api
+    image: lixozero-api
     build:
       context: .
     restart: always
     depends_on:
       - lixozero-db
+      - lixozero-redis
     environment:
       - PORT=${PORT}
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
-      - GMAIL_USER=${GMAIL_USER}
-      - GMAIL_PASS=${GMAIL_PASS}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@lixozero-redis:6379
       - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - FILA_EMAIL_TENTATIVAS=${FILA_EMAIL_TENTATIVAS:-5}
+      - FILA_EMAIL_BACKOFF_MS=${FILA_EMAIL_BACKOFF_MS:-5000}
     networks:
       - proxy-manager
       - lixozero-network
     ports:
       - 3000:3000
 
+  lixozero-worker:
+    container_name: lixozero-worker
+    image: lixozero-api
+    build:
+      context: .
+    restart: always
+    command: node dist/worker.js
+    depends_on:
+      - lixozero-redis
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@lixozero-redis:6379
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_PASS=${GMAIL_PASS}
+      - FILA_EMAIL_CONCORRENCIA=${FILA_EMAIL_CONCORRENCIA:-1}
+    networks:
+      - lixozero-network
+    healthcheck:
+      disable: true
+
 networks:
   lixozero-network:
     name: lixozero-network
-    
+
   proxy-manager:
     name: proxy-manager
     external: true
+
+volumes:
+  lixozero-redis-data:
