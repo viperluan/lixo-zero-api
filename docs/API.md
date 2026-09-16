@@ -195,6 +195,8 @@ Quando a sanitização se aplica, `celular` é removido do item e `usuario_respo
 | `situacao` | `'0'`, `'1'` ou `'2'`. **Só tem efeito para admin** |
 | `forma_realizacao_acao` | `'0'`, `'1'` ou `'2'` |
 
+A listagem sai ordenada por `data_acao` crescente, com `id` como desempate — a página 1 traz as ações **mais antigas**. A ordenação é explícita justamente para tornar a paginação determinística: sem ela o Postgres devolve as linhas em ordem arbitrária e o par `skip`/`take` repete e pula registros entre páginas.
+
 > **Advertência sobre `data_acao`:** o filtro faz `new Date(valor)` e compara por igualdade exata contra o `DateTime` da coluna, hora inclusa. Passar `2026-09-15` só casa com ações gravadas exatamente à meia-noite UTC. Para buscar "as ações de um dia", use `GET /acoes/:dataInicial/:dataFinal` com o início e o fim do dia.
 
 **200:**
