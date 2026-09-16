@@ -67,6 +67,15 @@ Só aceita `situacao_acao`, e só com os valores `'1'` ou `'2'`. Semanticamente 
 
 `GET /acoes` funciona anonimamente, mas `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` exigem token. Como as três rotas servem à mesma programação pública e as duas últimas já sanitizam a saída para não-admin, a exigência parece acidental — um front público não consegue montar um calendário sem autenticar.
 
+### Sem filtro de intervalo de data no endpoint público
+
+`GET /acoes` não tem um filtro do tipo "a partir de X". As duas alternativas existentes não servem a um front público: `data_acao` compara timestamp por igualdade exata (ver o primeiro item deste documento) e `GET /acoes/:dataInicial/:dataFinal` exige token.
+
+O front contorna isso buscando `page=1&limit=100` e filtrando as futuras no cliente — é o que a faixa "Próximas ações" da home faz. Funciona enquanto o total de ações aprovadas couber em 100. Como a listagem sai ordenada por `data_acao` crescente, quando o histórico acumulado de várias edições passar de 100 a página 1 será só passado e a faixa deixará de aparecer: falha silenciosa, não quebra a página.
+
+- **Correção preferida:** aceitar `data_acao_inicial` (`gte`) em `montarWhere()` do `AcaoPrismaRepository` e expor o query param em `listarTodasAcoes`. Resolve a home, a agenda e a raiz do bug de igualdade exata de uma vez.
+- **Paliativo no cliente:** se `totalPages > 1` e nenhuma ação da página 1 for futura, buscar `page=totalPages`.
+
 ### Chaves de resposta em inglês, campos em português
 
 `{ "actions": [...], "totalPages": 3, "currentPage": 1 }`, mas cada item tem `titulo_acao`, `nome_organizador`. Idem para `users` e `categories`. O front depende disso; qualquer mudança precisa ser coordenada.
@@ -153,9 +162,17 @@ Não há framework de teste instalado nem script `test`. A validação disponív
 
 Responde `200` mesmo com o Postgres fora do ar — foi uma decisão explícita (commit `fix: remove a validação do banco para o healthcheck`), provavelmente para evitar que o container fosse reiniciado durante indisponibilidades transitórias do banco. Vale saber que o healthcheck confirma apenas que o processo Node está de pé.
 
-### `CORS_ORIGIN` ausente do `docker-compose.yml`
+### Variáveis de ambiente do `docker-compose.yml`
 
-O serviço `lixozero-api` repassa `PORT`, `DATABASE_URL`, `SECRET_KEY`, `REDIS_URL`, `RATE_LIMIT_ENABLED`, `FILA_EMAIL_TENTATIVAS` e `FILA_EMAIL_BACKOFF_MS`, mas não `CORS_ORIGIN` nem `JWT_EXPIRES_IN`. Um deploy por compose sobe com CORS liberado para qualquer origem e expiração de token no padrão de 24h. `GMAIL_USER`/`GMAIL_PASS` e `FILA_EMAIL_CONCORRENCIA` ficam só no `lixozero-worker`.
+O serviço `lixozero-api` repassa `PORT`, `SECRET_KEY`, `CORS_ORIGIN`, `JWT_EXPIRES_IN`, `RATE_LIMIT_ENABLED`, `FILA_EMAIL_TENTATIVAS` e `FILA_EMAIL_BACKOFF_MS`. `GMAIL_USER`/`GMAIL_PASS` e `FILA_EMAIL_CONCORRENCIA` ficam só no `lixozero-worker`.
+
+`DATABASE_URL` e `REDIS_URL` **não** vêm do `.env`: são montadas inline no compose, com os hosts `lixozero-db` e `lixozero-redis` da rede interna. O `.env` guarda as variantes com `localhost`, para o ferramental do host (`prisma studio`, `migrate dev`, `start:dev`). A senha vem do mesmo `DB_PASSWORD`/`REDIS_PASSWORD` que alimenta os containers, então as duas pontas não divergem.
+
+Com `CORS_ORIGIN` vazio, `obterOpcoesCors()` devolve `{}` e libera qualquer origem — é o que permite o front de desenvolvimento (`:5173`) falar com a API. Em produção, defina a lista no `.env`.
+
+### `image: postgres` precisa continuar pinada
+
+A imagem está em `postgres:16`. A tag estava aberta (`postgres`, isto é, `latest`) e isso quebrou: a partir do Postgres 18 o data dir mudou de layout — espera o mount em `/var/lib/postgresql`, não em `/var/lib/postgresql/data` — e o container recusa subir sobre um `pg_data` no formato antigo. Subir a major exige `pg_upgrade`, não só trocar a tag. Também não use a variante `-alpine`: trocar glibc por musl muda a collation e invalida índices de texto de um banco já existente.
 
 ### Rate limit em memória
 
