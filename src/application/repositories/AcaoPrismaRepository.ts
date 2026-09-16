@@ -104,6 +104,10 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
           },
         },
       },
+      // Sem ordenacao explicita o Postgres devolve as linhas em ordem
+      // indefinida, e o par skip/take passa a repetir e pular registros entre
+      // paginas. `id` desempata acoes marcadas para o mesmo instante.
+      orderBy: [{ data_acao: 'asc' }, { id: 'asc' }],
       skip: (pagina - 1) * limiteAcoes,
       take: limiteAcoes,
     });
