@@ -1,7 +1,12 @@
 services:
   lixozero-db:
     container_name: lixozero-db
-    image: postgres
+    # Pinado: sem tag a imagem virava `latest`, e a partir do Postgres 18 o
+    # data dir mudou de layout (espera o mount em /var/lib/postgresql, nao em
+    # /var/lib/postgresql/data). Com a tag aberta, um `docker compose pull`
+    # derruba o banco. Nao usar a variante -alpine: trocar glibc por musl muda
+    # a collation e invalida indices de texto de um banco ja existente.
+    image: postgres:16
     restart: always
     environment:
       - POSTGRES_USER=lixo-zero
@@ -13,6 +18,14 @@ services:
       - ./pg_data:/var/lib/postgresql/data:rw
     networks:
       - lixozero-network
+    # A API roda `prisma migrate deploy` no proprio CMD. Num volume virgem o
+    # initdb ainda esta em andamento nesse momento, e sem a condicao abaixo o
+    # container da API morre e reinicia ate o banco aceitar conexao.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lixo-zero -d lixo-zero']
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   lixozero-redis:
     container_name: lixozero-redis
@@ -33,12 +46,22 @@ services:
       context: .
     restart: always
     depends_on:
-      - lixozero-db
-      - lixozero-redis
+      lixozero-db:
+        condition: service_healthy
+      lixozero-redis:
+        condition: service_started
     environment:
       - PORT=${PORT}
-      - DATABASE_URL=${DATABASE_URL}
+      # Montada inline, no mesmo padrao do REDIS_URL abaixo: dentro da rede do
+      # compose o host e lixozero-db, enquanto o .env do host aponta para
+      # localhost (prisma studio, migrate dev, start:dev). A senha vem do mesmo
+      # DB_PASSWORD que alimenta POSTGRES_PASSWORD, entao as duas nao divergem.
+      - DATABASE_URL=postgresql://lixo-zero:${DB_PASSWORD}@lixozero-db:5432/lixo-zero?schema=public
       - SECRET_KEY=${SECRET_KEY}
+      # Vazio libera qualquer origem — e o que permite o front de dev (5173)
+      # falar com a API. Em producao, defina a lista no .env.
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@lixozero-redis:6379
       - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
       - FILA_EMAIL_TENTATIVAS=${FILA_EMAIL_TENTATIVAS:-5}
