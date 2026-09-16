@@ -30,7 +30,42 @@ npm run start:worker:dev
 
 A API sobe em `http://localhost:3000` (ou na porta definida em `PORT`). Sem o worker, as requisições respondem rápido mas os e-mails ficam parados na fila.
 
-`DATABASE_URL` e `REDIS_URL` no `.env` devem apontar para `localhost` quando a API/worker rodam no host (`npm run start:dev`). No Compose, os containers usam `lixozero-db` e `lixozero-redis`.
+`DATABASE_URL` e `REDIS_URL` no `.env` devem apontar para `localhost` quando a API/worker rodam no host (`npm run start:dev`). No Compose, os containers usam `lixozero-db` e `lixozero-redis` — as duas URLs são montadas inline no `docker-compose.yml`, então o `.env` fica livre para o ferramental do host (`prisma studio`, `migrate dev`).
+
+`REDIS_PASSWORD` é obrigatória: sem ela o `command` do serviço Redis vira `redis-server --requirepass --appendonly yes` e o `--appendonly` é consumido como senha. E `REDIS_URL` vazia derruba a API **no import** — `conexaoRedis.ts` lança em escopo de módulo.
+
+## Tudo em Docker
+
+```bash
+# A rede proxy-manager e externa (o compose so a referencia)
+docker network create proxy-manager
+
+docker compose up -d --build
+docker compose ps        # lixozero-db e lixozero-api devem ficar healthy
+curl localhost:3000/health
+```
+
+A imagem do Postgres está pinada em `postgres:16`. Não troque para uma major maior sem `pg_upgrade`: a partir do Postgres 18 o data dir mudou de layout e o container recusa subir sobre um `pg_data` no formato antigo.
+
+## Seed de desenvolvimento
+
+`prisma/seed.ts` popula a 7ª Semana Lixo Zero com 2 usuários, 5 categorias e 12 ações (9 aprovadas, 2 pendentes, 1 reprovada), distribuídas entre passado e futuro. É idempotente — todo registro tem UUID fixo e entra por `upsert`.
+
+```bash
+# Dentro do container (canonico)
+docker compose exec lixozero-api npm run seed
+
+# Iterando no seed sem rebuildar a imagem
+docker compose run --rm --no-deps -v "$(pwd)/prisma:/app/prisma" \
+  lixozero-api npx tsx prisma/seed.ts
+```
+
+| Credencial           | Senha       | Tipo          |
+|----------------------|-------------|---------------|
+| `admin@lixozero.dev` | `Admin@123` | Administrador |
+| `joana@lixozero.dev` | `Joana@123` | Comum         |
+
+O seed grava direto pelo Prisma, contornando a entidade `Acao` — de propósito, porque `validarDataAcao()` recusa data no passado e a home precisa de ações históricas para exercitar o recorte de "próximas ações".
 
 ### Variáveis de ambiente
 
@@ -64,10 +99,13 @@ Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMI
 | `npm run build` | Compila com `tsc`, reescreve `@/` (`tsc-alias`) e copia templates `.ejs` |
 | `npm run start` | Produção (migrations + `node dist/server.js`) |
 | `npm run lint` | ESLint |
+| `npm run seed` | Popula o banco com os dados de desenvolvimento (idempotente) |
 
 ## Primeiro administrador
 
-Todo cadastro pela API nasce como usuário comum (`tipo = '1'`). Não existe endpoint para promover alguém, então em um ambiente novo é preciso criar o primeiro admin manualmente:
+Todo cadastro pela API nasce como usuário comum (`tipo = '1'`). Não existe endpoint para promover alguém.
+
+Em **desenvolvimento**, use `npm run seed` — ele já cria o administrador. Em **produção**, promova manualmente:
 
 ```sql
 UPDATE "Usuario" SET tipo = '0' WHERE email = 'admin@exemplo.com';
