@@ -6,6 +6,8 @@ Este documento descreve os controles implementados, as decisões por trás deles
 
 JWT assinado com **HS256** usando `SECRET_KEY`, com expiração de `JWT_EXPIRES_IN` (padrão `24h`).
 
+O login (`POST /usuarios/autenticar`) devolve, além do `token`, `expires_in` (segundos) e `expires_at` (ISO 8601), derivados dos claims `exp` e `iat` do JWT já assinado — o cliente não precisa parsear a string `24h`.
+
 O payload carrega `id`, `nome`, `email` e `tipo`. A assinatura é gerada em `GerarTokenUsuario` e verificada em `VerificarTokenUsuario`, sempre com o algoritmo fixado explicitamente:
 
 ```ts
@@ -20,7 +22,7 @@ Fixar `algorithms` é o que impede o ataque de confusão de algoritmo (um token 
 
 ```ts
 const usuario = await usuarioRepository.buscarPorId(idUsuario);
-if (!usuario || !usuario.status) return null;
+if (!usuario || !usuario.status) return { autenticado: false, motivo: 'sessao_invalida' };
 ```
 
 Isso existe porque `tipo` e `status` mudam sem invalidar tokens já emitidos. Sem essa consulta, um admin rebaixado continuaria administrador até o token expirar, e um usuário desativado ou excluído continuaria autenticado por até 24 horas. O tipo `UsuarioAutenticado` traz esse aviso escrito no próprio arquivo:
@@ -29,17 +31,17 @@ Isso existe porque `tipo` e `status` mudam sem invalidar tokens já emitidos. Se
 
 O custo é uma consulta por requisição autenticada. É um trade-off deliberado — se for otimizar isso algum dia, faça com cache invalidável, não voltando a confiar no payload.
 
-Outro detalhe do middleware: falhas de verificação do JWT viram `null` (→ `401`), mas falhas de **infraestrutura** (banco indisponível) são propagadas e viram `500`. Um banco fora do ar não deve se disfarçar de credencial inválida.
+Outro detalhe do middleware: falhas de verificação do JWT viram resultado discriminado (`token_expirado` ou `sessao_invalida` → `401`), mas falhas de **infraestrutura** (banco indisponível) são propagadas e viram `500`. Um banco fora do ar não deve se disfarçar de credencial inválida. JWT expirado responde `{ message: 'Sessão inválida.', code: 'TOKEN_EXPIRED' }`; as demais sessões inválidas mantêm só a mensagem.
 
 ### Os três middlewares
 
 | Middleware | Comportamento sem token | Comportamento com token inválido |
 |------------|-------------------------|----------------------------------|
-| `AutenticacaoMiddleware` | `401 Autenticação necessária...` | `401 Sessão inválida.` |
-| `AutenticacaoOpcionalMiddleware` | Segue adiante como anônimo | Segue adiante como anônimo |
+| `AutenticacaoMiddleware` | `401 Autenticação necessária...` | `401 Sessão inválida.` (`code: TOKEN_EXPIRED` se o JWT expirou) |
+| `AutenticacaoOpcionalMiddleware` | Segue adiante como anônimo | Segue como anônimo e envia `X-Session-Expired: true` |
 | `AdminMiddleware` | `401 Usuário não autenticado` | — |
 
-`AutenticacaoOpcionalMiddleware` é usado só em `GET /acoes` e nunca rejeita ninguém: ele apenas popula `request.usuario` quando o token é válido, para que a listagem possa decidir o nível de detalhe. `AdminMiddleware` sempre vem **depois** de `AutenticacaoMiddleware` na cadeia da rota, e responde `403 Acesso negado.` para quem está autenticado mas não é admin.
+`AutenticacaoOpcionalMiddleware` é usado só em `GET /acoes` e nunca rejeita ninguém: ele apenas popula `request.usuario` quando o token é válido, para que a listagem possa decidir o nível de detalhe. Bearer presente mas inválido/expirado não vira `401` — a rota segue anônima e o header `X-Session-Expired` avisa o front para limpar o storage. `AdminMiddleware` sempre vem **depois** de `AutenticacaoMiddleware` na cadeia da rota, e responde `403 Acesso negado.` para quem está autenticado mas não é admin.
 
 ### Senhas
 
@@ -112,11 +114,16 @@ O valor `1` é o correto para a topologia atual (um proxy reverso na frente). Se
 
 ```ts
 const corsOrigin = process.env.CORS_ORIGIN?.trim();
-if (!corsOrigin || corsOrigin === '*') return {};
-return { origin: corsOrigin.split(',').map((origin) => origin.trim()) };
+if (!corsOrigin || corsOrigin === '*') return { exposedHeaders: ['X-Session-Expired'] };
+return {
+  origin: corsOrigin.split(',').map((origin) => origin.trim()),
+  exposedHeaders: ['X-Session-Expired'],
+};
 ```
 
 Vazio ou `*` libera qualquer origem. Em produção, defina a lista explícita de domínios do front separados por vírgula. Note que `CORS_ORIGIN` **não está no `docker-compose.yml`** — se o deploy for por compose, adicione a variável ao serviço `lixozero-api` ou a API subirá com CORS aberto.
+
+`exposedHeaders` inclui `X-Session-Expired` nos dois ramos: sem isso, um front em outra origem não consegue ler o header de `GET /acoes`.
 
 ## Superfície de entrada
 
@@ -158,7 +165,7 @@ O Redis da fila exige senha (`REDIS_PASSWORD` / `REDIS_URL`) e não é publicado
 
 Nenhum destes é bug — são decisões conscientes ou lacunas conhecidas, listadas para que ninguém presuma que existem:
 
-- **Refresh token / revogação.** Um token válido permanece válido até expirar. A mitigação parcial é a recarga do usuário a cada requisição, que cobre desativação e rebaixamento, mas não um token roubado de uma conta ainda ativa.
+- **Refresh token / revogação.** Um token válido permanece válido até expirar. O login informa `expires_in`/`expires_at` e o 401 distingue expiração (`TOKEN_EXPIRED`), mas não há renovação. A mitigação parcial é a recarga do usuário a cada requisição, que cobre desativação e rebaixamento, mas não um token roubado de uma conta ainda ativa.
 - **Verificação de e-mail no cadastro.** Qualquer e-mail é aceito sem confirmação.
 - **Recuperação de senha.** Não há fluxo de "esqueci minha senha".
 - **Política de senha.** Nenhum tamanho mínimo ou requisito de complexidade.

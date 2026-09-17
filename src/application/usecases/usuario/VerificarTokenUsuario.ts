@@ -2,6 +2,8 @@ import { Usecase } from '../usecase';
 
 import jwt from 'jsonwebtoken';
 
+export const ERRO_TOKEN_EXPIRADO = 'Token expirado.';
+
 export type TokenDecodificado = {
   id: string;
   email: string;
@@ -28,10 +30,18 @@ export default class VerificarTokenUsuario
   public async executar({
     token,
   }: VerificarTokenUsuarioEntradaDTO): Promise<VerificarTokenUsuarioSaidaDTO> {
-    const tokenDecodificado = jwt.verify(token, process.env.SECRET_KEY as string, {
-      algorithms: ['HS256'],
-    }) as TokenDecodificado;
+    try {
+      const tokenDecodificado = jwt.verify(token, process.env.SECRET_KEY as string, {
+        algorithms: ['HS256'],
+      }) as TokenDecodificado;
 
-    return tokenDecodificado;
+      return tokenDecodificado;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error(ERRO_TOKEN_EXPIRADO);
+      }
+
+      throw error;
+    }
   }
 }

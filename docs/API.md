@@ -12,7 +12,9 @@ Envie o token JWT no header:
 Authorization: Bearer <token>
 ```
 
-O token é obtido em `POST /usuarios/autenticar` e vale 24 horas por padrão (`JWT_EXPIRES_IN`).
+O token é obtido em `POST /usuarios/autenticar` e vale 24 horas por padrão (`JWT_EXPIRES_IN`). A resposta do login inclui `expires_in` (segundos, `exp - iat`) e `expires_at` (ISO 8601), lidos do JWT já assinado.
+
+Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.", "code": "TOKEN_EXPIRED" }`. Token adulterado, malformado ou conta inativa/excluída responde a mesma mensagem **sem** `code`.
 
 ## Mapa de rotas
 
@@ -92,7 +94,7 @@ Nenhum dos campos tem validação de formato ou de força de senha — apenas du
 
 | Status | Corpo |
 |--------|-------|
-| `200` | `{ "token": "...", "usuario": { "id", "nome", "email", "tipo" } }` |
+| `200` | `{ "token": "...", "expires_in": 86400, "expires_at": "2026-09-17T01:58:00.000Z", "usuario": { "id", "nome", "email", "tipo" } }` |
 | `401` | `{ "error": "Email ou senha incorretos" }` |
 | `400` | Outros erros |
 
@@ -176,6 +178,8 @@ Não existe endpoint para editar ou excluir categoria.
 
 O endpoint principal e o único com **autenticação opcional**: funciona sem token, e o que é devolvido muda conforme quem chama.
 
+Se o header `Authorization` vier com um Bearer que não autentica (expirado, inválido ou conta inativa), a rota segue como anônima e inclui `X-Session-Expired: true` para o front limpar o storage. Sem Bearer, esse header não é enviado. A rota **não** responde `401`.
+
 | Chamador | Ações visíveis | Filtro `situacao` | Sanitização |
 |----------|----------------|-------------------|-------------|
 | Anônimo ou usuário comum | Só `Aprovada` (forçado) | Ignorado | Sim |
@@ -194,6 +198,8 @@ Quando a sanitização se aplica, `celular` é removido do item e `usuario_respo
 | `search` | Busca case-insensitive em `titulo_acao`, `descricao_acao`, `nome_organizador` e `nome_local_acao` |
 | `situacao` | `'0'`, `'1'` ou `'2'`. **Só tem efeito para admin** |
 | `forma_realizacao_acao` | `'0'`, `'1'` ou `'2'` |
+
+A listagem sai ordenada por `data_acao` crescente, com `id` como desempate — a página 1 traz as ações **mais antigas**. A ordenação é explícita justamente para tornar a paginação determinística: sem ela o Postgres devolve as linhas em ordem arbitrária e o par `skip`/`take` repete e pula registros entre páginas.
 
 > **Advertência sobre `data_acao`:** o filtro faz `new Date(valor)` e compara por igualdade exata contra o `DateTime` da coluna, hora inclusa. Passar `2026-09-15` só casa com ações gravadas exatamente à meia-noite UTC. Para buscar "as ações de um dia", use `GET /acoes/:dataInicial/:dataFinal` com o início e o fim do dia.
 
@@ -243,7 +249,7 @@ O responsável sai **somente** do token. Query `id_usuario`, se vier, é ignorad
 
 Admin nesta rota também vê só as ações em que é responsável. A fila de moderação continua em `GET /acoes`.
 
-Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario_alteracao` vêm completos. O envelope e o formato de cada item são os mesmos de `GET /acoes` (`situacao_acao` em texto).
+Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario_alteracao` vêm completos. O envelope e o formato de cada item são os mesmos de `GET /acoes` (`situacao_acao` em texto). A ordenação também é a mesma (`data_acao` crescente, `id` como desempate), porque as duas rotas passam por `listarComPaginacao`.
 
 **Query params:**
 
@@ -379,7 +385,8 @@ Clientes devem checar as duas chaves. Mensagens de erro `500` são detalhadas fo
 | Status | Mensagem | Quando |
 |--------|----------|--------|
 | `401` | `Autenticação necessária para acessar o recurso.` | Header `Authorization` ausente |
-| `401` | `Sessão inválida.` | Token expirado/adulterado, ou usuário excluído/desativado |
+| `401` | `Sessão inválida.` com `code: TOKEN_EXPIRED` | JWT com `exp` vencido |
+| `401` | `Sessão inválida.` (sem `code`) | Token adulterado/malformado, ou usuário excluído/desativado |
 | `401` | `Usuário não autenticado` | `AdminMiddleware` sem `request.usuario` |
 | `403` | `Acesso negado.` | Autenticado, mas `tipo !== '0'` |
 

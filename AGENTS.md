@@ -88,6 +88,7 @@ Atenção à inversão: em `Usuario.tipo`, `'0'` é admin e `'1'` é usuário co
 | `npm run lint` | ESLint com `--max-warnings 0` |
 | `npm run build` | `tsc` + `tsc-alias` + cópia dos `.ejs` para `dist/` |
 | `npm run start` | Produção: `prisma migrate deploy` e depois `node dist/server.js` |
+| `npm run seed` | Popula o banco com dados de desenvolvimento (`prisma/seed.ts`, idempotente) |
 | `npx prisma migrate dev --name <nome>` | Nova migration em desenvolvimento |
 | `npx prisma generate` | Regenerar o client após mexer no schema |
 
