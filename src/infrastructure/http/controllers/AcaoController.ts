@@ -72,6 +72,53 @@ export async function listarTodasAcoes(request: UsuarioRequest, response: Respon
   }
 }
 
+export async function listarMinhasAcoes(request: UsuarioRequest, response: Response) {
+  try {
+    if (!request.usuario) {
+      return response
+        .status(401)
+        .json({ message: 'Autenticação necessária para acessar o recurso.' });
+    }
+
+    const {
+      page = 1,
+      limit = 10,
+      id_categoria,
+      data_acao,
+      search,
+      situacao,
+      forma_realizacao_acao,
+    } = request.query;
+
+    const { paginaAtual, limite: limiteDeAcoesPorPagina } = normalizarPaginacao(page, limit);
+
+    const filtros = {
+      id_categoria: (id_categoria as string) || '',
+      id_usuario: request.usuario.id,
+      data_acao: (data_acao as string) || '',
+      search: (search as string) || '',
+      situacao: (situacao as string) || '',
+      forma_realizacao_acao: (forma_realizacao_acao as string) || '',
+    };
+
+    const listarAcoes = new ListarAcoes(acaoPrismaRepository);
+    const { acoes, totalDePaginas } = await listarAcoes.executar({
+      filtros,
+      limiteDeAcoesPorPagina,
+      paginaAtual,
+      sanitizarSaida: false,
+    });
+
+    response.status(200).json({
+      actions: acoes,
+      totalPages: totalDePaginas,
+      currentPage: paginaAtual,
+    });
+  } catch (error) {
+    responderErroInterno(response, error);
+  }
+}
+
 export async function criarAcao(request: UsuarioRequest, response: Response) {
   try {
     if (!request.usuario) {

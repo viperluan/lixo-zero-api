@@ -19,7 +19,7 @@ Só existem dois papéis, distinguidos pelo campo `Usuario.tipo`:
 | Papel | `tipo` | O que faz |
 |-------|--------|-----------|
 | **Administrador** | `'0'` | Aprova e reprova ações, vê todas as ações em qualquer situação com dados completos, cria categorias, lista e remove usuários |
-| **Organizador (comum)** | `'1'` | Cadastra ações, consulta a programação |
+| **Organizador (comum)** | `'1'` | Cadastra ações, consulta as próprias em qualquer situação (`GET /acoes/minhas`) e a programação pública (só aprovadas) |
 
 Cuidado com a inversão: `'0'` é o administrador, não o usuário comum. A verificação está centralizada em `src/shared/utils/usuarioEhAdmin.ts`.
 
@@ -82,6 +82,7 @@ Não é persistido. É um value object (`src/domain/email/entity/Email.ts`) com 
 Características do fluxo, todas verificáveis em `src/application/usecases/acao/`:
 
 - Uma ação **sempre** nasce `Pendente`. O cliente não escolhe a situação inicial.
+- O organizador responsável vê as próprias ações em qualquer situação em `GET /acoes/minhas`. A programação pública (`GET /acoes`) continua expondo só `Aprovada`.
 - As transições não são restritas por estado de origem. Um admin pode reprovar uma ação já aprovada, ou reaprovar uma reprovada, quantas vezes quiser. Cada transição dispara um novo e-mail.
 - Só os valores `'1'` e `'2'` são aceitos em `PUT /acoes/:id`. Tentar voltar para `'0'` (Pendente) é rejeitado com erro de "Situação inválida".
 - `id_usuario_alteracao` registra quem fez a última mudança. Na criação, ele é preenchido com o próprio `id_usuario_responsavel`.

@@ -138,7 +138,7 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 - **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua. Atualize [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) se o disparo ou o conteúdo mudar. O SMTP em si roda no worker (`src/worker.ts`); a API só enfileira o HTML já renderizado.
 - **Fila de e-mail**: `FilaEmailService` implementa `IEmailService` e publica na fila BullMQ `emails`. Não coloque BullMQ no `domain/`. Credenciais SMTP (`GMAIL_*`) pertencem só ao worker; a API usa `REDIS_URL`.
 - **Segurança**: leia [`docs/SEGURANCA.md`](docs/SEGURANCA.md) antes. O middleware de autenticação recarrega o usuário do banco a cada requisição de propósito — não substitua isso pelo payload do JWT.
-- **Resposta pública de ações**: usuários não-admin recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. Qualquer campo sensível novo precisa entrar nessa função.
+- **Resposta pública de ações**: usuários não-admin em `GET /acoes` e nas listagens por data recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. `GET /acoes/minhas` devolve as ações do dono autenticado em qualquer situação, sem sanitizar. Qualquer campo sensível novo precisa entrar nessa função.
 
 ## Documentação
 
