@@ -15,6 +15,7 @@ acaoRouter.get(
   AutenticacaoOpcionalMiddleware,
   acaoController.listarTodasAcoes
 );
+acaoRouter.get('/minhas', AutenticacaoMiddleware, acaoController.listarMinhasAcoes);
 acaoRouter.get('/:data', AutenticacaoMiddleware, acaoController.listarPorData);
 acaoRouter.get(
   '/:dataInicial/:dataFinal',

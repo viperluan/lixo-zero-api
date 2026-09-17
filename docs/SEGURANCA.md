@@ -66,7 +66,9 @@ function montarOpcoesListagemAcoes(request: UsuarioRequest) {
 }
 ```
 
-Não-admin tem a situação **forçada** para `Aprovada`, o que também neutraliza a tentativa de passar `?situacao=0` na query para espiar a fila de moderação.
+Não-admin tem a situação **forçada** para `Aprovada`, o que também neutraliza a tentativa de passar `?situacao=0` na query para espiar a fila de moderação. Essa regra vale para `GET /acoes` e para as listagens por data — a vitrine pública.
+
+`GET /acoes/minhas` é o outro caminho: exige token, filtra pelo `id` do usuário autenticado (query `id_usuario` é ignorada) e devolve as ações do dono em qualquer situação, **sem** sanitizar. Admin nesta rota também vê só as ações em que é responsável; a fila de moderação permanece em `GET /acoes`.
 
 ## Sanitização das respostas públicas
 
@@ -75,7 +77,7 @@ Não-admin tem a situação **forçada** para `Aprovada`, o que também neutrali
 - `celular` é deletado do objeto;
 - `usuario_responsavel` e `usuario_alteracao` são reduzidos a `{ nome }`, sem `email`.
 
-Aplicada nos três endpoints de listagem de ações sempre que `sanitizarSaida` é verdadeiro. **Qualquer campo sensível novo em `Acao` precisa ser adicionado a essa função** — ela é a única barreira entre o banco e a resposta pública.
+Aplicada em `GET /acoes`, `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` sempre que `sanitizarSaida` é verdadeiro. `GET /acoes/minhas` não sanitiza: o dono autenticado recebe `celular` e e-mails. **Qualquer campo sensível novo em `Acao` precisa ser adicionado a essa função** — ela é a única barreira entre o banco e a resposta pública.
 
 Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continuam visíveis: são dados de divulgação do evento, expostos de propósito.
 

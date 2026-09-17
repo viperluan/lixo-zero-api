@@ -59,6 +59,8 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
 8. worker.ts             consome a fila `emails` e envia via Nodemailer/Gmail SMTP
 ```
 
+`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova. A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
+
 Os middlewares globais são aplicados na ordem exata declarada em `src/app.ts`:
 
 ```ts
@@ -115,7 +117,7 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 |----------|-------------|------------------|
 | `acao` | `CriarAcao` | Valida título único, cria a ação, envia e-mail de confirmação |
 | | `AtualizarAcao` | Aprova ou reprova, envia o e-mail correspondente |
-| | `ListarAcoes` | Listagem paginada com filtros e sanitização opcional |
+| | `ListarAcoes` | Listagem paginada com filtros e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
 | | `ListarAcoesPorData` | Ações em uma data exata |
 | | `ListarAcoesPorIntervaloData` | Ações entre duas datas |
 | `usuario` | `CriarUsuario` | Verifica e-mail e CPF/CNPJ duplicados, persiste com senha hasheada |

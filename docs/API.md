@@ -26,6 +26,7 @@ O token é obtido em `POST /usuarios/autenticar` e vale 24 horas por padrão (`J
 | `GET` | `/categorias` | Público | Leitura pública (60/min) |
 | `POST` | `/categorias` | Admin | — |
 | `GET` | `/acoes` | Público, com auth opcional | Leitura pública (60/min) |
+| `GET` | `/acoes/minhas` | Autenticado | — |
 | `POST` | `/acoes` | Autenticado | — |
 | `GET` | `/acoes/:data` | Autenticado | — |
 | `GET` | `/acoes/:dataInicial/:dataFinal` | Autenticado | — |
@@ -35,7 +36,7 @@ Todas as rotas também passam pelo rate limit global de 200 requisições por 15
 
 ## Paginação
 
-Os três endpoints de listagem paginada (`/usuarios`, `/categorias`, `/acoes`) aceitam:
+Os endpoints de listagem paginada (`/usuarios`, `/categorias`, `/acoes`, `/acoes/minhas`) aceitam:
 
 | Query param | Default | Regra |
 |-------------|---------|-------|
@@ -232,6 +233,35 @@ Quando a sanitização se aplica, `celular` é removido do item e `usuario_respo
 
 Repare que `situacao_acao`, `forma_realizacao_acao` e `tipo_publico_acao` vêm **traduzidos para texto** neste endpoint, enquanto os filtros da query esperam os **códigos**. Erros inesperados respondem `500` via `responderErroInterno`.
 
+A tela de Minhas Ações **não** deve usar este endpoint: para não-admin ele só devolve aprovadas. Use `GET /acoes/minhas`.
+
+### `GET /acoes/minhas`
+
+Requer autenticação (qualquer usuário autenticado). Devolve as ações em que o chamador é `id_usuario_responsavel`, em **qualquer** situação — Pendente, Aprovada ou Reprovada. É o endpoint da tela Minhas Ações.
+
+O responsável sai **somente** do token. Query `id_usuario`, se vier, é ignorada.
+
+Admin nesta rota também vê só as ações em que é responsável. A fila de moderação continua em `GET /acoes`.
+
+Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario_alteracao` vêm completos. O envelope e o formato de cada item são os mesmos de `GET /acoes` (`situacao_acao` em texto).
+
+**Query params:**
+
+| Param | Descrição |
+|-------|-----------|
+| `page`, `limit` | Paginação |
+| `id_categoria` | UUID da categoria |
+| `data_acao` | Data exata — mesma advertência de `GET /acoes` |
+| `search` | Busca case-insensitive em `titulo_acao`, `descricao_acao`, `nome_organizador` e `nome_local_acao` |
+| `situacao` | `'0'`, `'1'` ou `'2'`. Omitido = todas as situações do dono |
+| `forma_realizacao_acao` | `'0'`, `'1'` ou `'2'` |
+
+| Status | Situação |
+|--------|----------|
+| `200` | Envelope `{ "actions", "totalPages", "currentPage" }` |
+| `401` | Sem token ou sessão inválida |
+| `500` | Falha inesperada via `responderErroInterno` |
+
 ### `POST /acoes`
 
 Requer autenticação (qualquer usuário). O `id_usuario_responsavel` vem do token — mandar no corpo não tem efeito.
@@ -363,6 +393,9 @@ TOKEN=$(curl -s -X POST http://localhost:3000/usuarios/autenticar \
 
 # Listagem pública (só ações aprovadas, sem dados de contato)
 curl 'http://localhost:3000/acoes?page=1&limit=20&search=mutirao'
+
+# Minhas ações (qualquer situação do usuário autenticado)
+curl -H "Authorization: Bearer $TOKEN" 'http://localhost:3000/acoes/minhas?page=1&limit=10'
 
 # Fila de moderação (admin)
 curl -H "Authorization: Bearer $TOKEN" 'http://localhost:3000/acoes?situacao=0'
