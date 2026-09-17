@@ -12,7 +12,9 @@ Envie o token JWT no header:
 Authorization: Bearer <token>
 ```
 
-O token é obtido em `POST /usuarios/autenticar` e vale 24 horas por padrão (`JWT_EXPIRES_IN`).
+O token é obtido em `POST /usuarios/autenticar` e vale 24 horas por padrão (`JWT_EXPIRES_IN`). A resposta do login inclui `expires_in` (segundos, `exp - iat`) e `expires_at` (ISO 8601), lidos do JWT já assinado.
+
+Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.", "code": "TOKEN_EXPIRED" }`. Token adulterado, malformado ou conta inativa/excluída responde a mesma mensagem **sem** `code`.
 
 ## Mapa de rotas
 
@@ -92,7 +94,7 @@ Nenhum dos campos tem validação de formato ou de força de senha — apenas du
 
 | Status | Corpo |
 |--------|-------|
-| `200` | `{ "token": "...", "usuario": { "id", "nome", "email", "tipo" } }` |
+| `200` | `{ "token": "...", "expires_in": 86400, "expires_at": "2026-09-17T01:58:00.000Z", "usuario": { "id", "nome", "email", "tipo" } }` |
 | `401` | `{ "error": "Email ou senha incorretos" }` |
 | `400` | Outros erros |
 
@@ -175,6 +177,8 @@ Não existe endpoint para editar ou excluir categoria.
 ### `GET /acoes`
 
 O endpoint principal e o único com **autenticação opcional**: funciona sem token, e o que é devolvido muda conforme quem chama.
+
+Se o header `Authorization` vier com um Bearer que não autentica (expirado, inválido ou conta inativa), a rota segue como anônima e inclui `X-Session-Expired: true` para o front limpar o storage. Sem Bearer, esse header não é enviado. A rota **não** responde `401`.
 
 | Chamador | Ações visíveis | Filtro `situacao` | Sanitização |
 |----------|----------------|-------------------|-------------|
@@ -381,7 +385,8 @@ Clientes devem checar as duas chaves. Mensagens de erro `500` são detalhadas fo
 | Status | Mensagem | Quando |
 |--------|----------|--------|
 | `401` | `Autenticação necessária para acessar o recurso.` | Header `Authorization` ausente |
-| `401` | `Sessão inválida.` | Token expirado/adulterado, ou usuário excluído/desativado |
+| `401` | `Sessão inválida.` com `code: TOKEN_EXPIRED` | JWT com `exp` vencido |
+| `401` | `Sessão inválida.` (sem `code`) | Token adulterado/malformado, ou usuário excluído/desativado |
 | `401` | `Usuário não autenticado` | `AdminMiddleware` sem `request.usuario` |
 | `403` | `Acesso negado.` | Autenticado, mas `tipo !== '0'` |
 

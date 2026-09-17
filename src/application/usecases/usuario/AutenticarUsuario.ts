@@ -10,6 +10,8 @@ export type AutenticarUsuarioEntradaDTO = {
 
 export type AutenticarUsuarioSaidaDTO = {
   token: string;
+  expires_in: number;
+  expires_at: string;
   usuario: {
     id: string;
     nome: string;
@@ -47,7 +49,7 @@ export default class AutenticarUsuario
     email,
     tipo,
   }: Usuario): Promise<AutenticarUsuarioSaidaDTO> {
-    const { token } = await this.gerarTokenUsuario.executar({
+    const { token, expires_in, expires_at } = await this.gerarTokenUsuario.executar({
       id,
       email,
       nome,
@@ -56,6 +58,8 @@ export default class AutenticarUsuario
 
     const saida: AutenticarUsuarioSaidaDTO = {
       token,
+      expires_in,
+      expires_at,
       usuario: {
         id,
         email,

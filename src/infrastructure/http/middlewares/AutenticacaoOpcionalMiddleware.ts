@@ -3,7 +3,7 @@ import { carregarUsuarioAutenticado, UsuarioRequest } from './AutenticacaoMiddle
 
 const AutenticacaoOpcionalMiddleware = async (
   request: UsuarioRequest,
-  _response: Response,
+  response: Response,
   next: NextFunction
 ) => {
   const token = request.headers.authorization?.split(' ')[1];
@@ -12,10 +12,16 @@ const AutenticacaoOpcionalMiddleware = async (
     return next();
   }
 
-  const usuario = await carregarUsuarioAutenticado(token).catch(() => null);
+  try {
+    const resultado = await carregarUsuarioAutenticado(token);
 
-  if (usuario) {
-    request.usuario = usuario;
+    if (resultado.autenticado) {
+      request.usuario = resultado.usuario;
+    } else {
+      response.setHeader('X-Session-Expired', 'true');
+    }
+  } catch {
+    // Falha de infraestrutura: segue anônimo, sem o header.
   }
 
   next();

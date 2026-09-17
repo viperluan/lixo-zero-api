@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import VerificarTokenUsuario from '@/application/usecases/usuario/VerificarTokenUsuario';
+import VerificarTokenUsuario, {
+  ERRO_TOKEN_EXPIRADO,
+} from '@/application/usecases/usuario/VerificarTokenUsuario';
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
 import { prisma } from '@/shared/package/prisma';
 import { UsuarioAutenticado } from '@/shared/types/UsuarioAutenticado';
@@ -9,18 +11,22 @@ export type UsuarioRequest = Request & {
   usuario?: UsuarioAutenticado;
 };
 
+export type ResultadoCarregarUsuarioAutenticado =
+  | { autenticado: true; usuario: UsuarioAutenticado }
+  | { autenticado: false; motivo: 'token_expirado' | 'sessao_invalida' };
+
 const usuarioRepository = new UsuarioPrismaRepository(prisma);
 
 /**
  * Resolve o usuário a partir do token consultando o banco, de modo que
  * desativação, rebaixamento e exclusão tenham efeito imediato.
  *
- * Retorna `null` quando o token é inválido ou a conta não pode mais ser usada.
- * Falhas de infraestrutura são propagadas para não virarem 401.
+ * Falhas de verificação do JWT e contas inutilizáveis viram resultado
+ * discriminado. Falhas de infraestrutura são propagadas para não virarem 401.
  */
 export async function carregarUsuarioAutenticado(
   token: string
-): Promise<UsuarioAutenticado | null> {
+): Promise<ResultadoCarregarUsuarioAutenticado> {
   let idUsuario: string;
 
   try {
@@ -28,19 +34,28 @@ export async function carregarUsuarioAutenticado(
     const tokenDecodificado = await verificarTokenUsuario.executar({ token });
 
     idUsuario = tokenDecodificado.id;
-  } catch {
-    return null;
+  } catch (error) {
+    if ((error as Error).message === ERRO_TOKEN_EXPIRADO) {
+      return { autenticado: false, motivo: 'token_expirado' };
+    }
+
+    return { autenticado: false, motivo: 'sessao_invalida' };
   }
 
   const usuario = await usuarioRepository.buscarPorId(idUsuario);
 
-  if (!usuario || !usuario.status) return null;
+  if (!usuario || !usuario.status) {
+    return { autenticado: false, motivo: 'sessao_invalida' };
+  }
 
   return {
-    id: usuario.id,
-    nome: usuario.nome,
-    email: usuario.email,
-    tipo: usuario.tipo,
+    autenticado: true,
+    usuario: {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      tipo: usuario.tipo,
+    },
   };
 }
 
@@ -58,13 +73,17 @@ const AutenticacaoMiddleware = async (
   }
 
   try {
-    const usuario = await carregarUsuarioAutenticado(token);
+    const resultado = await carregarUsuarioAutenticado(token);
 
-    if (!usuario) {
+    if (!resultado.autenticado) {
+      if (resultado.motivo === 'token_expirado') {
+        return response.status(401).json({ message: 'Sessão inválida.', code: 'TOKEN_EXPIRED' });
+      }
+
       return response.status(401).json({ message: 'Sessão inválida.' });
     }
 
-    request.usuario = usuario;
+    request.usuario = resultado.usuario;
 
     next();
   } catch (error) {
