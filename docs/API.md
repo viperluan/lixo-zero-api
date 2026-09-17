@@ -245,7 +245,7 @@ O responsável sai **somente** do token. Query `id_usuario`, se vier, é ignorad
 
 Admin nesta rota também vê só as ações em que é responsável. A fila de moderação continua em `GET /acoes`.
 
-Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario_alteracao` vêm completos. O envelope e o formato de cada item são os mesmos de `GET /acoes` (`situacao_acao` em texto).
+Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario_alteracao` vêm completos. O envelope e o formato de cada item são os mesmos de `GET /acoes` (`situacao_acao` em texto). A ordenação também é a mesma (`data_acao` crescente, `id` como desempate), porque as duas rotas passam por `listarComPaginacao`.
 
 **Query params:**
 

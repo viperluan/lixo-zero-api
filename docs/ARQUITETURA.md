@@ -59,7 +59,7 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
 8. worker.ts             consome a fila `emails` e envia via Nodemailer/Gmail SMTP
 ```
 
-`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova. A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
+`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova — inclusive a ordenação de `listarComPaginacao` (`data_acao` crescente, `id` como desempate). A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
 
 Os middlewares globais são aplicados na ordem exata declarada em `src/app.ts`:
 
