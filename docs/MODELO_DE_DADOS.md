@@ -83,7 +83,7 @@ Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (
 As três FKs de `Acao` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
 
 - Não dá para excluir uma categoria que tenha ações.
-- Não dá para excluir um usuário que seja responsável por alguma ação **ou** que tenha sido o último a alterar alguma ação. `DeletarUsuario` antecipa essa checagem com `possuiAcaoVinculada()` para devolver um `409` legível, e `UsuarioPrismaRepository.deletar()` ainda captura os códigos Prisma `P2003`/`P2014` como rede de segurança.
+- Não dá para excluir um usuário que seja responsável por alguma ação **ou** que tenha sido o último a alterar alguma ação: a FK do banco barra com `ON DELETE RESTRICT`. Não há endpoint de exclusão de usuário.
 
 `id_usuario_alteracao` é `NOT NULL` desde o início, por isso `Acao.criarNovaAcao()` o preenche com o próprio `id_usuario_responsavel` na criação.
 

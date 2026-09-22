@@ -24,14 +24,11 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `POST` | `/usuarios` | Público | Cadastro (5/h) |
 | `POST` | `/usuarios/autenticar` | Público | Autenticação (10/15min) |
 | `GET` | `/usuarios` | Admin | — |
-| `DELETE` | `/usuarios/:id` | Admin | — |
 | `GET` | `/categorias` | Público | Leitura pública (60/min) |
 | `POST` | `/categorias` | Admin | — |
 | `GET` | `/acoes` | Público, com auth opcional | Leitura pública (60/min) |
 | `GET` | `/acoes/minhas` | Autenticado | — |
 | `POST` | `/acoes` | Autenticado | — |
-| `GET` | `/acoes/:data` | Autenticado | — |
-| `GET` | `/acoes/:dataInicial/:dataFinal` | Autenticado | — |
 | `PUT` | `/acoes/:id` | Admin | — |
 
 Todas as rotas também passam pelo rate limit global de 200 requisições por 15 minutos por IP.
@@ -125,17 +122,6 @@ O hash da senha não é retornado. O CPF/CNPJ sai mascarado (`123.***.***-01` ou
 | `403` | Autenticado mas não admin |
 | `400` | Qualquer falha (este controller não diferencia erro interno) |
 
-### `DELETE /usuarios/:id`
-
-Requer admin. Bloqueado quando o usuário está vinculado a ações, como responsável ou como autor da última alteração.
-
-| Status | Corpo |
-|--------|-------|
-| `200` | **Vazio** |
-| `404` | `{ "error": "Usuário não existe." }` |
-| `409` | `{ "error": "Não é possível excluir um usuário vinculado a ações." }` |
-| `500` | `{ "error": "..." }` |
-
 ---
 
 ## Categorias
@@ -201,7 +187,7 @@ Quando a sanitização se aplica, `celular` é removido do item e `usuario_respo
 
 A listagem sai ordenada por `data_acao` crescente, com `id` como desempate — a página 1 traz as ações **mais antigas**. A ordenação é explícita justamente para tornar a paginação determinística: sem ela o Postgres devolve as linhas em ordem arbitrária e o par `skip`/`take` repete e pula registros entre páginas.
 
-> **Advertência sobre `data_acao`:** o filtro faz `new Date(valor)` e compara por igualdade exata contra o `DateTime` da coluna, hora inclusa. Passar `2026-09-15` só casa com ações gravadas exatamente à meia-noite UTC. Para buscar "as ações de um dia", use `GET /acoes/:dataInicial/:dataFinal` com o início e o fim do dia.
+> **Advertência sobre `data_acao`:** o filtro faz `new Date(valor)` e compara por igualdade exata contra o `DateTime` da coluna, hora inclusa. Passar `2026-09-15` só casa com ações gravadas exatamente à meia-noite UTC.
 
 **200:**
 
@@ -338,34 +324,6 @@ A resposta é um subconjunto dos campos, com `situacao_acao` em texto. `id_usuar
 | `400` | `{ "error": "Situação inválida. Use \"1\" para aprovar ou \"2\" para reprovar." }`, `"Ação não encontrada!"`, `"Usuário não encontrado!"` ou `"Erro ao gerar template."` |
 | `401` / `403` | Sem token / não é admin |
 
-### `GET /acoes/:data`
-
-Requer autenticação — diferente de `GET /acoes`, não funciona anonimamente. Não é paginado: devolve um **array puro**.
-
-`:data` é passado direto para `new Date()`, então aceita ISO 8601 (`2026-09-15` ou `2026-09-15T14:00:00.000Z`). A comparação é por igualdade exata de timestamp, com a mesma limitação descrita no filtro `data_acao`.
-
-Usuário comum recebe só ações `Aprovada`, sanitizadas. Admin recebe todas, completas.
-
-| Status | Corpo |
-|--------|-------|
-| `200` | `[ { ...ação }, ... ]` |
-| `400` | `{ "error": "Data inválida." }` |
-| `401` | Sem token |
-
-> **Inconsistência conhecida:** aqui `situacao_acao` volta como **código** (`"1"`), não como texto, ao contrário de `GET /acoes`. Já `forma_realizacao_acao` e `tipo_publico_acao` continuam em texto. Este endpoint também não inclui `categoria`, `usuario_responsavel` nem `usuario_alteracao` preenchidos, porque a consulta do repositório não faz `include`.
-
-### `GET /acoes/:dataInicial/:dataFinal`
-
-Requer autenticação. Array puro, sem paginação. Intervalo **inclusivo** nas duas pontas (`gte` / `lte`). Mesmas regras de visibilidade e o mesmo formato de saída de `GET /acoes/:data`.
-
-Este é o endpoint recomendado para montar a programação de um período — por exemplo, a semana do evento em um ano específico.
-
-| Status | Corpo |
-|--------|-------|
-| `200` | `[ { ...ação }, ... ]` |
-| `400` | `{ "error": "Data inicial inválida." }`, `"Data final inválida."` ou `"A data de início deve ser anterior à data de fim."` |
-| `401` | Sem token |
-
 ---
 
 ## Formato dos erros
@@ -412,8 +370,4 @@ curl -X PUT "http://localhost:3000/acoes/<id>" \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"situacao_acao":"1"}'
-
-# Programação de um período
-curl -H "Authorization: Bearer $TOKEN" \
-  'http://localhost:3000/acoes/2026-09-01/2026-09-30'
 ```

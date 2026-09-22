@@ -60,7 +60,7 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
 8. worker.ts             consome a fila `emails` e envia via Nodemailer/Gmail SMTP
 ```
 
-`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova — inclusive a ordenação de `listarComPaginacao` (`data_acao` crescente, `id` como desempate). A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
+`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova — inclusive a ordenação de `listarComPaginacao` (`data_acao` crescente, `id` como desempate). O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
 
 Os middlewares globais são aplicados na ordem exata declarada em `src/app.ts`:
 
@@ -119,14 +119,11 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | `acao` | `CriarAcao` | Valida título único, cria a ação, envia e-mail de confirmação |
 | | `AtualizarAcao` | Aprova ou reprova, envia o e-mail correspondente |
 | | `ListarAcoes` | Listagem paginada com filtros e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
-| | `ListarAcoesPorData` | Ações em uma data exata |
-| | `ListarAcoesPorIntervaloData` | Ações entre duas datas |
 | `usuario` | `CriarUsuario` | Verifica e-mail e CPF/CNPJ duplicados, persiste com senha hasheada |
 | | `AutenticarUsuario` | Confere credenciais e `status`, delega a geração do token |
 | | `GerarTokenUsuario` | Assina o JWT (HS256) e devolve `expires_in` / `expires_at` |
 | | `VerificarTokenUsuario` | Valida a assinatura; token expirado lança `ERRO_TOKEN_EXPIRADO` |
 | | `ListarUsuarios` | Listagem paginada |
-| | `DeletarUsuario` | Bloqueia exclusão de usuário vinculado a ações |
 | `categoria` | `CriarCategoria` | Verifica descrição duplicada |
 | | `ListarCategorias` | Listagem paginada |
 | `email` | `GerarTemplateAcaoCadastrada` | Renderiza EJS com os dados completos da ação |
@@ -139,12 +136,11 @@ Não existe middleware de erro do Express. Cada função de controller tem seu `
 
 O padrão predominante é responder `400` com `{ error: mensagem }`. Os lugares que fogem disso e servem de referência para código novo:
 
-- `UsuarioController.remover` compara com as constantes exportadas `ERRO_USUARIO_NAO_EXISTE` (→ `404`) e `ERRO_USUARIO_VINCULADO_A_ACOES` (→ `409`).
 - `UsuarioController.autenticar` mapeia `'Email ou senha incorretos'` para `401`.
 - `AutenticacaoMiddleware` compara `ERRO_TOKEN_EXPIRADO` para `401` com `code: TOKEN_EXPIRED`.
 - Falhas inesperadas usam `responderErroInterno()`, que loga no console e responde `500` — com a mensagem real fora de produção e com um texto genérico quando `NODE_ENV=production`.
 
-Exportar a mensagem como constante e comparar contra ela, como em `DeletarUsuario`, é o caminho mais robusto entre os que existem hoje.
+Exportar a mensagem como constante e comparar contra ela, como em `ERRO_TOKEN_EXPIRADO`, é o caminho mais robusto entre os que existem hoje.
 
 ## Utilitários compartilhados
 

@@ -11,12 +11,6 @@ export default interface IAcaoRepository {
     pagina: number,
     limiteAcoes: number
   ): Promise<Acao[] | null>;
-  listarPorData(data: Date, situacao?: string): Promise<Acao[] | null>;
-  listarPorIntervaloData(
-    dataInicial: Date,
-    dataFinal: Date,
-    situacao?: string
-  ): Promise<Acao[] | null>;
   salvar(acao: Acao): Promise<void>;
   atualizar(id: string, campos: unknown): Promise<Acao>;
   deletar(id: string): Promise<void>;

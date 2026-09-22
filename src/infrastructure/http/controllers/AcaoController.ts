@@ -4,8 +4,6 @@ import AcaoPrismaRepository from '@/application/repositories/AcaoPrismaRepositor
 import CriarAcao, { CriarAcaoDadosDTO } from '@/application/usecases/acao/CriarAcao';
 import ListarAcoes from '@/application/usecases/acao/ListarAcoes';
 import AtualizarAcao from '@/application/usecases/acao/AtualizarAcao';
-import ListarAcoesPorData from '@/application/usecases/acao/ListarAcoesPorData';
-import ListarAcoesPorIntervaloData from '@/application/usecases/acao/ListarAcoesPorIntervaloData';
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
 import FilaEmailService from '@/application/services/email/FilaEmailService';
 import { filaEmail } from '@/infrastructure/fila/filaEmail';
@@ -172,43 +170,6 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
     });
 
     response.status(200).json(acao);
-  } catch (error) {
-    response.status(400).json({ error: (error as Error).message });
-  }
-}
-
-export async function listarPorData(request: UsuarioRequest, response: Response) {
-  try {
-    const { data } = request.params;
-    const { situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
-
-    const listarPorData = new ListarAcoesPorData(acaoPrismaRepository);
-    const acoes = await listarPorData.executar({
-      data,
-      situacao: situacaoPadrao,
-      sanitizarSaida,
-    });
-
-    response.status(200).json(acoes);
-  } catch (error) {
-    response.status(400).json({ error: (error as Error).message });
-  }
-}
-
-export async function listarPorIntervaloData(request: UsuarioRequest, response: Response) {
-  try {
-    const { dataInicial, dataFinal } = request.params;
-    const { situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
-
-    const listarAcoesPorIntervaloData = new ListarAcoesPorIntervaloData(acaoPrismaRepository);
-    const acoes = await listarAcoesPorIntervaloData.executar({
-      dataInicial,
-      dataFinal,
-      situacao: situacaoPadrao,
-      sanitizarSaida,
-    });
-
-    response.status(200).json(acoes);
   } catch (error) {
     response.status(400).json({ error: (error as Error).message });
   }

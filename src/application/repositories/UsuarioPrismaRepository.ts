@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 import Usuario from '../../domain/usuario/entity/Usuario';
 import IUsuarioRepository from '../../domain/usuario/repository/IUsuarioRepository';
-import { ERRO_USUARIO_VINCULADO_A_ACOES } from '../usecases/usuario/DeletarUsuario';
 
 export default class UsuarioPrismaRepository implements IUsuarioRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -76,30 +75,5 @@ export default class UsuarioPrismaRepository implements IUsuarioRepository {
     };
 
     await this.prisma.usuario.update({ where: { email }, data });
-  }
-
-  async possuiAcaoVinculada(id: string): Promise<boolean> {
-    const quantidade = await this.prisma.acao.count({
-      where: {
-        OR: [{ id_usuario_responsavel: id }, { id_usuario_alteracao: id }],
-      },
-    });
-
-    return quantidade > 0;
-  }
-
-  async deletar(id: string): Promise<void> {
-    try {
-      await this.prisma.usuario.delete({ where: { id } });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        (error.code === 'P2003' || error.code === 'P2014')
-      ) {
-        throw new Error(ERRO_USUARIO_VINCULADO_A_ACOES);
-      }
-
-      throw error;
-    }
   }
 }

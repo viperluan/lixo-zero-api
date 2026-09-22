@@ -119,45 +119,6 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     return acoes;
   }
 
-  async listarPorData(data: Date, situacao?: string): Promise<Acao[] | null> {
-    const listaAcoes = await this.prisma.acao.findMany({
-      where: {
-        data_acao: {
-          equals: data,
-        },
-        ...(situacao ? { situacao_acao: situacao } : {}),
-      },
-    });
-
-    if (!listaAcoes) return null;
-
-    const acoes = listaAcoes.map((acao) => Acao.carregarAcaoExistente(acao));
-
-    return acoes;
-  }
-
-  async listarPorIntervaloData(
-    dataInicial: Date,
-    dataFinal: Date,
-    situacao?: string
-  ): Promise<Acao[] | null> {
-    const listaAcoes = await this.prisma.acao.findMany({
-      where: {
-        data_acao: {
-          gte: dataInicial,
-          lte: dataFinal,
-        },
-        ...(situacao ? { situacao_acao: situacao } : {}),
-      },
-    });
-
-    if (!listaAcoes) return null;
-
-    const acoes = listaAcoes.map((acao) => Acao.carregarAcaoExistente(acao));
-
-    return acoes;
-  }
-
   async salvar({
     celular,
     data_acao,

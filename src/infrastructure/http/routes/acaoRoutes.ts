@@ -16,12 +16,6 @@ acaoRouter.get(
   acaoController.listarTodasAcoes
 );
 acaoRouter.get('/minhas', AutenticacaoMiddleware, acaoController.listarMinhasAcoes);
-acaoRouter.get('/:data', AutenticacaoMiddleware, acaoController.listarPorData);
-acaoRouter.get(
-  '/:dataInicial/:dataFinal',
-  AutenticacaoMiddleware,
-  acaoController.listarPorIntervaloData
-);
 acaoRouter.put('/:id', AutenticacaoMiddleware, AdminMiddleware, acaoController.atualizarAcao);
 
 export default acaoRouter;

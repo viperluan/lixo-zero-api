@@ -135,11 +135,11 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 ## Ao mexer em cada área
 
 - **Novo endpoint**: crie o caso de uso em `application/usecases/`, a função no controller, e registre a rota em `infrastructure/http/routes/`. Decida explicitamente os middlewares (`AutenticacaoMiddleware`, `AutenticacaoOpcionalMiddleware`, `AdminMiddleware`) e se precisa de rate limit próprio. Atualize [`docs/API.md`](docs/API.md) e, se mudar o fluxo, [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
-- **Novo campo em `Acao`**: são pelo menos 8 pontos a tocar — `prisma/schema.prisma` + migration, `AcaoProps`, validação na entidade, getter, `CriarAcaoDadosDTO`, `AcaoPrismaRepository.salvar()`, os DTOs de saída dos três casos de uso de listagem, e possivelmente os templates `.ejs`. Não esqueça de nenhum. Atualize [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) e [`docs/API.md`](docs/API.md).
+- **Novo campo em `Acao`**: são pelo menos 8 pontos a tocar — `prisma/schema.prisma` + migration, `AcaoProps`, validação na entidade, getter, `CriarAcaoDadosDTO`, `AcaoPrismaRepository.salvar()`, o DTO de saída de `ListarAcoes`, e possivelmente os templates `.ejs`. Não esqueça de nenhum. Atualize [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) e [`docs/API.md`](docs/API.md).
 - **Templates de e-mail**: ficam em `src/infrastructure/smtp/templates/`. São resolvidos em runtime por `resolveCaminhoArquivoTemplate()`, que monta o caminho a partir de `process.cwd()` e alterna entre `src/` e `dist/` conforme `NODE_ENV`. Se criar um template novo, garanta que `npm run copy-ejs` o inclua. Atualize [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) se o disparo ou o conteúdo mudar. O SMTP em si roda no worker (`src/worker.ts`); a API só enfileira o HTML já renderizado.
 - **Fila de e-mail**: `FilaEmailService` implementa `IEmailService` e publica na fila BullMQ `emails`. Não coloque BullMQ no `domain/`. Credenciais SMTP (`GMAIL_*`) pertencem só ao worker; a API usa `REDIS_URL`.
 - **Segurança**: leia [`docs/SEGURANCA.md`](docs/SEGURANCA.md) antes. O middleware de autenticação recarrega o usuário do banco a cada requisição de propósito — não substitua isso pelo payload do JWT.
-- **Resposta pública de ações**: usuários não-admin em `GET /acoes` e nas listagens por data recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. `GET /acoes/minhas` devolve as ações do dono autenticado em qualquer situação, sem sanitizar. Qualquer campo sensível novo precisa entrar nessa função.
+- **Resposta pública de ações**: usuários não-admin em `GET /acoes` recebem apenas ações `Aprovada` e passam por `sanitizarAcaoResposta()`, que remove `celular` e os e-mails dos usuários. `GET /acoes/minhas` devolve as ações do dono autenticado em qualquer situação, sem sanitizar. Qualquer campo sensível novo precisa entrar nessa função.
 
 ## Documentação
 
@@ -156,8 +156,7 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 
 Leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) para a lista completa. As que mais causam confusão:
 
-1. O filtro `data_acao` e a rota `GET /acoes/:data` comparam o `DateTime` por **igualdade exata**, incluindo hora. Buscar por `2026-09-15` não retorna uma ação marcada para `2026-09-15T14:00:00`.
-2. `situacao_acao` volta como texto (`"Aprovada"`) em `GET /acoes` e `PUT /acoes/:id`, mas como código (`"1"`) em `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal`.
-3. `PUT /acoes/:id` não é um update genérico: só aceita `situacao_acao` com valor `'1'` ou `'2'`. É o endpoint de aprovar/reprovar.
-4. Não existe entidade de "edição"/"ano" do evento. O ano é implícito em `data_acao`, e títulos de ação são únicos globalmente — inclusive entre anos diferentes.
-5. Falha ao enfileirar o e-mail (Redis fora) é só logada: a ação já foi salva e a API ainda responde sucesso. SMTP com erro é relançado no worker para o BullMQ retentar.
+1. O filtro `data_acao` compara o `DateTime` por **igualdade exata**, incluindo hora. Buscar por `2026-09-15` não retorna uma ação marcada para `2026-09-15T14:00:00`.
+2. `PUT /acoes/:id` não é um update genérico: só aceita `situacao_acao` com valor `'1'` ou `'2'`. É o endpoint de aprovar/reprovar.
+3. Não existe entidade de "edição"/"ano" do evento. O ano é implícito em `data_acao`, e títulos de ação são únicos globalmente — inclusive entre anos diferentes.
+4. Falha ao enfileirar o e-mail (Redis fora) é só logada: a ação já foi salva e a API ainda responde sucesso. SMTP com erro é relançado no worker para o BullMQ retentar.

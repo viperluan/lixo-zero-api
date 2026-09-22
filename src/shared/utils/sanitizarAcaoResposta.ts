@@ -25,7 +25,3 @@ export function sanitizarAcaoResposta<T extends AcaoComDadosSensiveis>(acao: T):
 
   return acaoSanitizada as T;
 }
-
-export function sanitizarListaAcoesResposta<T extends AcaoComDadosSensiveis>(acoes: T[]): T[] {
-  return acoes.map(sanitizarAcaoResposta);
-}

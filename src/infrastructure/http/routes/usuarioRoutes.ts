@@ -9,7 +9,6 @@ const usuarioRouter = Router();
 
 usuarioRouter.post('/', criarRateLimitCadastroUsuario(), usuarioController.criar);
 usuarioRouter.get('/', AutenticacaoMiddleware, AdminMiddleware, usuarioController.buscarTodos);
-usuarioRouter.delete('/:id', AutenticacaoMiddleware, AdminMiddleware, usuarioController.remover);
 usuarioRouter.post('/autenticar', criarRateLimitAutenticar(), usuarioController.autenticar);
 
 export default usuarioRouter;

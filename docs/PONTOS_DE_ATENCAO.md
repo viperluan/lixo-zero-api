@@ -8,26 +8,11 @@ Nada aqui foi alterado — é um retrato do estado atual.
 
 ### Filtro por data compara timestamp exato
 
-`AcaoPrismaRepository.montarWhere()` faz `where.data_acao = new Date(filtros.data_acao)`, uma igualdade exata contra um `TIMESTAMP(3)` que inclui hora. `ListarAcoesPorData` tem o mesmo problema, com `equals`.
+`AcaoPrismaRepository.montarWhere()` faz `where.data_acao = new Date(filtros.data_acao)`, uma igualdade exata contra um `TIMESTAMP(3)` que inclui hora.
 
-Consequência: `GET /acoes?data_acao=2026-09-15` e `GET /acoes/2026-09-15` só retornam ações marcadas exatamente para `2026-09-15T00:00:00.000Z`. Uma ação às 14h nunca aparece. Na prática esses dois caminhos quase sempre devolvem lista vazia.
+Consequência: `GET /acoes?data_acao=2026-09-15` só retorna ações marcadas exatamente para `2026-09-15T00:00:00.000Z`. Uma ação às 14h nunca aparece. Na prática esse filtro quase sempre devolve lista vazia.
 
-A correção seria usar um intervalo `gte`/`lt` cobrindo o dia. Enquanto isso não acontece, use `GET /acoes/:dataInicial/:dataFinal`, que funciona corretamente com `gte`/`lte`.
-
-### `situacao_acao` tem dois formatos diferentes
-
-| Endpoint | Formato |
-|----------|---------|
-| `GET /acoes` | Texto — `"Aprovada"` |
-| `PUT /acoes/:id` | Texto — `"Aprovada"` |
-| `GET /acoes/:data` | Código — `"1"` |
-| `GET /acoes/:dataInicial/:dataFinal` | Código — `"1"` |
-
-A causa está no mapeamento de saída: `ListarAcoes` desestrutura `situacao_acao_texto`, enquanto `ListarAcoesPorData` e `ListarAcoesPorIntervaloData` desestruturam `situacao_acao`. Nos mesmos objetos, `forma_realizacao_acao` e `tipo_publico_acao` vêm em texto nos três. Clientes precisam tratar os dois formatos.
-
-### Listagens por data não trazem os relacionamentos
-
-`listarPorData` e `listarPorIntervaloData` fazem `findMany` sem `include`, ao contrário de `listarComPaginacao`. Os DTOs declaram `categoria`, `usuario_responsavel` e `usuario_alteracao`, mas esses campos chegam sempre `undefined`. O tipo TypeScript mente sobre o que a resposta realmente contém.
+A correção seria usar um intervalo `gte`/`lt` cobrindo o dia.
 
 ### `UsuarioPrismaRepository.atualizar()` usa o e-mail como chave
 
@@ -55,7 +40,7 @@ Controllers respondem `{ error: "..." }`; middlewares e rate limit respondem `{ 
 
 ### Códigos de status inconsistentes
 
-A maioria dos controllers responde `400` para qualquer exceção, incluindo falhas internas. `UsuarioController.buscarTodos` chega a responder `400` até para erro de banco. Os únicos lugares que diferenciam corretamente são `UsuarioController.remover` (`404`/`409`/`500`) e `autenticar` (`401`).
+A maioria dos controllers responde `400` para qualquer exceção, incluindo falhas internas. `UsuarioController.buscarTodos` chega a responder `400` até para erro de banco. O único lugar que diferencia corretamente é `autenticar` (`401`).
 
 Erros de domínio também não têm classes tipadas: a tradução para HTTP é feita comparando strings de mensagem.
 
@@ -63,13 +48,9 @@ Erros de domínio também não têm classes tipadas: a tradução para HTTP é f
 
 Só aceita `situacao_acao`, e só com os valores `'1'` ou `'2'`. Semanticamente é `POST /acoes/:id/aprovar` e `POST /acoes/:id/reprovar`. Nada mais na ação pode ser editado por nenhum endpoint.
 
-### Endpoints de data exigem autenticação, o de listagem não
-
-`GET /acoes` funciona anonimamente, mas `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` exigem token. Como as três rotas servem à mesma programação pública e as duas últimas já sanitizam a saída para não-admin, a exigência parece acidental — um front público não consegue montar um calendário sem autenticar.
-
 ### Sem filtro de intervalo de data no endpoint público
 
-`GET /acoes` não tem um filtro do tipo "a partir de X". As duas alternativas existentes não servem a um front público: `data_acao` compara timestamp por igualdade exata (ver o primeiro item deste documento) e `GET /acoes/:dataInicial/:dataFinal` exige token.
+`GET /acoes` não tem um filtro do tipo "a partir de X". O query `data_acao` compara timestamp por igualdade exata (ver o primeiro item deste documento) e não serve para recortar um período.
 
 O front contorna isso buscando `page=1&limit=100` e filtrando as futuras no cliente — é o que a faixa "Próximas ações" da home faz. Funciona enquanto o total de ações aprovadas couber em 100. Como a listagem sai ordenada por `data_acao` crescente, quando o histórico acumulado de várias edições passar de 100 a página 1 será só passado e a faixa deixará de aparecer: falha silenciosa, não quebra a página.
 
@@ -80,9 +61,9 @@ O front contorna isso buscando `page=1&limit=100` e filtrando as futuras no clie
 
 `{ "actions": [...], "totalPages": 3, "currentPage": 1 }`, mas cada item tem `titulo_acao`, `nome_organizador`. Idem para `users` e `categories`. O front depende disso; qualquer mudança precisa ser coordenada.
 
-### Respostas vazias em criação e exclusão
+### Respostas vazias em criação
 
-`POST /usuarios` responde `201` sem corpo (`response.status(201).end()`) e `DELETE /usuarios/:id` responde `200` sem corpo. `POST /acoes` responde só `{ id }`. Um cliente que espere o recurso criado não o recebe.
+`POST /usuarios` responde `201` sem corpo (`response.status(201).end()`). `POST /acoes` responde só `{ id }`. Um cliente que espere o recurso criado não o recebe.
 
 ## Lacunas de validação
 
@@ -123,10 +104,6 @@ O que não é validado em nenhum lugar:
 ### `IAcaoRepository.atualizar` recebe `unknown`
 
 A interface declara `atualizar(id: string, campos: unknown)`, enquanto a implementação usa `Pick<Acao, 'situacao_acao' | 'id_usuario_alteracao'>`. O `unknown` anula a checagem de tipo em quem consome a interface.
-
-### DTOs de listagem triplicados
-
-`ListarAcoes`, `ListarAcoesPorData` e `ListarAcoesPorIntervaloData` declaram DTOs de saída praticamente idênticos e repetem o mesmo mapeamento de ~20 campos. Adicionar um campo em `Acao` exige editar os três — e é exatamente onde as divergências de formato descritas acima nasceram.
 
 ### Sem middleware de erro central
 

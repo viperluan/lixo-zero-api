@@ -124,8 +124,6 @@ Duas observações sobre o que **não** é validado: `link_para_inscricao_acao` 
 
 `CriarUsuario` verifica duplicidade de `email` e de `cpf_cnpj`, e nada mais — não há validação de formato de e-mail, de dígito verificador de CPF/CNPJ, nem qualquer exigência de força de senha. A senha é hasheada com bcrypt dentro da própria entidade, em `criarNovoUsuario()`.
 
-`DeletarUsuario` bloqueia a exclusão quando o usuário está vinculado a alguma ação, seja como responsável ou como autor da última alteração (`possuiAcaoVinculada`), respondendo `409`. O repositório ainda captura os códigos Prisma `P2003`/`P2014` como rede de segurança contra violação de chave estrangeira.
-
 `CriarCategoria` rejeita descrições duplicadas e descrições acima de 100 caracteres.
 
 ## E-mails transacionais
@@ -148,7 +146,7 @@ Se o Redis estiver indisponível no `queue.add`, a falha é só logada: a ação
 
 Contexto importante ao planejar features, porque essas ausências são frequentemente confundidas com bugs:
 
-- **Não existe conceito de edição anual do evento.** Nenhuma entidade guarda "ano" ou "período de inscrições". O ano é derivado de `data_acao`, e os assuntos dos e-mails usam o ano corrente do servidor. Filtrar a programação de um ano específico exige usar `GET /acoes/:dataInicial/:dataFinal`.
+- **Não existe conceito de edição anual do evento.** Nenhuma entidade guarda "ano" ou "período de inscrições". O ano é derivado de `data_acao`, e os assuntos dos e-mails usam o ano corrente do servidor.
 - **Não há janela de inscrição.** A única restrição temporal é que a data da ação seja futura.
 - **Não há histórico de auditoria.** Só se sabe quem fez a *última* alteração; aprovações e reprovações anteriores se perdem.
 - **Não há motivo de reprovação.** O e-mail de reprovação é genérico, sem campo para justificativa.
