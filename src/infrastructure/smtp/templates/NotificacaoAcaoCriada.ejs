@@ -1,283 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Lixo Zero - Caxias do Sul</title>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #121212;
-      background-color: #f4f4f4;
-    }
-
-    table {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #fff;
-      border-spacing: 0;
-      border-collapse: collapse;
-    }
-
-    td {
-      padding: 24px;
-    }
-
-    h1 {
-      font-size: 24px;
-    }
-
-    h2 {
-      font-size: 18px;
-    }
-
-    p,
-    span {
-      line-height: 1.5;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #ddd;
-      margin: 40px 0;
-    }
-
-    .tags {
-      color: #5f91b1;
-      font-weight: bold;
-      font-size: 18px;
-    }
-
-    .footer,
-    .header {
-      color: #fff;
-      text-align: center;
-    }
-
-    .header {
-      background-color: #5f91b1;
-    }
-
-    .footer {
-      background-color: #5f91b1;
+    @media only screen and (max-width: 600px) {
+      .coluna-rotulo,
+      .coluna-valor {
+        display: block !important;
+        width: 100% !important;
+      }
     }
   </style>
 </head>
 
-<body>
-  <table>
-    <!-- Cabeçalho do email -->
-    <thead class="header">
-      <tr>
-        <td>
-          <h1>Olá, <span style="font-weight: bold;">
-              <%= nome_usuario %>
-            </span>!!!</h1>
+<body style="margin:0;padding:0;background-color:#FFFCE6;color:#2E292C;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    Sua inscrição foi cadastrada e assim que nossa equipe aprovar, você receberá um email informando sobre!
+  </div>
 
-          <p style="font-size: 18px;">Muito obrigado por ter se inscrito na
-            <span style="font-weight: 700;">6ª Semana Lixo Zero de Caxias do Sul!</span>
-          </p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFCE6;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <!--[if mso]>
+        <table role="presentation" align="center" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td>
+        <![endif]-->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;">
+          <tr>
+            <td align="center" style="background-color:#246352;padding:28px 24px;">
+              <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.4;font-weight:bold;color:#FFFCE6;">
+                Olá, <%= nome_usuario %>!!!
+              </h1>
+            </td>
+          </tr>
 
-          <p>Estamos muito felizes com a sua participação! :)</p>
-        </td>
-      </tr>
-    </thead>
+          <tr>
+            <td style="padding:24px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 12px;font-size:18px;">
+                Muito obrigado por ter se inscrito na
+                <span style="font-weight:bold;">6ª Semana Lixo Zero de Caxias do Sul!</span>
+              </p>
+              <p style="margin:0 0 12px;">Estamos muito felizes com a sua participação! :)</p>
+              <p style="margin:0;">
+                Vamos te passar algumas informações super importantes aqui.
+                <span style="font-weight:bold;">Por favor, leia com atenção para que possamos confirmar a sua inscrição!</span>
+              </p>
+            </td>
+          </tr>
 
-    <!-- Conteúdo principal -->
-    <tbody>
-      <tr>
-        <td>
-          <p style="font-style: italic; font-size: 20px; text-align: center;">Vamos te passar algumas informações super
-            importantes aqui.
-            <span style="font-weight: bold;">Por favor, leia com atenção para que possamos confirmar a sua
-              inscrição!</span>
-          </p>
+          <tr>
+            <td style="background-color:#FFFCE6;border-top:1px solid #A5B798;border-bottom:1px solid #A5B798;padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;font-weight:bold;color:#153C31;">
+              Sua inscrição foi cadastrada e assim que nossa equipe aprovar, você receberá um email informando sobre!
+            </td>
+          </tr>
 
-          <hr>
-
-          <p style="text-align: center; font-size: 24px;">
-            <span style="background-color: #fffb11; ">Sua inscrição foi cadastrada e assim que nossa equipe aprovar,
-              você receberá
-              um email informando sobre!
-            </span>
-          </p>
-
-          <ol>
-            <li>
-              <span style="background-color: #b6d7a8;">
+          <tr>
+            <td style="padding:24px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 12px;">
                 Antes de prosseguir, gostaríamos de
-                <span style="font-weight: bold;">
-                  confirmar as informações que você cadastrou
-                </span>
+                <span style="font-weight:bold;">confirmar as informações que você cadastrou</span>
                 em nosso formulário:
-              </span>
-
-              <ul>
-                <li>
-                  <span style="font-weight: bold;">Organizador da ação:</span>
-                  <%= nome_organizador %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Título da ação:</span>
-                  <%= titulo_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Data:</span>
-                  <%= data_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Horário:</span>
-                  <%= horario_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Forma de realização:</span>
-                  <%= forma_realizacao_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Evento para público:</span>
-                  <%= tipo_publico_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Link de divulgação de acesso:</span>
-                  <%= link_divulgacao_acesso_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Nome do local:</span>
-                  <%= nome_local_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Endereço do local:</span>
-                  <%= endereco_local_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Informações:</span>
-                  <%= informacoes_acao %>
-                </li>
-                <li>
-                  <span style="font-weight: bold;">Link para inscrição:</span>
-                  <%= link_para_inscricao_acao %>
-                </li>
-              </ul>
-
-              <p>
-                <span style="font-weight: bold;">Era isso mesmo?</span>
-                Se algo está diferente do que você planejou, ou se em algum momento houver qualquer alteração nas
-                informações acima, por favor, nos informe pelo email
-                <a target="_blank" href="mailto:caxiaslixozero@gmail.com">caxiaslixozero@gmail.com</a> até dia 18/10.
-              </p>
-            </li>
-
-            <li>
-              <p>Lembre-se:
-                <span style="font-weight: bold;">
-                  você é responsável pela organização e execução da atividade cadastrada
-                </span>, ok? Nós estamos aqui para tirar qualquer dúvida e te ajudar na divulgação ;)
-              </p>
-            </li>
-
-            <li>
-              <p>
-                <span style="font-weight: bold; background-color: #b6d7a8;">
-                  Temos alguns cards e templates prontos para você divulgar a sua ação!
-                </span>
-                Eles servem para ajudar na
-                identificação
-                das ações que fazem parte da Semana Lixo Zero e você pode editá-los para incluir as informações da sua
-                atividade!
-
-                <span style="font-weight: bold; background-color: #b6d7a8;">
-                  Dá uma olhadinha nessa pasta:
-                  <a target="_blank"
-                    href="https://drive.google.com/drive/folders/12qTWAQrkjjoVl9CW72rNawOKY21q6Byo">Templates
-                    para ações - SLZ 2026</a>
-                </span>
               </p>
 
-              <p>Quanto antes você começar a divulgar seu evento, melhor!</p>
-            </li>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #A5B798;">
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Organizador da ação:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= nome_organizador %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Título da ação:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= titulo_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Data:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= data_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Horário:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= horario_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Forma de realização:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= forma_realizacao_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Evento para público:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= tipo_publico_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Link de divulgação de acesso:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= link_divulgacao_acesso_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Nome do local:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= nome_local_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Endereço do local:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= endereco_local_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Informações:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;border-bottom:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= informacoes_acao %></td>
+                </tr>
+                <tr>
+                  <td class="coluna-rotulo" width="42%" valign="top" style="width:42%;padding:10px 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;font-weight:bold;color:#246352;">Link para inscrição:</td>
+                  <td class="coluna-valor" valign="top" style="padding:10px 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2E292C;word-break:break-word;"><%= link_para_inscricao_acao %></td>
+                </tr>
+              </table>
 
-            <li>
-              <p>
-                <span style="font-weight: bold; background-color: #b6d7a8;">
-                  Ah, não esquece de marcar a gente
-                </span>
-                para que possamos encontrar o seu post e compartilhar nas nossas redes
-                também!
+              <p style="margin:16px 0 0;">
+                <span style="font-weight:bold;">Era isso mesmo?</span>
+                Se algo está diferente do que você planejou, ou se em algum momento houver qualquer alteração nas informações acima, por favor, nos informe pelo email
+                <a target="_blank" href="mailto:caxiaslixozero@gmail.com" style="color:#246352;text-decoration:underline;">caxiaslixozero@gmail.com</a>
+                <span style="font-weight:bold;color:#246352;">até dia 18/10</span>.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0;">
+                Lembre-se:
+                <span style="font-weight:bold;">você é responsável pela organização e execução da atividade cadastrada</span>,
+                ok? Nós estamos aqui para tirar qualquer dúvida e te ajudar na divulgação ;)
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 12px;">
+                <span style="font-weight:bold;">Temos alguns cards e templates prontos para você divulgar a sua ação!</span>
+                Eles servem para ajudar na identificação das ações que fazem parte da Semana Lixo Zero e você pode editá-los para incluir as informações da sua atividade!
               </p>
 
-              <p style="font-weight: bold;">Essas são as tags do nosso evento, anota aí:</p>
+              <p style="margin:0 0 12px;font-weight:bold;">Dá uma olhadinha nessa pasta:</p>
 
-              <p>
-                <span class="tags">@caxiaslixozero</span>
-                <br>
-                <span class="tags">#semanalixozerocaxias</span>
-                <br>
-                <span class="tags">#slzcxs</span>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+                <tr>
+                  <td align="center" bgcolor="#246352" style="background-color:#246352;border-radius:8px;">
+                    <a target="_blank" href="https://drive.google.com/drive/folders/12qTWAQrkjjoVl9CW72rNawOKY21q6Byo" style="display:inline-block;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;font-weight:bold;color:#FFFCE6;text-decoration:none;">
+                      Templates para ações - SLZ 2026
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;">Quanto antes você começar a divulgar seu evento, melhor!</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 12px;">
+                <span style="font-weight:bold;">Ah, não esquece de marcar a gente</span>
+                para que possamos encontrar o seu post e compartilhar nas nossas redes também!
               </p>
-            </li>
 
-            <li>
-              <p>
-                <span style="background-color: #b6d7a8;">
-                  Fica ligado nas nossas redes sociais
-                </span>
+              <p style="margin:0 0 12px;font-weight:bold;">Essas são as tags do nosso evento, anota aí:</p>
 
-                para
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFCE6;border:1px solid #A5B798;">
+                <tr>
+                  <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.6;font-weight:bold;color:#246352;">
+                    @caxiaslixozero<br>
+                    #semanalixozerocaxias<br>
+                    #slzcxs
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-                <span style="font-weight: bold;">
-                  acompanhar a divulgação da programação (você vai estar lá!!)
-                </span>
-
+          <tr>
+            <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0;">
+                Fica ligado nas nossas redes sociais para
+                <span style="font-weight:bold;">acompanhar a divulgação da programação (você vai estar lá!!)</span>
                 Também estaremos divulgando o cronograma completo do evento,
-
-                <span style="font-weight: bold; background-color: #fffb11;">
-                  até dia 17/10
-                </span>
-
-                , pelo site
-                <a target="_blank" href="https://www.caxiaslixozero.com.br">www.caxiaslixozero.com.br</a>
+                <span style="font-weight:bold;color:#246352;">até dia 17/10</span>,
+                pelo site
+                <a target="_blank" href="https://www.caxiaslixozero.com.br" style="color:#246352;text-decoration:underline;">www.caxiaslixozero.com.br</a>
               </p>
-            </li>
-          </ol>
+            </td>
+          </tr>
 
-          <hr>
+          <tr>
+            <td style="padding:20px 24px 28px;border-top:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 12px;">
+                Muito obrigado por topar essa com a gente!
+                <span style="font-weight:bold;">Vamos juntos construir nossa cidade sustentável!</span>
+              </p>
 
-          <p>Muito obrigado por topar essa com a gente!
-            <span style="font-weight: bold;">
-              Vamos juntos construir nossa cidade sustentável!
-            </span>
-          </p>
+              <p style="margin:0 0 16px;font-size:20px;font-weight:bold;color:#246352;">Vai ser incrível!</p>
 
-          <span style="font-size: 20px; background-color: #b6d7a8; font-weight: bold;">Vai ser incrível!</span>
+              <p style="margin:0 0 16px;">Um abraço,<br>Equipe Coletivo Lixo Zero Caxias do Sul</p>
 
-          <p>Um abraço,<br>Equipe Coletivo Lixo Zero Caxias do Sul</p>
+              <p style="margin:0;">
+                Instagram:
+                <a target="_blank" href="https://www.instagram.com/caxiaslixozero" style="color:#246352;text-decoration:underline;">@caxiaslixozero</a>
+              </p>
+              <p style="margin:0;">
+                Site:
+                <a target="_blank" href="https://www.caxiaslixozero.com.br" style="color:#246352;text-decoration:underline;">www.caxiaslixozero.com.br</a>
+              </p>
+            </td>
+          </tr>
 
-          <div>
-            <span>Instagram: <a target="_blank"
-                href="https://www.instagram.com/caxiaslixozero">@caxiaslixozero</a></span>
-            <br>
-            <span>Site: <a target="_blank" href="https://www.caxiaslixozero.com.br">www.caxiaslixozero.com.br</a></span>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-
-    <!-- Rodapé -->
-    <tfoot>
-      <tr>
-        <td class="footer">
-          <p class="text-footer">Se você tiver alguma dúvida, não hesite
-            <a target="_blank" href="mailto:caxiaslixozero@gmail.com">entrar em contato</a>!
-          </p>
-
-          <p class="text-footer">&copy; 2024 Lixo Zero - Caxias do Sul. Todos os direitos reservados.</p>
-        </td>
-      </tr>
-    </tfoot>
+          <tr>
+            <td align="center" style="background-color:#246352;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#FFFCE6;">
+              <p style="margin:0 0 12px;">
+                Se você tiver alguma dúvida, não hesite
+                <a target="_blank" href="mailto:caxiaslixozero@gmail.com" style="color:#FFFCE6;text-decoration:underline;">entrar em contato</a>!
+              </p>
+              <p style="margin:0;">&copy; 2024 Lixo Zero - Caxias do Sul. Todos os direitos reservados.</p>
+            </td>
+          </tr>
+        </table>
+        <!--[if mso]>
+        </td></tr></table>
+        <![endif]-->
+      </td>
+    </tr>
   </table>
 </body>
 
