@@ -51,7 +51,7 @@ Apenas `id` e `descricao` (máximo 100 caracteres, única). Classifica as açõe
 
 ### Usuário
 
-`id`, `nome`, `email` (único), `senha` (hash bcrypt, custo 10), `cpf_cnpj` (único, `VarChar(14)`), `status`, `tipo`. Aceita tanto pessoa física quanto jurídica no mesmo campo de documento.
+`id`, `nome`, `email` (único), `senha` (hash bcrypt, custo 10), `cpf_cnpj` (único, `VarChar(14)`), `status`, `tipo`. Aceita tanto pessoa física quanto jurídica no mesmo campo de documento. O documento é gravado inteiro; a listagem admin (`GET /usuarios`) devolve só a forma mascarada.
 
 ### E-mail
 

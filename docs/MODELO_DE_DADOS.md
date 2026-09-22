@@ -48,7 +48,7 @@ Não há índice único em `descricao` — a duplicidade é checada em `CriarCat
 | `senha` | `TEXT` | Hash bcrypt, custo 10 |
 | `status` | `BOOLEAN` default `true` | `false` bloqueia login e derruba sessões ativas |
 | `tipo` | `VARCHAR(2)` | `'0'` administrador, `'1'` comum |
-| `cpf_cnpj` | `VARCHAR(14)` UNIQUE | Sem máscara, sem validação de formato |
+| `cpf_cnpj` | `VARCHAR(14)` UNIQUE | Persistido sem máscara e sem validação de formato; `GET /usuarios` devolve mascarado |
 
 ### `Acao`
 

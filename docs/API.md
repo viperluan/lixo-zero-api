@@ -110,14 +110,14 @@ Requer admin. Aceita `page` e `limit`.
 {
   "users": [
     { "id": "uuid", "nome": "Maria Silva", "tipo": "1",
-      "email": "maria@exemplo.com", "cpf_cnpj": "12345678901" }
+      "email": "maria@exemplo.com", "cpf_cnpj": "123.***.***-01" }
   ],
   "totalPages": 3,
   "currentPage": 1
 }
 ```
 
-O hash da senha não é retornado. O CPF/CNPJ é, na íntegra e sem máscara.
+O hash da senha não é retornado. O CPF/CNPJ sai mascarado (`123.***.***-01` ou `12.***.***/****-91`); o valor completo fica só no banco. Documento com tamanho inesperado vira `***`.
 
 | Status | Situação |
 |--------|----------|
