@@ -83,6 +83,8 @@ Aplicada em `GET /acoes`, `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFin
 
 Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continuam visíveis: são dados de divulgação do evento, expostos de propósito.
 
+`GET /usuarios` (admin) não devolve o hash da senha. O `cpf_cnpj` passa por `mascararCpfCnpj()`: CPF vira `123.***.***-01`, CNPJ vira `12.***.***/****-91`, e tamanho inesperado vira `***`. E-mail e nome seguem inteiros — o admin precisa deles para falar com o organizador. Não existe endpoint que devolva o documento completo.
+
 ## Rate limiting
 
 `express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Quatro perfis, todos por IP e todos ajustáveis por variável de ambiente:

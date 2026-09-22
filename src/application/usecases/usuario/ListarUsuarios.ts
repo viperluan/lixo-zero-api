@@ -1,5 +1,6 @@
 import Usuario from '@/domain/usuario/entity/Usuario';
 import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
+import { mascararCpfCnpj } from '@/shared/utils/mascararCpfCnpj';
 import { Usecase } from '../usecase';
 
 type ListarUsuariosDTO = {
@@ -73,7 +74,7 @@ export default class ListarUsuarios
         nome,
         tipo,
         email,
-        cpf_cnpj,
+        cpf_cnpj: mascararCpfCnpj(cpf_cnpj),
       })
     );
 
