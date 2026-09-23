@@ -127,11 +127,15 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | | `VerificarTokenUsuario` | Valida a assinatura; token expirado lança `ERRO_TOKEN_EXPIRADO` |
 | | `ListarUsuarios` | Listagem paginada |
 | | `DeletarUsuario` | Bloqueia exclusão de usuário vinculado a ações |
+| | `SolicitarRedefinicaoSenha` | Gera token de uso único e enfileira o e-mail com o link, sem revelar se a conta existe |
+| | `RedefinirSenha` | Valida o token, grava a senha nova e enfileira o aviso de senha alterada |
 | `categoria` | `CriarCategoria` | Verifica descrição duplicada |
 | | `ListarCategorias` | Listagem paginada |
 | `email` | `GerarTemplateAcaoCadastrada` | Renderiza EJS com os dados completos da ação |
 | | `GerarTemplateAcaoAprovada` | Renderiza EJS de aprovação |
 | | `GerarTemplateAcaoReprovada` | Renderiza EJS de reprovação |
+| | `GerarTemplateRedefinicaoSenha` | Renderiza EJS com o link de redefinição |
+| | `GerarTemplateSenhaAlterada` | Renderiza EJS do aviso de senha alterada |
 
 ## Tratamento de erros
 

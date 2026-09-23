@@ -78,6 +78,7 @@ O seed grava direto pelo Prisma, contornando a entidade `Acao` — de propósito
 | `SECRET_KEY` | Chave para assinatura do JWT |
 | `JWT_EXPIRES_IN` | Expiração do token (padrão: `24h`) |
 | `CORS_ORIGIN` | Origens permitidas (`*` ou vazio libera qualquer origem) |
+| `URL_FRONT` | Origem pública do front, usada no link de redefinição de senha |
 | `GMAIL_USER` / `GMAIL_PASS` | Credenciais SMTP (somente o worker) |
 | `REDIS_URL` | Connection string do Redis (API e worker) |
 | `REDIS_PASSWORD` | Senha do Redis no Docker Compose |
@@ -86,7 +87,7 @@ O seed grava direto pelo Prisma, contornando a entidade `Acao` — de propósito
 | `FILA_EMAIL_BACKOFF_MS` | Delay inicial do backoff exponencial (padrão: `5000`) — só a API |
 | `RATE_LIMIT_ENABLED` | `true` ativa rate limiting; `false` desativa |
 
-Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMIT_GLOBAL_*`, `RATE_LIMIT_AUTH_*`, `RATE_LIMIT_REGISTER_*`, `RATE_LIMIT_PUBLIC_READ_*`.
+Limites de rate limiting (opcionais, com defaults no `.env.example`): `RATE_LIMIT_GLOBAL_*`, `RATE_LIMIT_AUTH_*`, `RATE_LIMIT_REGISTER_*`, `RATE_LIMIT_PUBLIC_READ_*`, `RATE_LIMIT_PASSWORD_RESET_*`, `RATE_LIMIT_PASSWORD_RESET_CONFIRM_*`.
 
 ## Scripts
 

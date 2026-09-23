@@ -164,7 +164,7 @@ Responde `200` mesmo com o Postgres fora do ar — foi uma decisão explícita (
 
 ### Variáveis de ambiente do `docker-compose.yml`
 
-O serviço `lixozero-api` repassa `PORT`, `SECRET_KEY`, `CORS_ORIGIN`, `JWT_EXPIRES_IN`, `RATE_LIMIT_ENABLED`, `FILA_EMAIL_TENTATIVAS` e `FILA_EMAIL_BACKOFF_MS`. `GMAIL_USER`/`GMAIL_PASS` e `FILA_EMAIL_CONCORRENCIA` ficam só no `lixozero-worker`.
+O serviço `lixozero-api` repassa `PORT`, `SECRET_KEY`, `CORS_ORIGIN`, `JWT_EXPIRES_IN`, `URL_FRONT`, `RATE_LIMIT_ENABLED`, `FILA_EMAIL_TENTATIVAS` e `FILA_EMAIL_BACKOFF_MS`. `GMAIL_USER`/`GMAIL_PASS` e `FILA_EMAIL_CONCORRENCIA` ficam só no `lixozero-worker`. `URL_FRONT` é a origem do front usada no link de redefinição de senha.
 
 `DATABASE_URL` e `REDIS_URL` **não** vêm do `.env`: são montadas inline no compose, com os hosts `lixozero-db` e `lixozero-redis` da rede interna. O `.env` guarda as variantes com `localhost`, para o ferramental do host (`prisma studio`, `migrate dev`, `start:dev`). A senha vem do mesmo `DB_PASSWORD`/`REDIS_PASSWORD` que alimenta os containers, então as duas pontas não divergem.
 

@@ -51,6 +51,16 @@ Ambas as operações são **síncronas** e bloqueiam o event loop por algumas de
 
 `AutenticarUsuario` devolve a mesma mensagem `'Email ou senha incorretos'` para e-mail inexistente, senha errada e conta desativada, evitando enumeração de usuários. Note que a checagem de `status` acontece **depois** da comparação de senha, então o custo de tempo é o mesmo nos três casos.
 
+### Redefinição de senha
+
+`POST /usuarios/esqueci-senha` responde sempre a mesma mensagem, exista ou não a conta. Conta desativada não recebe e-mail. O token tem 32 bytes, vai no link como `base64url` e o banco guarda só o SHA-256. Vale 1 hora, é de uso único, e um pedido novo invalida o anterior. A mesma conta só gera outro e-mail depois de 2 minutos; dentro desse intervalo a API responde sucesso e não enfileira.
+
+O link é `{URL_FRONT}/redefinir-senha?token=...`. `URL_FRONT` precisa ser `http://` ou `https://`. A API não usa o header `Host`. Abrir a página não consome o token: o gasto ocorre em `POST /usuarios/redefinir-senha`.
+
+A senha nova tem entre 10 e 128 caracteres, sem regra de maiúscula, número ou símbolo. O bcrypt só entra no cálculo com os primeiros 72 bytes; o limite de 128 evita um corpo enorme, e o que diferencia senhas maiores que isso é esse prefixo. O cadastro público continua sem esse piso. A troca e a marcação do token acontecem na mesma transação. Em seguida a API enfileira um aviso de senha alterada, sem a senha no corpo. Falha ao renderizar ou ao enfileirar é só logada.
+
+`senha_alterada_em` derruba JWTs cujo `iat`, em segundos, é anterior a essa data. A checagem está em `carregarUsuarioAutenticado`, então vale para o middleware obrigatório e para o opcional. Conta antiga, com o campo vazio, não perde a sessão.
+
 ## Autorização
 
 Modelo binário, sem RBAC ou permissões granulares. A única verificação é `usuario?.tipo === '0'`, centralizada em `src/shared/utils/usuarioEhAdmin.ts`. Use essa função — não compare `tipo` diretamente em código novo.
@@ -87,13 +97,15 @@ Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continu
 
 ## Rate limiting
 
-`express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Quatro perfis, todos por IP e todos ajustáveis por variável de ambiente:
+`express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Seis perfis, todos por IP e todos ajustáveis por variável de ambiente:
 
 | Perfil | Aplicado em | Padrão | Variáveis |
 |--------|-------------|--------|-----------|
 | Global | Todas as rotas, exceto `/health` | 200 / 15 min | `RATE_LIMIT_GLOBAL_MAX`, `RATE_LIMIT_GLOBAL_WINDOW_MS` |
 | Autenticação | `POST /usuarios/autenticar` | 10 / 15 min | `RATE_LIMIT_AUTH_*` |
 | Cadastro | `POST /usuarios` | 5 / hora | `RATE_LIMIT_REGISTER_*` |
+| Pedido de redefinição de senha | `POST /usuarios/esqueci-senha` | 5 / hora | `RATE_LIMIT_PASSWORD_RESET_MAX`, `RATE_LIMIT_PASSWORD_RESET_WINDOW_MS` |
+| Troca de senha | `POST /usuarios/redefinir-senha` | 10 / 15 min | `RATE_LIMIT_PASSWORD_RESET_CONFIRM_*` |
 | Leitura pública | `GET /acoes`, `GET /categorias` | 60 / min | `RATE_LIMIT_PUBLIC_READ_*` |
 
 Os limites específicos são cumulativos com o global. `RATE_LIMIT_ENABLED=false` substitui todos os middlewares por um no-op — útil em testes de carga, nunca em produção. Valores não numéricos ou ≤ 0 nas variáveis caem silenciosamente para o padrão.
@@ -169,8 +181,7 @@ Nenhum destes é bug — são decisões conscientes ou lacunas conhecidas, lista
 
 - **Refresh token / revogação.** Um token válido permanece válido até expirar. O login informa `expires_in`/`expires_at` e o 401 distingue expiração (`TOKEN_EXPIRED`), mas não há renovação. A mitigação parcial é a recarga do usuário a cada requisição, que cobre desativação e rebaixamento, mas não um token roubado de uma conta ainda ativa.
 - **Verificação de e-mail no cadastro.** Qualquer e-mail é aceito sem confirmação.
-- **Recuperação de senha.** Não há fluxo de "esqueci minha senha".
-- **Política de senha.** Nenhum tamanho mínimo ou requisito de complexidade.
+- **Política de senha no cadastro.** Nenhum tamanho mínimo ou requisito de complexidade. A redefinição de senha exige entre 10 e 128 caracteres.
 - **Bloqueio de conta após tentativas falhas.** Só o rate limit por IP protege o login.
 - **Logs de auditoria.** `id_usuario_alteracao` guarda apenas o autor da última alteração; não há trilha de quem aprovou o quê e quando.
 - **Rate limit distribuído.** Contadores em memória, por instância.

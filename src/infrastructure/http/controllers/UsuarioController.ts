@@ -2,6 +2,7 @@ import { prisma } from '@/shared/package/prisma';
 import { Request, Response } from 'express';
 
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
+import RedefinicaoSenhaPrismaRepository from '@/application/repositories/RedefinicaoSenhaPrismaRepository';
 import CriarUsuario from '@/application/usecases/usuario/CriarUsuario';
 import AutenticarUsuario from '@/application/usecases/usuario/AutenticarUsuario';
 import DeletarUsuario, {
@@ -10,10 +11,22 @@ import DeletarUsuario, {
 } from '@/application/usecases/usuario/DeletarUsuario';
 import ListarUsuarios from '@/application/usecases/usuario/ListarUsuarios';
 import GerarTokenUsuario from '@/application/usecases/usuario/GerarTokenUsuario';
+import SolicitarRedefinicaoSenha, {
+  MENSAGEM_SOLICITACAO_REDEFINICAO_SENHA,
+} from '@/application/usecases/usuario/SolicitarRedefinicaoSenha';
+import RedefinirSenha, {
+  ERRO_LINK_REDEFINICAO_SENHA,
+  ERRO_TAMANHO_SENHA_REDEFINICAO,
+  MENSAGEM_SENHA_REDEFINIDA,
+} from '@/application/usecases/usuario/RedefinirSenha';
+import FilaEmailService from '@/application/services/email/FilaEmailService';
+import { filaEmail } from '@/infrastructure/fila/filaEmail';
 import { normalizarPaginacao } from '@/shared/utils/normalizarPaginacao';
 import { responderErroInterno } from '@/shared/utils/responderErroInterno';
 
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
+const redefinicaoSenhaRepository = new RedefinicaoSenhaPrismaRepository(prisma);
+const filaEmailService = new FilaEmailService(filaEmail);
 
 export async function criar(request: Request, response: Response) {
   try {
@@ -71,6 +84,46 @@ export async function remover(request: Request, response: Response) {
 
     if (mensagem === ERRO_USUARIO_VINCULADO_A_ACOES) {
       return response.status(409).json({ error: mensagem });
+    }
+
+    responderErroInterno(response, error);
+  }
+}
+
+export async function solicitarRedefinicaoSenha(request: Request, response: Response) {
+  try {
+    const { email } = request.body ?? {};
+    const solicitar = new SolicitarRedefinicaoSenha(
+      usuarioPrismaRepository,
+      redefinicaoSenhaRepository,
+      filaEmailService
+    );
+
+    await solicitar.executar({ email });
+
+    response.status(200).json({ message: MENSAGEM_SOLICITACAO_REDEFINICAO_SENHA });
+  } catch (error) {
+    responderErroInterno(response, error);
+  }
+}
+
+export async function redefinirSenha(request: Request, response: Response) {
+  try {
+    const { token, senha } = request.body ?? {};
+    const redefinir = new RedefinirSenha(
+      usuarioPrismaRepository,
+      redefinicaoSenhaRepository,
+      filaEmailService
+    );
+
+    await redefinir.executar({ token, senha });
+
+    response.status(200).json({ message: MENSAGEM_SENHA_REDEFINIDA });
+  } catch (error) {
+    const mensagem = (error as Error).message;
+
+    if (mensagem === ERRO_LINK_REDEFINICAO_SENHA || mensagem === ERRO_TAMANHO_SENHA_REDEFINICAO) {
+      return response.status(400).json({ error: mensagem });
     }
 
     responderErroInterno(response, error);

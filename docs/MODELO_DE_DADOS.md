@@ -22,10 +22,23 @@ PostgreSQL gerenciado por Prisma 5. O schema está em `prisma/schema.prisma` e a
 │ status  (bool)  │        └───────────────────────────────┘
 │ tipo  varchar2  │
 │ cpf_cnpj UNIQUE │
-└─────────────────┘
+│ senha_alterada_em│
+└────────┬────────┘
+         │ 1
+         │ N
+┌────────┴──────────────┐
+│   RedefinicaoSenha    │
+│───────────────────────│
+│ id                    │
+│ id_usuario            │
+│ token_hash     UNIQUE │
+│ expira_em             │
+│ usado_em              │
+│ criado_em             │
+└───────────────────────┘
 ```
 
-Três tabelas, sem tabelas de junção. Toda relação é 1:N a partir de `Acao`.
+Quatro tabelas, sem tabelas de junção. `Acao` e `RedefinicaoSenha` são N:1 a partir de `Usuario`.
 
 ## Tabelas
 
@@ -49,6 +62,18 @@ Não há índice único em `descricao` — a duplicidade é checada em `CriarCat
 | `status` | `BOOLEAN` default `true` | `false` bloqueia login e derruba sessões ativas |
 | `tipo` | `VARCHAR(2)` | `'0'` administrador, `'1'` comum |
 | `cpf_cnpj` | `VARCHAR(14)` UNIQUE | Persistido sem máscara e sem validação de formato; `GET /usuarios` devolve mascarado |
+| `senha_alterada_em` | `TIMESTAMP(3)` NULL | Preenchido na redefinição de senha. JWT com `iat` anterior a esse instante deixa de valer. Contas antigas ficam `NULL` e mantêm a sessão |
+
+### `RedefinicaoSenha`
+
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| `id` | `TEXT` PK | UUID gerado pelo Prisma |
+| `id_usuario` | `TEXT` FK | → `Usuario.id` |
+| `token_hash` | `TEXT` UNIQUE | SHA-256 do token enviado no e-mail. O valor puro não é gravado |
+| `expira_em` | `TIMESTAMP(3)` | 1 hora após o pedido |
+| `usado_em` | `TIMESTAMP(3)` NULL | Preenchido no uso ou quando um pedido novo invalida o anterior |
+| `criado_em` | `TIMESTAMP(3)` default `now()` | Também serve ao intervalo de 2 minutos entre e-mails da mesma conta |
 
 ### `Acao`
 
@@ -80,10 +105,10 @@ Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (
 
 ## Chaves estrangeiras
 
-As três FKs de `Acao` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
+As três FKs de `Acao` e a FK de `RedefinicaoSenha` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
 
 - Não dá para excluir uma categoria que tenha ações.
-- Não dá para excluir um usuário que seja responsável por alguma ação **ou** que tenha sido o último a alterar alguma ação. `DeletarUsuario` antecipa essa checagem com `possuiAcaoVinculada()` para devolver um `409` legível, e `UsuarioPrismaRepository.deletar()` ainda captura os códigos Prisma `P2003`/`P2014` como rede de segurança.
+- Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, ou que tenha linha em `RedefinicaoSenha`. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; a FK de `RedefinicaoSenha` ainda barra no banco se restarem tokens.
 
 `id_usuario_alteracao` é `NOT NULL` desde o início, por isso `Acao.criarNovaAcao()` o preenche com o próprio `id_usuario_responsavel` na criação.
 
@@ -101,7 +126,7 @@ enum AcaoTipoPublico     { Interno = '0', Externo = '1' }
 
 ## Índices
 
-Só existem os criados pelas constraints: PKs, `Usuario_email_key`, `Usuario_cpf_cnpj_key` e `Acao_id_key`.
+Constraints únicas: PKs, `Usuario_email_key`, `Usuario_cpf_cnpj_key`, `Acao_id_key` e `RedefinicaoSenha_token_hash_key`. `RedefinicaoSenha` também tem índice em `(id_usuario, criado_em)`.
 
 Não há índice em `Acao.data_acao`, `Acao.situacao_acao` nem `Acao.id_categoria`, que são exatamente as colunas mais filtradas em `GET /acoes`. Também não há índice de texto para o `search`, que usa `contains` com `mode: 'insensitive'` em quatro colunas — isso vira `ILIKE '%termo%'`, incapaz de usar índice B-tree convencional. Aceitável no volume atual (dezenas a centenas de ações por ano); é o primeiro lugar a olhar se a listagem ficar lenta.
 
@@ -114,6 +139,7 @@ Não há índice em `Acao.data_acao`, `Acao.situacao_acao` nem `Acao.id_categori
 | `20240915060259_adiciona_campos_necessarios_para_email` | Reformula os campos de local e link para atender aos templates de e-mail |
 | `20251007231610_change_field_size_nome_organizador` | `nome_organizador` de `VARCHAR(60)` para `TEXT` |
 | `20260611120000_remove_patrocinio_cota` | Remove `Patrocinador`, `Cota` e `Acao.receber_informacao_patrocinio` |
+| `20260923014701_adiciona_redefinicao_de_senha` | `Usuario.senha_alterada_em` e tabela `RedefinicaoSenha` |
 
 Dois pontos de contexto que essa linha do tempo revela:
 

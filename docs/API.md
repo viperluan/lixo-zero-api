@@ -23,6 +23,8 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `GET` | `/health` | Público | Isento do limite global |
 | `POST` | `/usuarios` | Público | Cadastro (5/h) |
 | `POST` | `/usuarios/autenticar` | Público | Autenticação (10/15min) |
+| `POST` | `/usuarios/esqueci-senha` | Público | Pedido de redefinição (5/h) |
+| `POST` | `/usuarios/redefinir-senha` | Público | Troca de senha (10/15min) |
 | `GET` | `/usuarios` | Admin | — |
 | `DELETE` | `/usuarios/:id` | Admin | — |
 | `GET` | `/categorias` | Público | Leitura pública (60/min) |
@@ -99,6 +101,40 @@ Nenhum dos campos tem validação de formato ou de força de senha — apenas du
 | `400` | Outros erros |
 
 A mesma mensagem `401` cobre e-mail inexistente, senha errada e conta desativada (`status: false`), de propósito — não vaza qual dos três ocorreu.
+
+Um JWT emitido antes de uma redefinição de senha passa a receber `401` `{ "message": "Sessão inválida." }`, sem `code`. A comparação usa o `iat` do token e `Usuario.senha_alterada_em`.
+
+### `POST /usuarios/esqueci-senha`
+
+Pedido público de link para redefinir a senha. Não exige autenticação.
+
+```json
+{ "email": "maria@exemplo.com" }
+```
+
+| Status | Corpo |
+|--------|-------|
+| `200` | `{ "message": "Se existir uma conta com esse e-mail, enviaremos instruções para redefinir a senha." }` |
+| `429` | `{ "message": "Muitas requisições. Tente novamente mais tarde." }` |
+| `500` | Falha inesperada via `responderErroInterno` |
+
+A resposta `200` é a mesma quando o e-mail não existe, a conta está desativada, o pedido cai no intervalo de 2 minutos da mesma conta, ou o e-mail foi enfileirado. O link aponta para `{URL_FRONT}/redefinir-senha?token=...`, vale 1 hora e é de uso único. Abrir a página não consome o token.
+
+### `POST /usuarios/redefinir-senha`
+
+```json
+{ "token": "token-do-link", "senha": "senha-nova" }
+```
+
+| Status | Corpo |
+|--------|-------|
+| `200` | `{ "message": "Senha redefinida. Entre novamente com a nova senha." }` |
+| `400` | `{ "error": "Link inválido ou expirado." }` |
+| `400` | `{ "error": "A senha deve ter entre 10 e 128 caracteres." }` |
+| `429` | `{ "message": "Muitas requisições. Tente novamente mais tarde." }` |
+| `500` | Falha inesperada via `responderErroInterno` |
+
+A mensagem de tamanho só aparece quando o token ainda é válido. A senha nova não exige maiúscula, número ou símbolo. O sucesso não devolve JWT: a pessoa entra de novo em `POST /usuarios/autenticar`.
 
 ### `GET /usuarios`
 

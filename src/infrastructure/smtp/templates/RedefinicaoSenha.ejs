@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Lixo Zero - Caxias do Sul</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#FFFCE6;color:#2E292C;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    Use o link para escolher uma nova senha. Ele vale por 1 hora.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFCE6;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;">
+          <tr>
+            <td align="center" style="background-color:#246352;padding:28px 24px;">
+              <h1 style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:1.4;font-weight:bold;color:#FFFCE6;">
+                Olá, <%= nome_usuario %>!
+              </h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="background-color:#86B499;padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.4;font-weight:bold;color:#153C31;">
+              Recebemos um pedido para redefinir sua senha.
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 16px;">
+                Escolha uma nova senha pelo botão abaixo. O link vale por 1 hora e só pode ser usado uma vez.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+                <tr>
+                  <td align="center" bgcolor="#246352" style="background-color:#246352;border-radius:8px;">
+                    <a target="_blank" href="<%= link_redefinicao %>" style="display:inline-block;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;font-weight:bold;color:#FFFCE6;text-decoration:none;">
+                      Redefinir senha
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 12px;">Se o botão não abrir, copie este endereço:</p>
+              <p style="margin:0 0 16px;word-break:break-all;">
+                <a target="_blank" href="<%= link_redefinicao %>" style="color:#246352;text-decoration:underline;"><%= link_redefinicao %></a>
+              </p>
+              <p style="margin:0;">
+                Se você não pediu essa troca, ignore este e-mail. Sua senha atual continua valendo.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 24px 28px;border-top:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
+              <p style="margin:0 0 16px;">Um abraço,<br>Equipe Coletivo Lixo Zero Caxias do Sul</p>
+              <p style="margin:0;">
+                Site:
+                <a target="_blank" href="https://www.caxiaslixozero.com.br" style="color:#246352;text-decoration:underline;">www.caxiaslixozero.com.br</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
