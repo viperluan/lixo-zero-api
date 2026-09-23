@@ -4,7 +4,7 @@ import IEdicaoRepository, {
   AtualizarDatasEdicao,
   ProrrogacaoEdicaoRegistro,
 } from '@/domain/edicao/repository/IEdicaoRepository';
-import { ERRO_ANO_JA_CADASTRADO } from '@/domain/edicao/erros';
+import { ERRO_ANO_JA_CADASTRADO, ERRO_EDICAO_VINCULADA_A_ACOES } from '@/domain/edicao/erros';
 import { intervaloDoDiaCivil } from '@/shared/utils/diaCivil';
 
 export default class EdicaoPrismaRepository implements IEdicaoRepository {
@@ -126,6 +126,10 @@ export default class EdicaoPrismaRepository implements IEdicaoRepository {
     });
   }
 
+  async contarAcoes(idEdicao: string): Promise<number> {
+    return this.prisma.acao.count({ where: { id_edicao: idEdicao } });
+  }
+
   async contarAcoesForaDaRealizacao(
     idEdicao: string,
     inicio: string,
@@ -140,6 +144,24 @@ export default class EdicaoPrismaRepository implements IEdicaoRepository {
         OR: [{ data_acao: { lt: aPartirDe } }, { data_acao: { gt: ate } }],
       },
     });
+  }
+
+  async deletar(idEdicao: string): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (transacao) => {
+        await transacao.prorrogacaoEdicao.deleteMany({ where: { id_edicao: idEdicao } });
+        await transacao.edicao.delete({ where: { id: idEdicao } });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === 'P2003' || error.code === 'P2014')
+      ) {
+        throw new Error(ERRO_EDICAO_VINCULADA_A_ACOES);
+      }
+
+      throw error;
+    }
   }
 }
 

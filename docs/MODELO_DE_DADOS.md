@@ -135,7 +135,7 @@ Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (
 As FKs de `Acao` (categoria, responsável, alteração e edição), a de `RedefinicaoSenha` e as de `ProrrogacaoEdicao` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
 
 - Não dá para excluir uma categoria que tenha ações.
-- Não dá para excluir uma edição que tenha ações ou prorrogações.
+- Não dá para excluir uma edição que tenha ações. `DeletarEdicao` recusa só edição com ação (vigente vazia pode sair); se a edição estiver vazia, apaga as prorrogações na mesma transação para a FK `RESTRICT` não impedir.
 - Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, que tenha linha em `RedefinicaoSenha`, ou que tenha prorrogado uma edição. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; as outras FKs ainda barram no banco.
 
 `id_usuario_alteracao` é `NOT NULL` desde o início, por isso `Acao.criarNovaAcao()` o preenche com o próprio `id_usuario_responsavel` na criação.

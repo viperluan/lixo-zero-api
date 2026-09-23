@@ -123,14 +123,15 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | | `ListarAcoes` | Listagem paginada com filtros, edição e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
 | | `ListarAcoesPorData` | Ações de um dia civil, restritas à vigente para quem não é admin |
 | | `ListarAcoesPorIntervaloData` | Ações entre duas datas, com a mesma regra de edição |
-| `edicao` | `CriarEdicao` | Cria o ano com os dois prazos |
+| `edicao` | `CriarEdicao` | Cria o ano com os dois prazos, datas só daquele ano |
 | | `ObterEdicaoVigente` | Lê a vigente e calcula `cadastro_aberto` |
 | | `ListarEdicoes` | Lista os anos para o admin |
 | | `BuscarEdicao` | Detalhe com histórico de prorrogações |
 | | `ProrrogarEdicao` | Avança só o fim do cadastro da vigente |
 | | `AlterarInscricoesEdicao` | Liga ou desliga `inscricoes_abertas` na vigente |
-| | `TornarEdicaoVigente` | Troca a vigente só para um ano posterior |
-| | `AtualizarEdicao` | Ajusta início do cadastro e o intervalo de realização da vigente |
+| | `TornarEdicaoVigente` | Troca a vigente para qualquer ano ≥ calendário atual |
+| | `AtualizarEdicao` | Ajusta as datas da vigente; fim do cadastro no PUT só sem ação |
+| | `DeletarEdicao` | Exclui edição sem ações (inclusive vigente), com o histórico de prorrogação |
 | | `ResolverFiltroEdicao` | Decide o `id_edicao` das listagens de ações |
 | `usuario` | `CriarUsuario` | Verifica e-mail e CPF/CNPJ duplicados, persiste com senha hasheada |
 | | `AutenticarUsuario` | Confere credenciais e `status`, delega a geração do token |

@@ -12,3 +12,8 @@ export const ERRO_REALIZACAO_NAO_COBRE =
 export const ERRO_FIM_CADASTRO_SO_PRORROGACAO =
   'A data final do cadastro só pode ser alterada pela prorrogação.';
 export const ERRO_ATUALIZACAO_SEM_DATA = 'Informe ao menos uma data para atualizar.';
+export const ERRO_EDICAO_VINCULADA_A_ACOES = 'Não é possível excluir uma edição vinculada a ações.';
+
+export function erroDatasForaDoAno(ano: number): string {
+  return `As datas da edição precisam pertencer ao ano ${ano}.`;
+}

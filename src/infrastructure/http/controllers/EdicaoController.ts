@@ -9,7 +9,12 @@ import ListarEdicoes from '@/application/usecases/edicao/ListarEdicoes';
 import ObterEdicaoVigente from '@/application/usecases/edicao/ObterEdicaoVigente';
 import ProrrogarEdicao from '@/application/usecases/edicao/ProrrogarEdicao';
 import TornarEdicaoVigente from '@/application/usecases/edicao/TornarEdicaoVigente';
-import { ERRO_EDICAO_NAO_ENCONTRADA, ERRO_EDICAO_VIGENTE_AUSENTE } from '@/domain/edicao/erros';
+import DeletarEdicao from '@/application/usecases/edicao/DeletarEdicao';
+import {
+  ERRO_EDICAO_NAO_ENCONTRADA,
+  ERRO_EDICAO_VIGENTE_AUSENTE,
+  ERRO_EDICAO_VINCULADA_A_ACOES,
+} from '@/domain/edicao/erros';
 import { UsuarioRequest } from '../middlewares/AutenticacaoMiddleware';
 import { responderErroInterno } from '@/shared/utils/responderErroInterno';
 
@@ -20,6 +25,10 @@ function responderErroEdicao(response: Response, error: unknown) {
 
   if (mensagem === ERRO_EDICAO_NAO_ENCONTRADA || mensagem === ERRO_EDICAO_VIGENTE_AUSENTE) {
     return response.status(404).json({ error: mensagem });
+  }
+
+  if (mensagem === ERRO_EDICAO_VINCULADA_A_ACOES) {
+    return response.status(409).json({ error: mensagem });
   }
 
   return response.status(400).json({ error: mensagem });
@@ -158,6 +167,17 @@ export async function atualizar(request: UsuarioRequest, response: Response) {
     });
 
     response.status(200).json(edicao);
+  } catch (error) {
+    responderErroEdicao(response, error);
+  }
+}
+
+export async function remover(request: UsuarioRequest, response: Response) {
+  try {
+    const deletarEdicao = new DeletarEdicao(edicaoPrismaRepository);
+    await deletarEdicao.executar({ id: request.params.id });
+
+    response.status(200).end();
   } catch (error) {
     responderErroEdicao(response, error);
   }

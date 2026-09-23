@@ -23,12 +23,9 @@ export default class AtualizarEdicao implements Usecase<AtualizarEdicaoEntradaDT
   constructor(private readonly edicaoRepository: IEdicaoRepository) {}
 
   async executar(entrada: AtualizarEdicaoEntradaDTO): Promise<EdicaoSaidaDTO> {
-    if (entrada.data_fim_cadastro !== undefined) {
-      throw new Error(ERRO_FIM_CADASTRO_SO_PRORROGACAO);
-    }
-
     const informouData =
       entrada.data_inicio_cadastro !== undefined ||
+      entrada.data_fim_cadastro !== undefined ||
       entrada.data_inicio_realizacao !== undefined ||
       entrada.data_fim_realizacao !== undefined;
 
@@ -38,15 +35,24 @@ export default class AtualizarEdicao implements Usecase<AtualizarEdicaoEntradaDT
     if (!edicao) throw new Error(ERRO_EDICAO_NAO_ENCONTRADA);
     if (!edicao.vigente) throw new Error(ERRO_SO_EDICAO_VIGENTE);
 
-    const datas = Edicao.montarIntervalos({
-      data_inicio_cadastro:
-        entrada.data_inicio_cadastro ?? diaCivilDeColunaDate(edicao.data_inicio_cadastro),
-      data_fim_cadastro: diaCivilDeColunaDate(edicao.data_fim_cadastro),
-      data_inicio_realizacao:
-        entrada.data_inicio_realizacao ?? diaCivilDeColunaDate(edicao.data_inicio_realizacao),
-      data_fim_realizacao:
-        entrada.data_fim_realizacao ?? diaCivilDeColunaDate(edicao.data_fim_realizacao),
-    });
+    if (entrada.data_fim_cadastro !== undefined) {
+      const quantidadeAcoes = await this.edicaoRepository.contarAcoes(edicao.id);
+      if (quantidadeAcoes > 0) throw new Error(ERRO_FIM_CADASTRO_SO_PRORROGACAO);
+    }
+
+    const datas = Edicao.montarIntervalos(
+      {
+        data_inicio_cadastro:
+          entrada.data_inicio_cadastro ?? diaCivilDeColunaDate(edicao.data_inicio_cadastro),
+        data_fim_cadastro:
+          entrada.data_fim_cadastro ?? diaCivilDeColunaDate(edicao.data_fim_cadastro),
+        data_inicio_realizacao:
+          entrada.data_inicio_realizacao ?? diaCivilDeColunaDate(edicao.data_inicio_realizacao),
+        data_fim_realizacao:
+          entrada.data_fim_realizacao ?? diaCivilDeColunaDate(edicao.data_fim_realizacao),
+      },
+      edicao.ano
+    );
 
     const fora = await this.edicaoRepository.contarAcoesForaDaRealizacao(
       edicao.id,

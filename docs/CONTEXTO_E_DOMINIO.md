@@ -49,9 +49,11 @@ Campos, agrupados por propósito:
 
 O ciclo anual. Cada ano tem no máximo uma edição. Os prazos de cadastro e de realização são independentes: o formulário pode ficar aberto de 23/09 a 08/10, prorrogável até 15/10, enquanto a ação só pode acontecer de 07/11 a 15/11.
 
-`inscricoes_abertas` é manual. `cadastro_aberto` junta esse interruptor com o prazo de cadastro, no fuso `America/Sao_Paulo`, e não é coluna. Só a edição vigente aceita ação nova, prorrogação e troca do interruptor. Cadastrar ou tornar vigente um ano anterior ao calendário atual (São Paulo) é recusado — 2025 em 2026 não entra por `POST /edicoes` nem por `PUT /edicoes/:id/vigente`. Tornar vigente um ano menor ou igual ao da vigente atual também é recusado.
+`inscricoes_abertas` é manual. `cadastro_aberto` junta esse interruptor com o prazo de cadastro, no fuso `America/Sao_Paulo`, e não é coluna. Só a edição vigente aceita ação nova, prorrogação e troca do interruptor. Cadastrar ou tornar vigente um ano anterior ao calendário atual (São Paulo) é recusado — 2025 em 2026 não entra por `POST /edicoes` nem por `PUT /edicoes/:id/vigente`. Ano atual ou futuro pode ser criado, apagado se estiver vazio e tornado vigente mesmo que outro ano (inclusive maior) já seja o vigente.
 
-A prorrogação só avança `data_fim_cadastro` e fica registrada em `ProrrogacaoEdicao`, com quem prorrogou e quando.
+As quatro datas (e a nova data da prorrogação) precisam pertencer ao ano civil da edição. Cadastro e realização continuam independentes: o formulário pode encostar na semana das ações, desde que tudo seja daquele ano.
+
+A prorrogação só avança `data_fim_cadastro` (e grava `ProrrogacaoEdicao`) quando a edição já tem ação. Sem ação, o `PUT /edicoes/:id` corrige as quatro datas, inclusive encolher o fim do cadastro, sem histórico. `DELETE /edicoes/:id` apaga edição sem ações, inclusive a vigente; o histórico de prorrogação dessa edição sai junto.
 
 ### Categoria
 

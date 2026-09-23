@@ -80,7 +80,7 @@ function montarOpcoesListagemAcoes(request: UsuarioRequest) {
 
 Não-admin tem a situação **forçada** para `Aprovada` e a edição **forçada** para a vigente. Isso neutraliza `?situacao=0` e também `?ano=` ou `?id_edicao=` de outro ano. Sem vigente, a listagem pública volta vazia. Essa regra vale para `GET /acoes` e para as listagens por data.
 
-`GET /edicoes/vigente` é público e não devolve usuário, e-mail nem histórico de prorrogação. Criar, prorrogar, ligar inscrições e trocar a vigente exigem admin. O `id_edicao` de uma ação nova sai da vigente no servidor; o corpo do `POST /acoes` não escolhe a edição.
+`GET /edicoes/vigente` é público e não devolve usuário, e-mail nem histórico de prorrogação. Criar, prorrogar, ligar inscrições, trocar a vigente e excluir exigem admin. O `id_edicao` de uma ação nova sai da vigente no servidor; o corpo do `POST /acoes` não escolhe a edição.
 
 `GET /acoes/minhas` é o outro caminho: exige token, filtra pelo `id` do usuário autenticado (query `id_usuario` é ignorada) e devolve as ações do dono em qualquer situação, **sem** sanitizar. Admin nesta rota também vê só as ações em que é responsável; a fila de moderação permanece em `GET /acoes`.
 

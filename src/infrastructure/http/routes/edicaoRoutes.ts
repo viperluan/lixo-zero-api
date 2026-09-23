@@ -30,5 +30,6 @@ edicaoRouter.put(
   edicaoController.tornarVigente
 );
 edicaoRouter.put('/:id', AutenticacaoMiddleware, AdminMiddleware, edicaoController.atualizar);
+edicaoRouter.delete('/:id', AutenticacaoMiddleware, AdminMiddleware, edicaoController.remover);
 
 export default edicaoRouter;

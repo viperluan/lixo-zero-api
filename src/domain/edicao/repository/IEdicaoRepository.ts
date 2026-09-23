@@ -27,5 +27,7 @@ export default interface IEdicaoRepository {
   alterarInscricoes(idEdicao: string, inscricoesAbertas: boolean): Promise<void>;
   tornarVigente(idEdicao: string): Promise<void>;
   atualizarDatas(idEdicao: string, datas: AtualizarDatasEdicao): Promise<void>;
+  contarAcoes(idEdicao: string): Promise<number>;
   contarAcoesForaDaRealizacao(idEdicao: string, inicio: string, fim: string): Promise<number>;
+  deletar(idEdicao: string): Promise<void>;
 }

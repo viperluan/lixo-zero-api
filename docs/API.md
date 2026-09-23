@@ -40,6 +40,7 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `GET` | `/edicoes/:id` | Admin | — |
 | `POST` | `/edicoes` | Admin | — |
 | `PUT` | `/edicoes/:id` | Admin | — |
+| `DELETE` | `/edicoes/:id` | Admin | — |
 | `PUT` | `/edicoes/:id/prorrogar` | Admin | — |
 | `PUT` | `/edicoes/:id/inscricoes` | Admin | — |
 | `PUT` | `/edicoes/:id/vigente` | Admin | — |
@@ -431,7 +432,7 @@ Uma edição é o ciclo anual. Ela tem dois prazos independentes, ambos `YYYY-MM
 
 `inscricoes_abertas` é um interruptor manual e não muda sozinho quando a data acaba. `cadastro_aberto` é calculado: o interruptor está ligado e o dia de hoje, em `America/Sao_Paulo`, está dentro do prazo de cadastro, inclusive o dia final.
 
-Só uma edição fica `vigente`. Dá para tornar vigente um ano maior que o da vigente **e** maior ou igual ao ano civil atual em `America/Sao_Paulo`. Sem vigente, um ano já encerrado (2025 em 2026) também é recusado. Reativar um ano anterior responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Prorrogar, ligar inscrições e ajustar datas só funcionam na vigente.
+Só uma edição fica `vigente`. Dá para tornar vigente qualquer ano **maior ou igual** ao calendário atual em `America/Sao_Paulo`, inclusive um menor que a vigente de agora (2026 no lugar de 2027, no mesmo ano civil). Ano já encerrado (2025 em 2026) responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Prorrogar, ligar inscrições e ajustar datas só funcionam na vigente.
 
 ### `GET /edicoes/vigente`
 
@@ -498,12 +499,12 @@ Admin.
 }
 ```
 
-`ano` é número inteiro de 2000 a 2100 e tem de ser ≥ o calendário atual em `America/Sao_Paulo`, mesmo com `vigente: false`. Os booleanos não aceitam string. Com `vigente: true`, o ano também tem de ser maior que o da vigente, se houver. A vigente anterior deixa de ser vigente.
+`ano` é número inteiro de 2000 a 2100 e tem de ser ≥ o calendário atual em `America/Sao_Paulo`, mesmo com `vigente: false`. As quatro datas têm de ser desse mesmo ano civil (`2026-11-07` numa edição 2026; `2027-01-05` é recusado). Os booleanos não aceitam string. Com `vigente: true`, a vigente anterior deixa de ser vigente — pode ser um ano menor, igual ou maior, desde que não seja anterior ao calendário.
 
 | Status | Corpo |
 |--------|-------|
 | `201` | Objeto da edição, com `cadastro_aberto` |
-| `400` | Validação, `"Ano de edição já cadastrado."`, `"Não é possível cadastrar uma edição de um ano anterior."` ou `"Não é possível reativar uma edição anterior."` |
+| `400` | Validação, `"Ano de edição já cadastrado."`, `"Não é possível cadastrar uma edição de um ano anterior."` ou `"As datas da edição precisam pertencer ao ano <ano>."` |
 | `401` / `403` | Sem token / não é admin |
 
 ### `PUT /edicoes/:id/prorrogar`
@@ -517,7 +518,7 @@ Admin. Só a vigente. Só avança o fim do cadastro e grava o histórico.
 | Status | Corpo |
 |--------|-------|
 | `200` | Edição atualizada |
-| `400` | `"A nova data final do cadastro deve ser posterior à atual."` ou `"Só é possível alterar a edição vigente."` |
+| `400` | `"A nova data final do cadastro deve ser posterior à atual."`, `"As datas da edição precisam pertencer ao ano <ano>."` ou `"Só é possível alterar a edição vigente."` |
 | `404` | Edição não encontrada |
 
 ### `PUT /edicoes/:id/inscricoes`
@@ -532,21 +533,33 @@ Admin. Só a vigente.
 
 ### `PUT /edicoes/:id/vigente`
 
-Admin. Sem corpo. Torna essa edição a vigente se o ano for maior ou igual ao calendário atual e, havendo vigente, maior que o ano dela. Ano encerrado ou anterior à vigente responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Se ela já for a vigente, responde `200` sem alterar nada.
+Admin. Sem corpo. Torna essa edição a vigente se o ano for maior ou igual ao calendário atual. Pode voltar de 2027 para 2026 no mesmo ano civil. Ano encerrado responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Se ela já for a vigente, responde `200` sem alterar nada.
 
 ### `PUT /edicoes/:id`
 
-Admin. Só a vigente. Ajusta o início do cadastro e o intervalo de realização. O fim do cadastro só muda em `/prorrogar`. O novo intervalo de realização precisa continuar cobrindo as ações já gravadas nessa edição.
+Admin. Só a vigente. Ajusta início do cadastro, realização e, **se a edição não tiver ação**, o fim do cadastro (pode encolher, sem gravar prorrogação). Com ação, o fim do cadastro só muda em `/prorrogar`. O novo intervalo de realização precisa continuar cobrindo as ações já gravadas.
 
 ```json
 {
   "data_inicio_cadastro": "2026-09-23",
+  "data_fim_cadastro": "2026-10-08",
   "data_inicio_realizacao": "2026-11-07",
   "data_fim_realizacao": "2026-11-15"
 }
 ```
 
-Pelo menos um dos três campos. Mandar `data_fim_cadastro` responde `400` `"A data final do cadastro só pode ser alterada pela prorrogação."`
+Pelo menos um campo. Datas no ano da edição. Com ação, mandar `data_fim_cadastro` responde `400` `"A data final do cadastro só pode ser alterada pela prorrogação."`
+
+### `DELETE /edicoes/:id`
+
+Admin. Sem corpo. Só edição **sem ações** (a vigente vazia também sai). Histórico de prorrogação daquela edição, se houver, é apagado junto. Sem vigente, `GET /edicoes/vigente` passa a `404` e a listagem pública fica vazia.
+
+| Status | Corpo |
+|--------|-------|
+| `200` | **Vazio** |
+| `404` | `{ "error": "Edição não encontrada." }` |
+| `409` | `{ "error": "Não é possível excluir uma edição vinculada a ações." }` |
+| `401` / `403` | Sem token / não é admin |
 
 ---
 

@@ -1,5 +1,5 @@
 import { v4 as gerarUuid } from 'uuid';
-import { ERRO_PRORROGACAO_NAO_AVANCA } from '../erros';
+import { ERRO_PRORROGACAO_NAO_AVANCA, erroDatasForaDoAno } from '../erros';
 
 export type EdicaoProps = {
   id: string;
@@ -41,7 +41,7 @@ export default class Edicao {
       throw new Error('Informe vigente como verdadeiro ou falso.');
     }
 
-    const datas = this.montarIntervalos(entrada);
+    const datas = this.montarIntervalos(entrada, entrada.ano);
 
     return new Edicao({
       id: gerarUuid(),
@@ -56,7 +56,7 @@ export default class Edicao {
     return new Edicao(props);
   }
 
-  public static montarIntervalos(entrada: IntervaloEdicaoProps) {
+  public static montarIntervalos(entrada: IntervaloEdicaoProps, ano: number) {
     const data_inicio_cadastro = exigirDia(
       entrada.data_inicio_cadastro,
       'A data de início do cadastro é inválida.'
@@ -74,6 +74,13 @@ export default class Edicao {
       'A data de fim da realização é inválida.'
     );
 
+    exigirDiasNoAno(ano, [
+      data_inicio_cadastro,
+      data_fim_cadastro,
+      data_inicio_realizacao,
+      data_fim_realizacao,
+    ]);
+
     if (data_inicio_cadastro > data_fim_cadastro) {
       throw new Error('A data de início do cadastro deve ser anterior ou igual à data de fim.');
     }
@@ -90,8 +97,9 @@ export default class Edicao {
     };
   }
 
-  public static validarNovaDataFimCadastro(fimAtual: Date, fimNovo: string): Date {
+  public static validarNovaDataFimCadastro(fimAtual: Date, fimNovo: string, ano: number): Date {
     const nova = exigirDia(fimNovo, 'A data de fim do cadastro é inválida.');
+    exigirDiasNoAno(ano, [nova]);
 
     if (nova <= diaDaColuna(fimAtual)) {
       throw new Error(ERRO_PRORROGACAO_NAO_AVANCA);
@@ -146,6 +154,12 @@ export default class Edicao {
 
   public get vigente(): boolean {
     return this.props.vigente;
+  }
+}
+
+function exigirDiasNoAno(ano: number, dias: string[]): void {
+  if (dias.some((dia) => Number(dia.slice(0, 4)) !== ano)) {
+    throw new Error(erroDatasForaDoAno(ano));
   }
 }
 

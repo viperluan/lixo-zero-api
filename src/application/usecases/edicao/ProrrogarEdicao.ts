@@ -22,7 +22,11 @@ export default class ProrrogarEdicao implements Usecase<ProrrogarEdicaoEntradaDT
     if (!edicao) throw new Error(ERRO_EDICAO_NAO_ENCONTRADA);
     if (!edicao.vigente) throw new Error(ERRO_SO_EDICAO_VIGENTE);
 
-    const novaData = Edicao.validarNovaDataFimCadastro(edicao.data_fim_cadastro, data_fim_cadastro);
+    const novaData = Edicao.validarNovaDataFimCadastro(
+      edicao.data_fim_cadastro,
+      data_fim_cadastro,
+      edicao.ano
+    );
     await this.edicaoRepository.prorrogar(id, novaData, id_usuario);
 
     const atualizada = await this.edicaoRepository.buscarPorId(id);
