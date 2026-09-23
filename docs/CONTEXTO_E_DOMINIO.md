@@ -43,7 +43,15 @@ Campos, agrupados por propósito:
 | Como | `forma_realizacao_acao`, `tipo_publico_acao` |
 | Onde | `nome_local_acao`, `endereco_local_acao` (presencial/híbrida), `link_divulgacao_acesso_acao` (online/híbrida) |
 | Divulgação | `orientacao_divulgacao_acao`, `link_para_inscricao_acao`, `informacoes_acao` |
-| Controle | `situacao_acao`, `data_cadastro`, `data_atualizacao`, `id_usuario_alteracao` |
+| Controle | `situacao_acao`, `data_cadastro`, `data_atualizacao`, `id_usuario_alteracao`, `id_edicao` |
+
+### Edição (`Edicao`)
+
+O ciclo anual. Cada ano tem no máximo uma edição. Os prazos de cadastro e de realização são independentes: o formulário pode ficar aberto de 23/09 a 08/10, prorrogável até 15/10, enquanto a ação só pode acontecer de 07/11 a 15/11.
+
+`inscricoes_abertas` é manual. `cadastro_aberto` junta esse interruptor com o prazo de cadastro, no fuso `America/Sao_Paulo`, e não é coluna. Só a edição vigente aceita ação nova, prorrogação e troca do interruptor. Cadastrar ou tornar vigente um ano anterior ao calendário atual (São Paulo) é recusado — 2025 em 2026 não entra por `POST /edicoes` nem por `PUT /edicoes/:id/vigente`. Tornar vigente um ano menor ou igual ao da vigente atual também é recusado.
+
+A prorrogação só avança `data_fim_cadastro` e fica registrada em `ProrrogacaoEdicao`, com quem prorrogou e quando.
 
 ### Categoria
 
@@ -116,7 +124,7 @@ Concentradas em `Acao.validacao()`, executada apenas por `criarNovaAcao()`. `car
 | Presencial (`'1'`) | `nome_local_acao`, `endereco_local_acao` |
 | Híbrida (`'2'`) | `link_divulgacao_acesso_acao`, `nome_local_acao`, `endereco_local_acao`, `informacoes_acao` |
 
-**Regra de unicidade:** `CriarAcao` rejeita títulos já existentes (`buscarPorTitulo`), com a mensagem "Título já cadastrado.". A checagem é feita na aplicação, sem índice único no banco, e vale para toda a base — inclusive ações de anos anteriores.
+**Regra de unicidade:** `CriarAcao` rejeita título já existente na mesma edição (`buscarPorTituloNaEdicao`), com a mensagem "Título já cadastrado.". Há índice único `(titulo_acao, id_edicao)`. O mesmo título pode voltar em outra edição.
 
 Duas observações sobre o que **não** é validado: `link_para_inscricao_acao` é aceito vazio ou em qualquer formato, e `celular` só tem o comprimento conferido (não há verificação de que sejam dígitos).
 
@@ -136,13 +144,13 @@ Cinco templates EJS em `src/infrastructure/smtp/templates/`. Os três primeiros 
 
 | Template | Disparado por | Assunto |
 |----------|---------------|---------|
-| `NotificacaoAcaoCriada.ejs` | `CriarAcao` | `CaxiasLixoZero <ano> - Cadastro da ação: <título>` |
-| `NotificacaoAcaoAprovada.ejs` | `AtualizarAcao` com `'1'` | `CaxiasLixoZero <ano> - Informação de ação aprovada!` |
-| `NotificacaoAcaoReprovada.ejs` | `AtualizarAcao` com `'2'` | `CaxiasLixoZero <ano> - Informação de ação reprovada!` |
+| `NotificacaoAcaoCriada.ejs` | `CriarAcao` | `CaxiasLixoZero <ano da edição> - Cadastro da ação: <título>` |
+| `NotificacaoAcaoAprovada.ejs` | `AtualizarAcao` com `'1'` | `CaxiasLixoZero <ano da edição> - Informação de ação aprovada!` |
+| `NotificacaoAcaoReprovada.ejs` | `AtualizarAcao` com `'2'` | `CaxiasLixoZero <ano da edição> - Informação de ação reprovada!` |
 | `RedefinicaoSenha.ejs` | `SolicitarRedefinicaoSenha` | `CaxiasLixoZero <ano> - Redefinição de senha` |
 | `SenhaAlterada.ejs` | `RedefinirSenha` | `CaxiasLixoZero <ano> - Sua senha foi alterada` |
 
-O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos casos de uso. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário. O de redefinição leva o nome e o link `{URL_FRONT}/redefinir-senha?token=...`. O de senha alterada leva só o nome, sem a senha.
+O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos casos de uso. Nos e-mails de ação, `<ano da edição>` é o `ano` da edição da ação. Nos e-mails de senha, `<ano>` continua sendo o ano corrente do servidor. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário. O de redefinição leva o nome e o link `{URL_FRONT}/redefinir-senha?token=...`. O de senha alterada leva só o nome, sem a senha.
 
 Os casos de uso renderizam o template EJS e chamam `IEmailService.enviarEmail()`; a implementação injetada na API (`FilaEmailService`) publica o e-mail já montado na fila Redis `emails`. O worker (`src/worker.ts`) consome o job e envia via Gmail SMTP (`GMAIL_USER`/`GMAIL_PASS`), com até 5 tentativas e backoff exponencial.
 
@@ -152,8 +160,7 @@ Se o Redis estiver indisponível no `queue.add`, a falha é só logada: a ação
 
 Contexto importante ao planejar features, porque essas ausências são frequentemente confundidas com bugs:
 
-- **Não existe conceito de edição anual do evento.** Nenhuma entidade guarda "ano" ou "período de inscrições". O ano é derivado de `data_acao`, e os assuntos dos e-mails usam o ano corrente do servidor. Filtrar a programação de um ano específico exige usar `GET /acoes/:dataInicial/:dataFinal`.
-- **Não há janela de inscrição.** A única restrição temporal é que a data da ação seja futura.
-- **Não há histórico de auditoria.** Só se sabe quem fez a *última* alteração; aprovações e reprovações anteriores se perdem.
+- **A edição não abre nem fecha o cadastro sozinha além da data.** `inscricoes_abertas` permanece como foi gravado. O fechamento no fim do prazo vem de `cadastro_aberto`, calculado na leitura.
+- **Não há histórico de auditoria da situação da ação.** A prorrogação da edição fica registrada; aprovações e reprovações anteriores da ação, não. Só se sabe quem fez a *última* alteração da ação.
 - **Não há motivo de reprovação.** O e-mail de reprovação é genérico, sem campo para justificativa.
 - **Não há edição de ação pelo organizador.** Depois de criada, só a situação pode mudar, e apenas por um admin. Corrigir um erro de digitação exige intervenção no banco.

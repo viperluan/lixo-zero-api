@@ -1,11 +1,13 @@
 import Acao from '@/domain/acao/entity/Acao';
 import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
 import { sanitizarListaAcoesResposta } from '@/shared/utils/sanitizarAcaoResposta';
+import { intervaloDoDiaCivil, diaCivilDaEntrada } from '@/shared/utils/diaCivil';
 import { Usecase } from '../usecase';
 
 export type ListarAcoesPorDataEntradaDTO = {
   data: string;
   situacao?: string;
+  id_edicao?: string;
   sanitizarSaida?: boolean;
 };
 
@@ -55,21 +57,15 @@ export default class ListarAcoesPorData
   public async executar({
     data,
     situacao,
+    id_edicao,
     sanitizarSaida = false,
   }: ListarAcoesPorDataEntradaDTO): Promise<ListarAcoesPorDataSaidaDTO[]> {
-    const objetoData = new Date(data);
+    const dia = diaCivilDaEntrada(data);
+    const intervalo = intervaloDoDiaCivil(dia);
 
-    this.validarData(objetoData);
-
-    const acoes = await this.acaoRepository.listarPorData(objetoData, situacao);
+    const acoes = await this.acaoRepository.listarPorData(intervalo, situacao, id_edicao);
 
     return this.objetoDeSaida(acoes, sanitizarSaida);
-  }
-
-  private validarData(data: Date) {
-    if (isNaN(data.getTime())) {
-      throw new Error('Data inválida.');
-    }
   }
 
   private objetoDeSaida(

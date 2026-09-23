@@ -9,6 +9,11 @@ import ListarAcoesPorIntervaloData from '@/application/usecases/acao/ListarAcoes
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
 import FilaEmailService from '@/application/services/email/FilaEmailService';
 import { filaEmail } from '@/infrastructure/fila/filaEmail';
+import EdicaoPrismaRepository from '@/application/repositories/EdicaoPrismaRepository';
+import ResolverFiltroEdicao, {
+  PerfilFiltroEdicao,
+} from '@/application/usecases/edicao/ResolverFiltroEdicao';
+import { ERRO_EDICAO_NAO_ENCONTRADA } from '@/domain/edicao/erros';
 import { UsuarioRequest } from '../middlewares/AutenticacaoMiddleware';
 import { AcaoSituacao } from '@/domain/acao/enum/AcaoSituacao';
 import { normalizarPaginacao } from '@/shared/utils/normalizarPaginacao';
@@ -17,6 +22,7 @@ import { usuarioEhAdmin } from '@/shared/utils/usuarioEhAdmin';
 
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
+const edicaoPrismaRepository = new EdicaoPrismaRepository(prisma);
 const filaEmailService = new FilaEmailService(filaEmail);
 
 function montarOpcoesListagemAcoes(request: UsuarioRequest) {
@@ -29,6 +35,32 @@ function montarOpcoesListagemAcoes(request: UsuarioRequest) {
   };
 }
 
+async function resolverEdicaoDaListagem(
+  perfil: PerfilFiltroEdicao,
+  ano?: string,
+  idEdicao?: string
+) {
+  return new ResolverFiltroEdicao(edicaoPrismaRepository).executar({
+    perfil,
+    ano: ano || undefined,
+    id_edicao: idEdicao || undefined,
+  });
+}
+
+function responderErroListagem(response: Response, error: unknown) {
+  const mensagem = (error as Error).message;
+
+  if (mensagem === ERRO_EDICAO_NAO_ENCONTRADA) {
+    return response.status(404).json({ error: mensagem });
+  }
+
+  if (mensagem === 'Data inválida.') {
+    return response.status(400).json({ error: mensagem });
+  }
+
+  return responderErroInterno(response, error);
+}
+
 export async function listarTodasAcoes(request: UsuarioRequest, response: Response) {
   try {
     const {
@@ -37,18 +69,38 @@ export async function listarTodasAcoes(request: UsuarioRequest, response: Respon
       id_categoria,
       id_usuario,
       data_acao,
+      data_acao_inicial,
+      data_acao_final,
       search,
       situacao,
       forma_realizacao_acao,
+      ano,
+      id_edicao,
     } = request.query;
 
     const { paginaAtual, limite: limiteDeAcoesPorPagina } = normalizarPaginacao(page, limit);
     const { admin, situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
+    const filtroEdicao = await resolverEdicaoDaListagem(
+      admin ? 'admin' : 'publico',
+      ano as string,
+      id_edicao as string
+    );
+
+    if (filtroEdicao.sem_resultado) {
+      return response.status(200).json({
+        actions: [],
+        totalPages: 0,
+        currentPage: paginaAtual,
+      });
+    }
 
     const filtros = {
       id_categoria: (id_categoria as string) || '',
       id_usuario: (id_usuario as string) || '',
+      id_edicao: filtroEdicao.id_edicao || '',
       data_acao: (data_acao as string) || '',
+      data_acao_inicial: (data_acao_inicial as string) || '',
+      data_acao_final: (data_acao_final as string) || '',
       search: (search as string) || '',
       situacao: admin ? (situacao as string) || '' : situacaoPadrao,
       forma_realizacao_acao: (forma_realizacao_acao as string) || '',
@@ -68,7 +120,7 @@ export async function listarTodasAcoes(request: UsuarioRequest, response: Respon
       currentPage: paginaAtual,
     });
   } catch (error) {
-    responderErroInterno(response, error);
+    responderErroListagem(response, error);
   }
 }
 
@@ -85,17 +137,37 @@ export async function listarMinhasAcoes(request: UsuarioRequest, response: Respo
       limit = 10,
       id_categoria,
       data_acao,
+      data_acao_inicial,
+      data_acao_final,
       search,
       situacao,
       forma_realizacao_acao,
+      ano,
+      id_edicao,
     } = request.query;
 
     const { paginaAtual, limite: limiteDeAcoesPorPagina } = normalizarPaginacao(page, limit);
+    const filtroEdicao = await resolverEdicaoDaListagem(
+      'minhas',
+      ano as string,
+      id_edicao as string
+    );
+
+    if (filtroEdicao.sem_resultado) {
+      return response.status(200).json({
+        actions: [],
+        totalPages: 0,
+        currentPage: paginaAtual,
+      });
+    }
 
     const filtros = {
       id_categoria: (id_categoria as string) || '',
       id_usuario: request.usuario.id,
+      id_edicao: filtroEdicao.id_edicao || '',
       data_acao: (data_acao as string) || '',
+      data_acao_inicial: (data_acao_inicial as string) || '',
+      data_acao_final: (data_acao_final as string) || '',
       search: (search as string) || '',
       situacao: (situacao as string) || '',
       forma_realizacao_acao: (forma_realizacao_acao as string) || '',
@@ -115,7 +187,7 @@ export async function listarMinhasAcoes(request: UsuarioRequest, response: Respo
       currentPage: paginaAtual,
     });
   } catch (error) {
-    responderErroInterno(response, error);
+    responderErroListagem(response, error);
   }
 }
 
@@ -132,6 +204,7 @@ export async function criarAcao(request: UsuarioRequest, response: Response) {
     const criarAcao = new CriarAcao(
       acaoPrismaRepository,
       usuarioPrismaRepository,
+      edicaoPrismaRepository,
       filaEmailService
     );
 
@@ -160,6 +233,7 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
     const atualizarAcao = new AtualizarAcao(
       acaoPrismaRepository,
       usuarioPrismaRepository,
+      edicaoPrismaRepository,
       filaEmailService
     );
 
@@ -180,12 +254,18 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
 export async function listarPorData(request: UsuarioRequest, response: Response) {
   try {
     const { data } = request.params;
-    const { situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
+    const { admin, situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
+    const idEdicao = await idEdicaoParaCalendario(admin);
+
+    if (idEdicao === null) {
+      return response.status(200).json([]);
+    }
 
     const listarPorData = new ListarAcoesPorData(acaoPrismaRepository);
     const acoes = await listarPorData.executar({
       data,
       situacao: situacaoPadrao,
+      id_edicao: idEdicao,
       sanitizarSaida,
     });
 
@@ -198,13 +278,19 @@ export async function listarPorData(request: UsuarioRequest, response: Response)
 export async function listarPorIntervaloData(request: UsuarioRequest, response: Response) {
   try {
     const { dataInicial, dataFinal } = request.params;
-    const { situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
+    const { admin, situacao: situacaoPadrao, sanitizarSaida } = montarOpcoesListagemAcoes(request);
+    const idEdicao = await idEdicaoParaCalendario(admin);
+
+    if (idEdicao === null) {
+      return response.status(200).json([]);
+    }
 
     const listarAcoesPorIntervaloData = new ListarAcoesPorIntervaloData(acaoPrismaRepository);
     const acoes = await listarAcoesPorIntervaloData.executar({
       dataInicial,
       dataFinal,
       situacao: situacaoPadrao,
+      id_edicao: idEdicao,
       sanitizarSaida,
     });
 
@@ -212,4 +298,13 @@ export async function listarPorIntervaloData(request: UsuarioRequest, response: 
   } catch (error) {
     response.status(400).json({ error: (error as Error).message });
   }
+}
+
+async function idEdicaoParaCalendario(admin: boolean): Promise<string | undefined | null> {
+  if (admin) return undefined;
+
+  const filtro = await resolverEdicaoDaListagem('publico');
+  if (filtro.sem_resultado) return null;
+
+  return filtro.id_edicao;
 }

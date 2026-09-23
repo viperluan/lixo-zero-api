@@ -159,5 +159,5 @@ Leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) para a lista compl
 1. O filtro `data_acao` e a rota `GET /acoes/:data` comparam o `DateTime` por **igualdade exata**, incluindo hora. Buscar por `2026-09-15` não retorna uma ação marcada para `2026-09-15T14:00:00`.
 2. `situacao_acao` volta como texto (`"Aprovada"`) em `GET /acoes` e `PUT /acoes/:id`, mas como código (`"1"`) em `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal`.
 3. `PUT /acoes/:id` não é um update genérico: só aceita `situacao_acao` com valor `'1'` ou `'2'`. É o endpoint de aprovar/reprovar.
-4. Não existe entidade de "edição"/"ano" do evento. O ano é implícito em `data_acao`, e títulos de ação são únicos globalmente — inclusive entre anos diferentes.
+4. A edição vigente é a única que aceita cadastro, prorrogação e troca de inscrições. O título da ação é único dentro da edição, não na base inteira. Ano anterior ao calendário atual não é criado nem volta a ser vigente.
 5. Falha ao enfileirar o e-mail (Redis fora) é só logada: a ação já foi salva e a API ainda responde sucesso. SMTP com erro é relançado no worker para o BullMQ retentar.

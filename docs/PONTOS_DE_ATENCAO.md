@@ -6,13 +6,9 @@ Nada aqui foi alterado — é um retrato do estado atual.
 
 ## Bugs e comportamentos incorretos
 
-### Filtro por data compara timestamp exato
+### Filtro por data nas rotas autenticadas de intervalo
 
-`AcaoPrismaRepository.montarWhere()` faz `where.data_acao = new Date(filtros.data_acao)`, uma igualdade exata contra um `TIMESTAMP(3)` que inclui hora. `ListarAcoesPorData` tem o mesmo problema, com `equals`.
-
-Consequência: `GET /acoes?data_acao=2026-09-15` e `GET /acoes/2026-09-15` só retornam ações marcadas exatamente para `2026-09-15T00:00:00.000Z`. Uma ação às 14h nunca aparece. Na prática esses dois caminhos quase sempre devolvem lista vazia.
-
-A correção seria usar um intervalo `gte`/`lt` cobrindo o dia. Enquanto isso não acontece, use `GET /acoes/:dataInicial/:dataFinal`, que funciona corretamente com `gte`/`lte`.
+`GET /acoes` trata `data_acao` como dia civil em `America/Sao_Paulo`. `GET /acoes/:data` também. Em `GET /acoes/:dataInicial/:dataFinal`, um valor só com a data cobre o dia inteiro; um instante ISO continua sendo aquele timestamp.
 
 ### `situacao_acao` tem dois formatos diferentes
 
@@ -45,7 +41,7 @@ Na prática o cenário é raro (o usuário acabou de ser autenticado), mas é um
 
 ### Unicidade verificada em duas etapas
 
-Título de ação, descrição de categoria, e-mail e CPF/CNPJ têm a duplicidade checada com um `SELECT` seguido de `INSERT`. Duas requisições simultâneas passam pela checagem antes de qualquer uma inserir. `Usuario.email` e `Usuario.cpf_cnpj` têm índice único no banco, então falham com erro Prisma pouco legível; `titulo_acao` e `Categoria.descricao` **não têm** índice único, então a duplicata simplesmente entra.
+Título de ação é único por edição no banco (`titulo_acao`, `id_edicao`). Descrição de categoria, e-mail e CPF/CNPJ têm a duplicidade checada com um `SELECT` seguido de `INSERT`. Duas requisições simultâneas passam pela checagem antes de qualquer uma inserir. `Usuario.email`, `Usuario.cpf_cnpj`, `Edicao.ano` e o par título/edição têm índice único no banco, então falham com erro Prisma pouco legível; `Categoria.descricao` **não tem** índice único, então a duplicata simplesmente entra.
 
 ## Inconsistências de API
 
@@ -67,14 +63,11 @@ Só aceita `situacao_acao`, e só com os valores `'1'` ou `'2'`. Semanticamente 
 
 `GET /acoes` funciona anonimamente, mas `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` exigem token. Como as três rotas servem à mesma programação pública e as duas últimas já sanitizam a saída para não-admin, a exigência parece acidental — um front público não consegue montar um calendário sem autenticar.
 
-### Sem filtro de intervalo de data no endpoint público
+### Listagem pública limitada à edição vigente
 
-`GET /acoes` não tem um filtro do tipo "a partir de X". As duas alternativas existentes não servem a um front público: `data_acao` compara timestamp por igualdade exata (ver o primeiro item deste documento) e `GET /acoes/:dataInicial/:dataFinal` exige token.
+`GET /acoes` para quem não é admin devolve só ações aprovadas da edição vigente. Sem vigente, a lista vem vazia. O admin vê a vigente por default e troca com `ano` ou `id_edicao`. `data_acao_inicial` e `data_acao_final` filtram o intervalo dentro dessa edição.
 
-O front contorna isso buscando `page=1&limit=100` e filtrando as futuras no cliente — é o que a faixa "Próximas ações" da home faz. Funciona enquanto o total de ações aprovadas couber em 100. Como a listagem sai ordenada por `data_acao` crescente, quando o histórico acumulado de várias edições passar de 100 a página 1 será só passado e a faixa deixará de aparecer: falha silenciosa, não quebra a página.
-
-- **Correção preferida:** aceitar `data_acao_inicial` (`gte`) em `montarWhere()` do `AcaoPrismaRepository` e expor o query param em `listarTodasAcoes`. Resolve a home, a agenda e a raiz do bug de igualdade exata de uma vez.
-- **Paliativo no cliente:** se `totalPages > 1` e nenhuma ação da página 1 for futura, buscar `page=totalPages`.
+O teto de 100 itens do front deixa de misturar anos anteriores na página 1, desde que a edição vigente esteja marcada. Ações de edições passadas continuam em `GET /acoes?ano=<ano>` para admin e em `GET /acoes/minhas` para o organizador.
 
 ### Chaves de resposta em inglês, campos em português
 

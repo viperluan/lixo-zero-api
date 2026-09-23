@@ -25,6 +25,7 @@ model Usuario {
   acao                   Acao[]
   acao_usuario_alteracao Acao[]             @relation("usuario_alteracao")
   redefinicoes_senha     RedefinicaoSenha[]
+  prorrogacoes_edicao    ProrrogacaoEdicao[]
 }
 
 model RedefinicaoSenha {
@@ -37,6 +38,36 @@ model RedefinicaoSenha {
   usuario    Usuario   @relation(fields: [id_usuario], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([id_usuario, criado_em])
+}
+
+model Edicao {
+  id                      String              @id @default(uuid())
+  ano                     Int                 @unique
+  data_inicio_cadastro    DateTime            @db.Date
+  data_fim_cadastro       DateTime            @db.Date
+  data_inicio_realizacao  DateTime            @db.Date
+  data_fim_realizacao     DateTime            @db.Date
+  inscricoes_abertas      Boolean             @default(false)
+  vigente                 Boolean             @default(false)
+  acoes                   Acao[]
+  prorrogacoes            ProrrogacaoEdicao[]
+
+  // Índice único parcial `Edicao_vigente_unica` (WHERE vigente = true) fica só
+  // no SQL da migration: o schema do Prisma não declara índice parcial.
+}
+
+model ProrrogacaoEdicao {
+  id                          String   @id @default(uuid())
+  id_edicao                   String
+  data_fim_cadastro_anterior  DateTime @db.Date
+  data_fim_cadastro_nova      DateTime @db.Date
+  prorrogada_em               DateTime @default(now())
+  id_usuario                  String
+  edicao                      Edicao   @relation(fields: [id_edicao], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  usuario                     Usuario  @relation(fields: [id_usuario], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([id_edicao, prorrogada_em])
+  @@index([id_usuario])
 }
 
 model Acao {
@@ -61,7 +92,12 @@ model Acao {
   id_usuario_responsavel      String
   id_categoria                String
   id_usuario_alteracao        String
+  id_edicao                   String
   categoria                   Categoria @relation(fields: [id_categoria], references: [id])
   usuario_alteracao           Usuario   @relation("usuario_alteracao", fields: [id_usuario_alteracao], references: [id])
   usuario_responsavel         Usuario   @relation(fields: [id_usuario_responsavel], references: [id])
+  edicao                      Edicao    @relation(fields: [id_edicao], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([titulo_acao, id_edicao])
+  @@index([id_edicao, situacao_acao, data_acao])
 }

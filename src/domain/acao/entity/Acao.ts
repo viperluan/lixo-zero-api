@@ -40,6 +40,7 @@ export type AcaoProps = {
   data_atualizacao: Date;
   id_usuario_responsavel: string;
   id_usuario_alteracao: string;
+  id_edicao: string;
 
   categoria?: CategoriaAcao;
   usuario_responsavel?: UsuarioResponsavelAcao;
@@ -319,6 +320,10 @@ export default class Acao {
 
   public get id_usuario_alteracao(): string {
     return this.props.id_usuario_alteracao;
+  }
+
+  public get id_edicao(): string {
+    return this.props.id_edicao;
   }
 
   public get categoria(): CategoriaAcao | undefined {

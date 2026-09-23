@@ -38,7 +38,7 @@ PostgreSQL gerenciado por Prisma 5. O schema está em `prisma/schema.prisma` e a
 └───────────────────────┘
 ```
 
-Quatro tabelas, sem tabelas de junção. `Acao` e `RedefinicaoSenha` são N:1 a partir de `Usuario`.
+Seis tabelas, sem tabelas de junção. `Acao` e `RedefinicaoSenha` são N:1 a partir de `Usuario`. `Acao` e `ProrrogacaoEdicao` são N:1 a partir de `Edicao`.
 
 ## Tabelas
 
@@ -82,9 +82,10 @@ Não há índice único em `descricao` — a duplicidade é checada em `CriarCat
 | `id` | `TEXT` PK + UNIQUE | UUID v4; tem índice único redundante com a PK |
 | `nome_organizador` | `TEXT` | Era `VARCHAR(60)` até a migration de out/2025 |
 | `celular` | `VARCHAR(11)` | Só dígitos, sem máscara |
-| `titulo_acao` | `TEXT` | Unicidade **apenas na aplicação** |
+| `titulo_acao` | `TEXT` | Único junto com `id_edicao` |
 | `descricao_acao` | `TEXT` | |
-| `data_acao` | `TIMESTAMP(3)` | Data **e** hora do evento |
+| `data_acao` | `TIMESTAMP(3)` | Data **e** hora do evento. O dia civil usado nos filtros é `America/Sao_Paulo` |
+| `id_edicao` | `TEXT` FK | → `Edicao.id`. Obrigatório |
 | `forma_realizacao_acao` | `VARCHAR(2)` | Enum `AcaoFormaRealizacao` |
 | `link_divulgacao_acesso_acao` | `TEXT` | Link de acesso (online/híbrida) |
 | `nome_local_acao` | `TEXT` | Presencial/híbrida |
@@ -103,12 +104,39 @@ Não há índice único em `descricao` — a duplicidade é checada em `CriarCat
 
 Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (por exemplo, `nome_local_acao` em uma ação online) são gravados como string vazia, não como `NULL`.
 
+### `Edicao`
+
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| `id` | `TEXT` PK | UUID |
+| `ano` | `INTEGER` UNIQUE | Um registro por ano |
+| `data_inicio_cadastro` | `DATE` | Abertura do formulário |
+| `data_fim_cadastro` | `DATE` | Encerra o formulário. A prorrogação só avança este dia |
+| `data_inicio_realizacao` | `DATE` | Primeiro dia permitido em `data_acao` |
+| `data_fim_realizacao` | `DATE` | Último dia permitido em `data_acao` |
+| `inscricoes_abertas` | `BOOLEAN` | Interruptor manual. Não vira `false` sozinho no fim do prazo |
+| `vigente` | `BOOLEAN` | No máximo uma `true`, por índice único parcial |
+
+`cadastro_aberto` não é coluna. A migration `20260923040000_adiciona_edicao` cria uma edição por ano já presente em `data_acao`, com os dois intervalos cobrindo os dias gravados, `inscricoes_abertas = false` e `vigente = false`. Não inventa a edição do ano corrente se ele ainda não tem ação.
+
+### `ProrrogacaoEdicao`
+
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| `id` | `TEXT` PK | UUID |
+| `id_edicao` | `TEXT` FK | → `Edicao.id` |
+| `data_fim_cadastro_anterior` | `DATE` | Fim do cadastro antes da prorrogação |
+| `data_fim_cadastro_nova` | `DATE` | Fim do cadastro depois |
+| `prorrogada_em` | `TIMESTAMP(3)` | |
+| `id_usuario` | `TEXT` FK | → `Usuario.id`, quem prorrogou |
+
 ## Chaves estrangeiras
 
-As três FKs de `Acao` e a FK de `RedefinicaoSenha` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
+As FKs de `Acao` (categoria, responsável, alteração e edição), a de `RedefinicaoSenha` e as de `ProrrogacaoEdicao` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
 
 - Não dá para excluir uma categoria que tenha ações.
-- Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, ou que tenha linha em `RedefinicaoSenha`. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; a FK de `RedefinicaoSenha` ainda barra no banco se restarem tokens.
+- Não dá para excluir uma edição que tenha ações ou prorrogações.
+- Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, que tenha linha em `RedefinicaoSenha`, ou que tenha prorrogado uma edição. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; as outras FKs ainda barram no banco.
 
 `id_usuario_alteracao` é `NOT NULL` desde o início, por isso `Acao.criarNovaAcao()` o preenche com o próprio `id_usuario_responsavel` na criação.
 
@@ -126,9 +154,9 @@ enum AcaoTipoPublico     { Interno = '0', Externo = '1' }
 
 ## Índices
 
-Constraints únicas: PKs, `Usuario_email_key`, `Usuario_cpf_cnpj_key`, `Acao_id_key` e `RedefinicaoSenha_token_hash_key`. `RedefinicaoSenha` também tem índice em `(id_usuario, criado_em)`.
+Constraints únicas: PKs, `Usuario_email_key`, `Usuario_cpf_cnpj_key`, `Acao_id_key`, `Acao_titulo_acao_id_edicao_key`, `Edicao_ano_key` e `RedefinicaoSenha_token_hash_key`. `RedefinicaoSenha` tem índice em `(id_usuario, criado_em)`. `Edicao_vigente_unica` é um índice único parcial `WHERE vigente = true` — o schema Prisma não o declara; ele mora no SQL da migration.
 
-Não há índice em `Acao.data_acao`, `Acao.situacao_acao` nem `Acao.id_categoria`, que são exatamente as colunas mais filtradas em `GET /acoes`. Também não há índice de texto para o `search`, que usa `contains` com `mode: 'insensitive'` em quatro colunas — isso vira `ILIKE '%termo%'`, incapaz de usar índice B-tree convencional. Aceitável no volume atual (dezenas a centenas de ações por ano); é o primeiro lugar a olhar se a listagem ficar lenta.
+`Acao` tem índice `(id_edicao, situacao_acao, data_acao)`, que cobre o filtro da listagem pública. Não há índice só em `Acao.id_categoria`. Também não há índice de texto para o `search`, que usa `contains` com `mode: 'insensitive'` em quatro colunas — isso vira `ILIKE '%termo%'`, incapaz de usar índice B-tree convencional. Aceitável no volume atual (dezenas a centenas de ações por ano); é o primeiro lugar a olhar se a listagem ficar lenta.
 
 ## Histórico de migrations
 
@@ -140,6 +168,7 @@ Não há índice em `Acao.data_acao`, `Acao.situacao_acao` nem `Acao.id_categori
 | `20251007231610_change_field_size_nome_organizador` | `nome_organizador` de `VARCHAR(60)` para `TEXT` |
 | `20260611120000_remove_patrocinio_cota` | Remove `Patrocinador`, `Cota` e `Acao.receber_informacao_patrocinio` |
 | `20260923014701_adiciona_redefinicao_de_senha` | `Usuario.senha_alterada_em` e tabela `RedefinicaoSenha` |
+| `20260923040000_adiciona_edicao` | `Edicao`, `ProrrogacaoEdicao`, `Acao.id_edicao` e backfill por ano de `data_acao` |
 
 Dois pontos de contexto que essa linha do tempo revela:
 

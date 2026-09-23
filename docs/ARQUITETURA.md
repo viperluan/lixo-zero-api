@@ -20,11 +20,11 @@ O projeto segue Clean Architecture com três camadas e uma camada transversal de
                         │ depende de abstrações
 ┌───────────────────────▼─────────────────────────────────┐
 │ domain/                                                 │
-│   entity/     Acao · Usuario · Categoria · Email        │
+│   entity/     Acao · Usuario · Categoria · Edicao · Email   │
 │   enum/       AcaoSituacao · AcaoFormaRealizacao ·      │
 │               AcaoTipoPublico                            │
 │   repository/ IAcaoRepository · IUsuarioRepository ·    │
-│               ICategoriaRepository                       │
+│               ICategoriaRepository · IEdicaoRepository   │
 │   service/    IEmailService                              │
 └─────────────────────────────────────────────────────────┘
 
@@ -50,7 +50,9 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
                          lê request.body, injeta id_usuario_responsavel do token,
                          instancia CriarAcao com repositórios e FilaEmailService
 6. usecases/acao/CriarAcao.executar
-                         verifica título duplicado
+                         exige edição vigente com cadastro aberto
+                         exige data_acao dentro da realização
+                         verifica título duplicado na edição
                          Acao.criarNovaAcao() → valida e gera o UUID
                          acaoRepository.salvar()
                          busca o usuário, formata data/hora
@@ -116,11 +118,20 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 
 | Contexto | Caso de uso | Responsabilidade |
 |----------|-------------|------------------|
-| `acao` | `CriarAcao` | Valida título único, cria a ação, envia e-mail de confirmação |
-| | `AtualizarAcao` | Aprova ou reprova, envia o e-mail correspondente |
-| | `ListarAcoes` | Listagem paginada com filtros e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
-| | `ListarAcoesPorData` | Ações em uma data exata |
-| | `ListarAcoesPorIntervaloData` | Ações entre duas datas |
+| `acao` | `CriarAcao` | Exige edição vigente com cadastro aberto, data dentro da realização, título único na edição, cria a ação e envia o e-mail |
+| | `AtualizarAcao` | Aprova ou reprova, envia o e-mail com o ano da edição |
+| | `ListarAcoes` | Listagem paginada com filtros, edição e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
+| | `ListarAcoesPorData` | Ações de um dia civil, restritas à vigente para quem não é admin |
+| | `ListarAcoesPorIntervaloData` | Ações entre duas datas, com a mesma regra de edição |
+| `edicao` | `CriarEdicao` | Cria o ano com os dois prazos |
+| | `ObterEdicaoVigente` | Lê a vigente e calcula `cadastro_aberto` |
+| | `ListarEdicoes` | Lista os anos para o admin |
+| | `BuscarEdicao` | Detalhe com histórico de prorrogações |
+| | `ProrrogarEdicao` | Avança só o fim do cadastro da vigente |
+| | `AlterarInscricoesEdicao` | Liga ou desliga `inscricoes_abertas` na vigente |
+| | `TornarEdicaoVigente` | Troca a vigente só para um ano posterior |
+| | `AtualizarEdicao` | Ajusta início do cadastro e o intervalo de realização da vigente |
+| | `ResolverFiltroEdicao` | Decide o `id_edicao` das listagens de ações |
 | `usuario` | `CriarUsuario` | Verifica e-mail e CPF/CNPJ duplicados, persiste com senha hasheada |
 | | `AutenticarUsuario` | Confere credenciais e `status`, delega a geração do token |
 | | `GerarTokenUsuario` | Assina o JWT (HS256) e devolve `expires_in` / `expires_at` |

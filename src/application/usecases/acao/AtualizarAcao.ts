@@ -4,6 +4,8 @@ import Acao from '@/domain/acao/entity/Acao';
 import { AcaoSituacao } from '@/domain/acao/enum/AcaoSituacao';
 import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
 import IEmailService from '@/domain/email/service/IEmailService';
+import IEdicaoRepository from '@/domain/edicao/repository/IEdicaoRepository';
+import { ERRO_EDICAO_NAO_ENCONTRADA } from '@/domain/edicao/erros';
 import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
 import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
 import Email from '@/domain/email/entity/Email';
@@ -31,6 +33,7 @@ export default class AtualizarAcao
   constructor(
     private readonly acaoRepository: IAcaoRepository,
     private readonly usuarioRepository: IUsuarioRepository,
+    private readonly edicaoRepository: IEdicaoRepository,
     private readonly emailService: IEmailService
   ) {}
 
@@ -43,6 +46,9 @@ export default class AtualizarAcao
     const usuario = await this.usuarioRepository.buscarPorId(acao.id_usuario_responsavel);
     if (!usuario) throw new Error('Usuário não encontrado!');
 
+    const edicao = await this.edicaoRepository.buscarPorId(acao.id_edicao);
+    if (!edicao) throw new Error(ERRO_EDICAO_NAO_ENCONTRADA);
+
     const template = await this.gerarTemplate(aprovacao, usuario.nome);
 
     const acaoAtualizada = await this.acaoRepository.atualizar(id, campos);
@@ -51,7 +57,7 @@ export default class AtualizarAcao
     const email = Email.criarNovoEmail({
       from: 'caxiaslixozero@gmail.com',
       to: usuario.email,
-      subject: `CaxiasLixoZero ${new Date().getFullYear()} - Informação de ação ${situacaoTexto}!`,
+      subject: `CaxiasLixoZero ${edicao.ano} - Informação de ação ${situacaoTexto}!`,
       html: template,
     });
 
