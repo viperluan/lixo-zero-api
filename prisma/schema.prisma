@@ -14,15 +14,29 @@ model Categoria {
 }
 
 model Usuario {
-  id                     String  @id @default(uuid())
+  id                     String             @id @default(uuid())
   nome                   String
-  email                  String  @unique
+  email                  String             @unique
   senha                  String
-  status                 Boolean @default(true)
-  tipo                   String  @db.VarChar(2)
-  cpf_cnpj               String  @unique @db.VarChar(14)
+  status                 Boolean            @default(true)
+  tipo                   String             @db.VarChar(2)
+  cpf_cnpj               String             @unique @db.VarChar(14)
+  senha_alterada_em      DateTime?
   acao                   Acao[]
-  acao_usuario_alteracao Acao[]  @relation("usuario_alteracao")
+  acao_usuario_alteracao Acao[]             @relation("usuario_alteracao")
+  redefinicoes_senha     RedefinicaoSenha[]
+}
+
+model RedefinicaoSenha {
+  id         String    @id @default(uuid())
+  id_usuario String
+  token_hash String    @unique
+  expira_em  DateTime
+  usado_em   DateTime?
+  criado_em  DateTime  @default(now())
+  usuario    Usuario   @relation(fields: [id_usuario], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([id_usuario, criado_em])
 }
 
 model Acao {

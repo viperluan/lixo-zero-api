@@ -19,7 +19,7 @@ const usuarioRepository = new UsuarioPrismaRepository(prisma);
 
 /**
  * Resolve o usuário a partir do token consultando o banco, de modo que
- * desativação, rebaixamento e exclusão tenham efeito imediato.
+ * desativação, rebaixamento, exclusão e troca de senha tenham efeito imediato.
  *
  * Falhas de verificação do JWT e contas inutilizáveis viram resultado
  * discriminado. Falhas de infraestrutura são propagadas para não virarem 401.
@@ -28,12 +28,14 @@ export async function carregarUsuarioAutenticado(
   token: string
 ): Promise<ResultadoCarregarUsuarioAutenticado> {
   let idUsuario: string;
+  let emitidoEm: number;
 
   try {
     const verificarTokenUsuario = new VerificarTokenUsuario();
     const tokenDecodificado = await verificarTokenUsuario.executar({ token });
 
     idUsuario = tokenDecodificado.id;
+    emitidoEm = tokenDecodificado.iat;
   } catch (error) {
     if ((error as Error).message === ERRO_TOKEN_EXPIRADO) {
       return { autenticado: false, motivo: 'token_expirado' };
@@ -43,8 +45,11 @@ export async function carregarUsuarioAutenticado(
   }
 
   const usuario = await usuarioRepository.buscarPorId(idUsuario);
+  const senhaTrocadaDepoisDoToken = usuario
+    ? tokenEmitidoAntesDaTrocaDeSenha(emitidoEm, usuario.senha_alterada_em)
+    : false;
 
-  if (!usuario || !usuario.status) {
+  if (!usuario || !usuario.status || senhaTrocadaDepoisDoToken) {
     return { autenticado: false, motivo: 'sessao_invalida' };
   }
 
@@ -92,3 +97,10 @@ const AutenticacaoMiddleware = async (
 };
 
 export default AutenticacaoMiddleware;
+
+function tokenEmitidoAntesDaTrocaDeSenha(emitidoEm: number, senhaAlteradaEm: Date | null): boolean {
+  if (!senhaAlteradaEm) return false;
+  if (typeof emitidoEm !== 'number') return true;
+
+  return emitidoEm < Math.floor(senhaAlteradaEm.getTime() / 1000);
+}

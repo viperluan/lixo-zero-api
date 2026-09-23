@@ -56,6 +56,20 @@ export function criarRateLimitCadastroUsuario(): RequestHandler {
   });
 }
 
+export function criarRateLimitSolicitarRedefinicaoSenha(): RequestHandler {
+  return criarMiddleware({
+    windowMs: lerNumeroEnv('RATE_LIMIT_PASSWORD_RESET_WINDOW_MS', 3_600_000),
+    max: lerNumeroEnv('RATE_LIMIT_PASSWORD_RESET_MAX', 5),
+  });
+}
+
+export function criarRateLimitRedefinirSenha(): RequestHandler {
+  return criarMiddleware({
+    windowMs: lerNumeroEnv('RATE_LIMIT_PASSWORD_RESET_CONFIRM_WINDOW_MS', 900_000),
+    max: lerNumeroEnv('RATE_LIMIT_PASSWORD_RESET_CONFIRM_MAX', 10),
+  });
+}
+
 export function criarRateLimitLeituraPublica(): RequestHandler {
   return criarMiddleware({
     windowMs: lerNumeroEnv('RATE_LIMIT_PUBLIC_READ_WINDOW_MS', 60_000),

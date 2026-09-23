@@ -9,6 +9,7 @@ export type UsuarioProps = {
   cpf_cnpj: string;
   status: boolean;
   tipo: string;
+  senha_alterada_em: Date | null;
 };
 
 export default class Usuario {
@@ -19,7 +20,7 @@ export default class Usuario {
   }
 
   public static criarNovoUsuario(
-    novoUsuario: Omit<UsuarioProps, 'id' | 'status' | 'tipo'>
+    novoUsuario: Omit<UsuarioProps, 'id' | 'status' | 'tipo' | 'senha_alterada_em'>
   ): Usuario {
     const senhaCriptografada = this.criptografarSenha(novoUsuario.senha);
 
@@ -29,6 +30,20 @@ export default class Usuario {
       senha: senhaCriptografada,
       status: true,
       tipo: '1',
+      senha_alterada_em: null,
+    });
+  }
+
+  public static redefinirSenha(usuario: Usuario, senhaLimpa: string): Usuario {
+    return new Usuario({
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      senha: this.criptografarSenha(senhaLimpa),
+      cpf_cnpj: usuario.cpf_cnpj,
+      status: usuario.status,
+      tipo: usuario.tipo,
+      senha_alterada_em: new Date(),
     });
   }
 
@@ -66,5 +81,9 @@ export default class Usuario {
 
   public get tipo() {
     return this.props.tipo;
+  }
+
+  public get senha_alterada_em() {
+    return this.props.senha_alterada_em;
   }
 }

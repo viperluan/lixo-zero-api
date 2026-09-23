@@ -126,19 +126,23 @@ Duas observações sobre o que **não** é validado: `link_para_inscricao_acao` 
 
 `DeletarUsuario` bloqueia a exclusão quando o usuário está vinculado a alguma ação, seja como responsável ou como autor da última alteração (`possuiAcaoVinculada`), respondendo `409`. O repositório ainda captura os códigos Prisma `P2003`/`P2014` como rede de segurança contra violação de chave estrangeira.
 
+`RedefinirSenha` exige senha nova entre 10 e 128 caracteres, sem regra de maiúscula, número ou símbolo. A senha anterior permanece válida até essa troca. O e-mail do pedido é o mesmo já gravado na conta, inclusive para quem cadastrou em anos anteriores.
+
 `CriarCategoria` rejeita descrições duplicadas e descrições acima de 100 caracteres.
 
 ## E-mails transacionais
 
-Três templates EJS em `src/infrastructure/smtp/templates/`, todos enviados para o e-mail do **usuário responsável** pela ação (não para o `nome_organizador`, que é apenas um texto informativo):
+Cinco templates EJS em `src/infrastructure/smtp/templates/`. Os três primeiros vão para o e-mail do **usuário responsável** pela ação (não para o `nome_organizador`, que é apenas um texto informativo). Os dois últimos vão para o e-mail da conta que pediu a redefinição de senha:
 
 | Template | Disparado por | Assunto |
 |----------|---------------|---------|
 | `NotificacaoAcaoCriada.ejs` | `CriarAcao` | `CaxiasLixoZero <ano> - Cadastro da ação: <título>` |
 | `NotificacaoAcaoAprovada.ejs` | `AtualizarAcao` com `'1'` | `CaxiasLixoZero <ano> - Informação de ação aprovada!` |
 | `NotificacaoAcaoReprovada.ejs` | `AtualizarAcao` com `'2'` | `CaxiasLixoZero <ano> - Informação de ação reprovada!` |
+| `RedefinicaoSenha.ejs` | `SolicitarRedefinicaoSenha` | `CaxiasLixoZero <ano> - Redefinição de senha` |
+| `SenhaAlterada.ejs` | `RedefinirSenha` | `CaxiasLixoZero <ano> - Sua senha foi alterada` |
 
-O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos dois casos de uso. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário.
+O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos casos de uso. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário. O de redefinição leva o nome e o link `{URL_FRONT}/redefinir-senha?token=...`. O de senha alterada leva só o nome, sem a senha.
 
 Os casos de uso renderizam o template EJS e chamam `IEmailService.enviarEmail()`; a implementação injetada na API (`FilaEmailService`) publica o e-mail já montado na fila Redis `emails`. O worker (`src/worker.ts`) consome o job e envia via Gmail SMTP (`GMAIL_USER`/`GMAIL_PASS`), com até 5 tentativas e backoff exponencial.
 
