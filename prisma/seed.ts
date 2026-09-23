@@ -27,6 +27,17 @@ const Publico = { Interno: '0', Externo: '1' } as const;
 /** Usuario.tipo e invertido em relacao a Situacao: '0' e o administrador. */
 const Tipo = { Admin: '0', Comum: '1' } as const;
 
+const EDICAO = {
+  id: 'ed1c0001-0000-4000-8000-000000000001',
+  ano: 2026,
+  data_inicio_cadastro: new Date('2026-01-01T00:00:00.000Z'),
+  data_fim_cadastro: new Date('2026-10-16T00:00:00.000Z'),
+  data_inicio_realizacao: new Date('2026-08-22T00:00:00.000Z'),
+  data_fim_realizacao: new Date('2026-10-26T00:00:00.000Z'),
+  inscricoes_abertas: false,
+  vigente: false,
+};
+
 const USUARIOS = [
   {
     id: '11111111-1111-4111-8111-111111111111',
@@ -259,6 +270,18 @@ async function semearCategorias() {
   console.log(`  ${CATEGORIAS.length} categorias`);
 }
 
+async function semearEdicao() {
+  const { id, ...dados } = EDICAO;
+
+  await prisma.edicao.upsert({
+    where: { id },
+    update: dados,
+    create: EDICAO,
+  });
+
+  console.log('  1 edição');
+}
+
 async function semearAcoes() {
   for (const acao of ACOES) {
     const dados = {
@@ -278,6 +301,7 @@ async function semearAcoes() {
       tipo_publico_acao: acao.tipo_publico_acao ?? Publico.Externo,
       id_usuario_responsavel: COMUM.id,
       id_usuario_alteracao: ADMIN.id,
+      id_edicao: EDICAO.id,
     };
 
     await prisma.acao.upsert({
@@ -304,6 +328,7 @@ async function main() {
 
   await semearUsuarios();
   await semearCategorias();
+  await semearEdicao();
   await semearAcoes();
 
   console.log(`\nAdministrador: ${ADMIN.email} / Admin@123`);

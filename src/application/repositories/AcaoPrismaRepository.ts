@@ -1,12 +1,16 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import Acao from '../../domain/acao/entity/Acao';
 import IAcaoRepository from '../../domain/acao/repository/IAcaoRepository';
+import { diaCivilDaEntrada, intervaloDoDiaCivil } from '@/shared/utils/diaCivil';
 
 export type FiltrosListarComPaginacaoType = {
   id_categoria?: string;
   id_usuario?: string;
   id_usuario_responsavel?: string;
+  id_edicao?: string;
   data_acao?: string;
+  data_acao_inicial?: string;
+  data_acao_final?: string;
   search?: string;
   situacao?: string;
   forma_realizacao_acao?: string;
@@ -26,8 +30,13 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
       where.id_usuario_responsavel = filtros.id_usuario;
     }
 
-    if (filtros.data_acao) {
-      where.data_acao = new Date(filtros.data_acao);
+    if (filtros.id_edicao) {
+      where.id_edicao = filtros.id_edicao;
+    }
+
+    const intervaloData = intervaloDeFiltro(filtros);
+    if (intervaloData) {
+      where.data_acao = intervaloData;
     }
 
     if (filtros.search) {
@@ -58,8 +67,10 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     return Acao.carregarAcaoExistente(acao);
   }
 
-  async buscarPorTitulo(titulo: string): Promise<Acao | null> {
-    const acao = await this.prisma.acao.findFirst({ where: { titulo_acao: titulo } });
+  async buscarPorTituloNaEdicao(titulo: string, idEdicao: string): Promise<Acao | null> {
+    const acao = await this.prisma.acao.findFirst({
+      where: { titulo_acao: titulo, id_edicao: idEdicao },
+    });
 
     if (!acao) return null;
 
@@ -119,13 +130,19 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     return acoes;
   }
 
-  async listarPorData(data: Date, situacao?: string): Promise<Acao[] | null> {
+  async listarPorData(
+    intervalo: { inicio: Date; fim: Date },
+    situacao?: string,
+    idEdicao?: string
+  ): Promise<Acao[] | null> {
     const listaAcoes = await this.prisma.acao.findMany({
       where: {
         data_acao: {
-          equals: data,
+          gte: intervalo.inicio,
+          lte: intervalo.fim,
         },
         ...(situacao ? { situacao_acao: situacao } : {}),
+        ...(idEdicao ? { id_edicao: idEdicao } : {}),
       },
     });
 
@@ -139,7 +156,8 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
   async listarPorIntervaloData(
     dataInicial: Date,
     dataFinal: Date,
-    situacao?: string
+    situacao?: string,
+    idEdicao?: string
   ): Promise<Acao[] | null> {
     const listaAcoes = await this.prisma.acao.findMany({
       where: {
@@ -148,6 +166,7 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
           lte: dataFinal,
         },
         ...(situacao ? { situacao_acao: situacao } : {}),
+        ...(idEdicao ? { id_edicao: idEdicao } : {}),
       },
     });
 
@@ -180,6 +199,7 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     situacao_acao,
     titulo_acao,
     orientacao_divulgacao_acao,
+    id_edicao,
   }: Acao): Promise<void> {
     const data = {
       celular,
@@ -203,6 +223,7 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
       situacao_acao,
       titulo_acao,
       orientacao_divulgacao_acao,
+      id_edicao,
     };
 
     await this.prisma.acao.create({ data });
@@ -226,4 +247,34 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
   async deletar(id: string): Promise<void> {
     await this.prisma.acao.delete({ where: { id } });
   }
+}
+
+function intervaloDeFiltro(
+  filtros: FiltrosListarComPaginacaoType
+): Prisma.DateTimeFilter | undefined {
+  let inicio: Date | undefined;
+  let fim: Date | undefined;
+
+  if (filtros.data_acao) {
+    const dia = intervaloDoDiaCivil(diaCivilDaEntrada(filtros.data_acao));
+    inicio = dia.inicio;
+    fim = dia.fim;
+  }
+
+  if (filtros.data_acao_inicial) {
+    const limite = intervaloDoDiaCivil(diaCivilDaEntrada(filtros.data_acao_inicial)).inicio;
+    inicio = inicio && inicio > limite ? inicio : limite;
+  }
+
+  if (filtros.data_acao_final) {
+    const limite = intervaloDoDiaCivil(diaCivilDaEntrada(filtros.data_acao_final)).fim;
+    fim = fim && fim < limite ? fim : limite;
+  }
+
+  if (!inicio && !fim) return undefined;
+
+  return {
+    ...(inicio ? { gte: inicio } : {}),
+    ...(fim ? { lte: fim } : {}),
+  };
 }

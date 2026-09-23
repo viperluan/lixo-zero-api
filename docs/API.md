@@ -35,6 +35,15 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `GET` | `/acoes/:data` | Autenticado | — |
 | `GET` | `/acoes/:dataInicial/:dataFinal` | Autenticado | — |
 | `PUT` | `/acoes/:id` | Admin | — |
+| `GET` | `/edicoes/vigente` | Público | Leitura pública (60/min) |
+| `GET` | `/edicoes` | Admin | — |
+| `GET` | `/edicoes/:id` | Admin | — |
+| `POST` | `/edicoes` | Admin | — |
+| `PUT` | `/edicoes/:id` | Admin | — |
+| `DELETE` | `/edicoes/:id` | Admin | — |
+| `PUT` | `/edicoes/:id/prorrogar` | Admin | — |
+| `PUT` | `/edicoes/:id/inscricoes` | Admin | — |
+| `PUT` | `/edicoes/:id/vigente` | Admin | — |
 
 Todas as rotas também passam pelo rate limit global de 200 requisições por 15 minutos por IP.
 
@@ -218,8 +227,10 @@ Se o header `Authorization` vier com um Bearer que não autentica (expirado, inv
 
 | Chamador | Ações visíveis | Filtro `situacao` | Sanitização |
 |----------|----------------|-------------------|-------------|
-| Anônimo ou usuário comum | Só `Aprovada` (forçado) | Ignorado | Sim |
-| Administrador | Todas | Respeitado | Não |
+| Anônimo ou usuário comum | Só `Aprovada` da edição vigente | Ignorado | Sim |
+| Administrador | Default: edição vigente, qualquer situação | Respeitado | Não |
+
+Sem edição vigente, a listagem pública (e o default do admin) responde `200` com `actions: []`. O admin troca de ano com `ano` ou `id_edicao`. `ano=todos` remove o filtro de edição. `id_edicao` enviado por quem não é admin é ignorado.
 
 Quando a sanitização se aplica, `celular` é removido do item e `usuario_responsavel`/`usuario_alteracao` são reduzidos a `{ nome }` — sem `email`.
 
@@ -230,14 +241,18 @@ Quando a sanitização se aplica, `celular` é removido do item e `usuario_respo
 | `page`, `limit` | Paginação |
 | `id_categoria` | UUID da categoria |
 | `id_usuario` | UUID do usuário responsável (mapeado internamente para `id_usuario_responsavel`) |
-| `data_acao` | Data exata — ver a advertência abaixo |
+| `data_acao` | Dia civil em `America/Sao_Paulo`. `2026-11-07` cobre o dia inteiro, não só a meia-noite |
+| `data_acao_inicial` | `data_acao` a partir do início desse dia civil |
+| `data_acao_final` | `data_acao` até o fim desse dia civil |
+| `ano` | Ano da edição. Admin: default é a vigente; `todos` lista todos os anos. Não-admin: ignorado |
+| `id_edicao` | UUID da edição. No admin, tem precedência sobre `ano`, exceto quando `ano=todos` |
 | `search` | Busca case-insensitive em `titulo_acao`, `descricao_acao`, `nome_organizador` e `nome_local_acao` |
 | `situacao` | `'0'`, `'1'` ou `'2'`. **Só tem efeito para admin** |
 | `forma_realizacao_acao` | `'0'`, `'1'` ou `'2'` |
 
-A listagem sai ordenada por `data_acao` crescente, com `id` como desempate — a página 1 traz as ações **mais antigas**. A ordenação é explícita justamente para tornar a paginação determinística: sem ela o Postgres devolve as linhas em ordem arbitrária e o par `skip`/`take` repete e pula registros entre páginas.
+A listagem sai ordenada por `data_acao` crescente, com `id` como desempate — a página 1 traz as ações **mais antigas da edição filtrada**. A ordenação é explícita justamente para tornar a paginação determinística: sem ela o Postgres devolve as linhas em ordem arbitrária e o par `skip`/`take` repete e pula registros entre páginas.
 
-> **Advertência sobre `data_acao`:** o filtro faz `new Date(valor)` e compara por igualdade exata contra o `DateTime` da coluna, hora inclusa. Passar `2026-09-15` só casa com ações gravadas exatamente à meia-noite UTC. Para buscar "as ações de um dia", use `GET /acoes/:dataInicial/:dataFinal` com o início e o fim do dia.
+Data inválida em `data_acao`, `data_acao_inicial` ou `data_acao_final` responde `400` `{ "error": "Data inválida." }`. `ano` ou `id_edicao` inexistente responde `404` `{ "error": "Edição não encontrada." }`.
 
 **200:**
 
@@ -293,7 +308,11 @@ Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario
 |-------|-----------|
 | `page`, `limit` | Paginação |
 | `id_categoria` | UUID da categoria |
-| `data_acao` | Data exata — mesma advertência de `GET /acoes` |
+| `data_acao` | Dia civil em `America/Sao_Paulo`, como em `GET /acoes` |
+| `data_acao_inicial` | Início do intervalo, dia civil |
+| `data_acao_final` | Fim do intervalo, dia civil |
+| `ano` | Opcional. Sem esse param e sem `id_edicao`, devolve todas as edições do dono. `todos` também não filtra |
+| `id_edicao` | Opcional. Tem precedência sobre `ano` |
 | `search` | Busca case-insensitive em `titulo_acao`, `descricao_acao`, `nome_organizador` e `nome_local_acao` |
 | `situacao` | `'0'`, `'1'` ou `'2'`. Omitido = todas as situações do dono |
 | `forma_realizacao_acao` | `'0'`, `'1'` ou `'2'` |
@@ -330,10 +349,12 @@ Requer autenticação (qualquer usuário). O `id_usuario_responsavel` vem do tok
 
 Quais campos são obrigatórios depende de `forma_realizacao_acao`; a matriz completa está em [`CONTEXTO_E_DOMINIO.md`](CONTEXTO_E_DOMINIO.md#regras-de-validação-da-ação). Em resumo: online exige o link de acesso, presencial exige nome e endereço do local, híbrida exige os três mais `informacoes_acao`.
 
+O cadastro só entra se existir edição vigente com `cadastro_aberto`. A `data_acao` continua tendo de ser futura e, além disso, cair no intervalo de realização dessa edição. O título é único dentro da edição, não na base inteira. `id_edicao` vem da vigente; mandar no corpo não tem efeito.
+
 | Status | Corpo |
 |--------|-------|
 | `201` | `{ "id": "uuid" }` — apenas o id |
-| `400` | `{ "error": "<mensagem de validação>" }`, incluindo `"Título já cadastrado."` |
+| `400` | `{ "error": "<mensagem de validação>" }`, incluindo `"Título já cadastrado."`, `"O cadastro de ações desta edição está fechado."`, `"Não há edição vigente."` e `"A data da ação precisa estar entre dd/mm/aaaa e dd/mm/aaaa."` |
 | `401` | `{ "message": "Autenticação necessária para acessar o recurso." }` |
 
 A ação nasce `Pendente` e um e-mail de confirmação é enfileirado para o usuário autenticado. A resposta `201` não espera o SMTP; se o Redis estiver fora, a ação já foi salva e a falha de enqueue só é logada.
@@ -378,9 +399,7 @@ A resposta é um subconjunto dos campos, com `situacao_acao` em texto. `id_usuar
 
 Requer autenticação — diferente de `GET /acoes`, não funciona anonimamente. Não é paginado: devolve um **array puro**.
 
-`:data` é passado direto para `new Date()`, então aceita ISO 8601 (`2026-09-15` ou `2026-09-15T14:00:00.000Z`). A comparação é por igualdade exata de timestamp, com a mesma limitação descrita no filtro `data_acao`.
-
-Usuário comum recebe só ações `Aprovada`, sanitizadas. Admin recebe todas, completas.
+`:data` é um dia civil (`2026-11-07`) ou um instante ISO. Dia civil cobre o dia inteiro em `America/Sao_Paulo`. Usuário comum recebe só ações `Aprovada` da edição vigente, sanitizadas. Sem vigente, a resposta é `[]`. Admin recebe todas as edições e situações, completas.
 
 | Status | Corpo |
 |--------|-------|
@@ -392,7 +411,7 @@ Usuário comum recebe só ações `Aprovada`, sanitizadas. Admin recebe todas, c
 
 ### `GET /acoes/:dataInicial/:dataFinal`
 
-Requer autenticação. Array puro, sem paginação. Intervalo **inclusivo** nas duas pontas (`gte` / `lte`). Mesmas regras de visibilidade e o mesmo formato de saída de `GET /acoes/:data`.
+Requer autenticação. Array puro, sem paginação. Intervalo inclusivo nas duas pontas. Um valor só com a data (`2026-11-07`) vale o dia civil inteiro em `America/Sao_Paulo`; um instante ISO continua sendo aquele timestamp. Mesmas regras de visibilidade e o mesmo formato de saída de `GET /acoes/:data`, inclusive o recorte da edição vigente para quem não é admin.
 
 Este é o endpoint recomendado para montar a programação de um período — por exemplo, a semana do evento em um ano específico.
 
@@ -401,6 +420,146 @@ Este é o endpoint recomendado para montar a programação de um período — po
 | `200` | `[ { ...ação }, ... ]` |
 | `400` | `{ "error": "Data inicial inválida." }`, `"Data final inválida."` ou `"A data de início deve ser anterior à data de fim."` |
 | `401` | Sem token |
+
+---
+
+## Edições
+
+Uma edição é o ciclo anual. Ela tem dois prazos independentes, ambos `YYYY-MM-DD`:
+
+- **Cadastro** (`data_inicio_cadastro` / `data_fim_cadastro`): quando o organizador pode enviar uma ação.
+- **Realização** (`data_inicio_realizacao` / `data_fim_realizacao`): dias que `data_acao` pode usar.
+
+`inscricoes_abertas` é um interruptor manual e não muda sozinho quando a data acaba. `cadastro_aberto` é calculado: o interruptor está ligado e o dia de hoje, em `America/Sao_Paulo`, está dentro do prazo de cadastro, inclusive o dia final.
+
+Só uma edição fica `vigente`. Dá para tornar vigente qualquer ano **maior ou igual** ao calendário atual em `America/Sao_Paulo`, inclusive um menor que a vigente de agora (2026 no lugar de 2027, no mesmo ano civil). Ano já encerrado (2025 em 2026) responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Prorrogar, ligar inscrições e ajustar datas só funcionam na vigente.
+
+### `GET /edicoes/vigente`
+
+Público. `404` `{ "error": "Não há edição vigente." }` quando nenhuma está marcada.
+
+**200:**
+
+```json
+{
+  "id": "uuid",
+  "ano": 2026,
+  "data_inicio_cadastro": "2026-09-23",
+  "data_fim_cadastro": "2026-10-08",
+  "data_inicio_realizacao": "2026-11-07",
+  "data_fim_realizacao": "2026-11-15",
+  "inscricoes_abertas": true,
+  "cadastro_aberto": true,
+  "vigente": true
+}
+```
+
+O front usa esse objeto para habilitar o formulário e limitar as datas da ação. A API recusa o `POST /acoes` fora desses prazos mesmo que o front não consulte.
+
+### `GET /edicoes`
+
+Admin. Lista todas, da mais nova para a mais antiga.
+
+**200:** `{ "editions": [ { ...mesmo objeto do vigente } ] }`
+
+### `GET /edicoes/:id`
+
+Admin. O mesmo objeto, mais `prorrogacoes`:
+
+```json
+{
+  "prorrogacoes": [
+    {
+      "id": "uuid",
+      "data_fim_cadastro_anterior": "2026-10-08",
+      "data_fim_cadastro_nova": "2026-10-15",
+      "prorrogada_em": "2026-10-07T18:00:00.000Z",
+      "id_usuario": "uuid",
+      "nome_usuario": "Admin"
+    }
+  ]
+}
+```
+
+`404` `{ "error": "Edição não encontrada." }`
+
+### `POST /edicoes`
+
+Admin.
+
+```json
+{
+  "ano": 2026,
+  "data_inicio_cadastro": "2026-09-23",
+  "data_fim_cadastro": "2026-10-08",
+  "data_inicio_realizacao": "2026-11-07",
+  "data_fim_realizacao": "2026-11-15",
+  "inscricoes_abertas": true,
+  "vigente": true
+}
+```
+
+`ano` é número inteiro de 2000 a 2100 e tem de ser ≥ o calendário atual em `America/Sao_Paulo`, mesmo com `vigente: false`. As quatro datas têm de ser desse mesmo ano civil (`2026-11-07` numa edição 2026; `2027-01-05` é recusado). Os booleanos não aceitam string. Com `vigente: true`, a vigente anterior deixa de ser vigente — pode ser um ano menor, igual ou maior, desde que não seja anterior ao calendário.
+
+| Status | Corpo |
+|--------|-------|
+| `201` | Objeto da edição, com `cadastro_aberto` |
+| `400` | Validação, `"Ano de edição já cadastrado."`, `"Não é possível cadastrar uma edição de um ano anterior."` ou `"As datas da edição precisam pertencer ao ano <ano>."` |
+| `401` / `403` | Sem token / não é admin |
+
+### `PUT /edicoes/:id/prorrogar`
+
+Admin. Só a vigente. Só avança o fim do cadastro e grava o histórico.
+
+```json
+{ "data_fim_cadastro": "2026-10-15" }
+```
+
+| Status | Corpo |
+|--------|-------|
+| `200` | Edição atualizada |
+| `400` | `"A nova data final do cadastro deve ser posterior à atual."`, `"As datas da edição precisam pertencer ao ano <ano>."` ou `"Só é possível alterar a edição vigente."` |
+| `404` | Edição não encontrada |
+
+### `PUT /edicoes/:id/inscricoes`
+
+Admin. Só a vigente.
+
+```json
+{ "inscricoes_abertas": false }
+```
+
+`200` devolve a edição. Com a data ainda dentro do prazo, `cadastro_aberto` fica `false`.
+
+### `PUT /edicoes/:id/vigente`
+
+Admin. Sem corpo. Torna essa edição a vigente se o ano for maior ou igual ao calendário atual. Pode voltar de 2027 para 2026 no mesmo ano civil. Ano encerrado responde `400` `{ "error": "Não é possível reativar uma edição anterior." }`. Se ela já for a vigente, responde `200` sem alterar nada.
+
+### `PUT /edicoes/:id`
+
+Admin. Só a vigente. Ajusta início do cadastro, realização e, **se a edição não tiver ação**, o fim do cadastro (pode encolher, sem gravar prorrogação). Com ação, o fim do cadastro só muda em `/prorrogar`. O novo intervalo de realização precisa continuar cobrindo as ações já gravadas.
+
+```json
+{
+  "data_inicio_cadastro": "2026-09-23",
+  "data_fim_cadastro": "2026-10-08",
+  "data_inicio_realizacao": "2026-11-07",
+  "data_fim_realizacao": "2026-11-15"
+}
+```
+
+Pelo menos um campo. Datas no ano da edição. Com ação, mandar `data_fim_cadastro` responde `400` `"A data final do cadastro só pode ser alterada pela prorrogação."`
+
+### `DELETE /edicoes/:id`
+
+Admin. Sem corpo. Só edição **sem ações** (a vigente vazia também sai). Histórico de prorrogação daquela edição, se houver, é apagado junto. Sem vigente, `GET /edicoes/vigente` passa a `404` e a listagem pública fica vazia.
+
+| Status | Corpo |
+|--------|-------|
+| `200` | **Vazio** |
+| `404` | `{ "error": "Edição não encontrada." }` |
+| `409` | `{ "error": "Não é possível excluir uma edição vinculada a ações." }` |
+| `401` / `403` | Sem token / não é admin |
 
 ---
 
@@ -451,5 +610,8 @@ curl -X PUT "http://localhost:3000/acoes/<id>" \
 
 # Programação de um período
 curl -H "Authorization: Bearer $TOKEN" \
-  'http://localhost:3000/acoes/2026-09-01/2026-09-30'
+  'http://localhost:3000/acoes/2026-11-07/2026-11-15'
+
+# Edição vigente (prazos do formulário e das ações)
+curl 'http://localhost:3000/edicoes/vigente'
 ```

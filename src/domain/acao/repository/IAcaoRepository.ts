@@ -3,7 +3,7 @@ import { FiltrosListarComPaginacaoType } from '@/application/repositories/AcaoPr
 
 export default interface IAcaoRepository {
   buscarPorId(id: string): Promise<Acao | null>;
-  buscarPorTitulo(titulo: string): Promise<Acao | null>;
+  buscarPorTituloNaEdicao(titulo: string, idEdicao: string): Promise<Acao | null>;
   buscarQuantidadeDeAcoes(): Promise<number>;
   contarComFiltros(filtros: FiltrosListarComPaginacaoType): Promise<number>;
   listarComPaginacao(
@@ -11,11 +11,16 @@ export default interface IAcaoRepository {
     pagina: number,
     limiteAcoes: number
   ): Promise<Acao[] | null>;
-  listarPorData(data: Date, situacao?: string): Promise<Acao[] | null>;
+  listarPorData(
+    intervalo: { inicio: Date; fim: Date },
+    situacao?: string,
+    idEdicao?: string
+  ): Promise<Acao[] | null>;
   listarPorIntervaloData(
     dataInicial: Date,
     dataFinal: Date,
-    situacao?: string
+    situacao?: string,
+    idEdicao?: string
   ): Promise<Acao[] | null>;
   salvar(acao: Acao): Promise<void>;
   atualizar(id: string, campos: unknown): Promise<Acao>;

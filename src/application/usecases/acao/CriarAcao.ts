@@ -5,7 +5,10 @@ import Email from '@/domain/email/entity/Email';
 import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
 import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
 import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
+import IEdicaoRepository from '@/domain/edicao/repository/IEdicaoRepository';
+import { ERRO_CADASTRO_FECHADO, ERRO_EDICAO_VIGENTE_AUSENTE } from '@/domain/edicao/erros';
 import IEmailService from '@/domain/email/service/IEmailService';
+import { diaCivilDaEntrada, diaCivilDeColunaDate } from '@/shared/utils/diaCivil';
 import { resolveCaminhoArquivoTemplate } from '@/shared/utils/resolveCaminhoArquivoTemplate';
 
 export type CriarAcaoDadosDTO = {
@@ -38,14 +41,31 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
   constructor(
     private readonly acaoRepository: IAcaoRepository,
     private readonly usuarioRepository: IUsuarioRepository,
+    private readonly edicaoRepository: IEdicaoRepository,
     private readonly emailService: IEmailService
   ) {}
 
   public async executar(entrada: CriarAcaoEntradaDTO): Promise<CriarAcaoSaidaDTO> {
-    const tituloExiste = await this.acaoRepository.buscarPorTitulo(entrada.titulo_acao);
+    const edicao = await this.edicaoRepository.buscarVigente();
+    if (!edicao) throw new Error(ERRO_EDICAO_VIGENTE_AUSENTE);
+
+    const diaHoje = diaCivilDaEntrada(new Date().toISOString());
+    if (!edicao.cadastroAberto(diaHoje)) throw new Error(ERRO_CADASTRO_FECHADO);
+
+    const diaAcao = diaCivilDaEntrada(entrada.data_acao);
+    if (!edicao.cobreRealizacao(diaAcao)) {
+      throw new Error(
+        `A data da ação precisa estar entre ${formatarDia(edicao.data_inicio_realizacao)} e ${formatarDia(edicao.data_fim_realizacao)}.`
+      );
+    }
+
+    const tituloExiste = await this.acaoRepository.buscarPorTituloNaEdicao(
+      entrada.titulo_acao,
+      edicao.id
+    );
     if (tituloExiste) throw new Error('Título já cadastrado.');
 
-    const acao = Acao.criarNovaAcao(entrada);
+    const acao = Acao.criarNovaAcao({ ...entrada, id_edicao: edicao.id });
     await this.acaoRepository.salvar(acao);
 
     const usuario = await this.usuarioRepository.buscarPorId(acao.id_usuario_responsavel);
@@ -86,7 +106,7 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
     const email = Email.criarNovoEmail({
       from: 'caxiaslixozero@gmail.com',
       to: usuario.email,
-      subject: `CaxiasLixoZero ${new Date().getFullYear()} - Cadastro da ação: ${acao.titulo_acao}`,
+      subject: `CaxiasLixoZero ${edicao.ano} - Cadastro da ação: ${acao.titulo_acao}`,
       html: template,
     });
 
@@ -94,4 +114,9 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
 
     return { id: acao.id };
   }
+}
+
+function formatarDia(data: Date): string {
+  const [ano, mes, dia] = diaCivilDeColunaDate(data).split('-');
+  return `${dia}/${mes}/${ano}`;
 }

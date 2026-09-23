@@ -1,12 +1,14 @@
 import Acao from '@/domain/acao/entity/Acao';
 import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
 import { sanitizarListaAcoesResposta } from '@/shared/utils/sanitizarAcaoResposta';
+import { intervaloDoDiaCivil } from '@/shared/utils/diaCivil';
 import { Usecase } from '../usecase';
 
 export type ListarAcoesPorIntervaloDataEntradaDTO = {
   dataInicial: string;
   dataFinal: string;
   situacao?: string;
+  id_edicao?: string;
   sanitizarSaida?: boolean;
 };
 
@@ -57,17 +59,19 @@ export default class ListarAcoesPorIntervaloData
     dataInicial,
     dataFinal,
     situacao,
+    id_edicao,
     sanitizarSaida = false,
   }: ListarAcoesPorIntervaloDataEntradaDTO): Promise<ListarAcoesPorIntervaloDataSaidaDTO[]> {
-    const objetoDataInicial = new Date(dataInicial);
-    const objetoDataFinal = new Date(dataFinal);
+    const objetoDataInicial = limiteDoIntervalo(dataInicial, 'inicio');
+    const objetoDataFinal = limiteDoIntervalo(dataFinal, 'fim');
 
     this.validarDatas(objetoDataInicial, objetoDataFinal);
 
     const listaAcoes = await this.acaoRepository.listarPorIntervaloData(
       objetoDataInicial,
       objetoDataFinal,
-      situacao
+      situacao,
+      id_edicao
     );
 
     return this.objetoDeSaida(listaAcoes, sanitizarSaida);
@@ -142,4 +146,24 @@ export default class ListarAcoesPorIntervaloData
 
     return sanitizarSaida ? sanitizarListaAcoesResposta(acoesSaida) : acoesSaida;
   }
+}
+
+function limiteDoIntervalo(valor: string, ponta: 'inicio' | 'fim'): Date {
+  const mensagem = ponta === 'inicio' ? 'Data inicial inválida.' : 'Data final inválida.';
+
+  if (typeof valor !== 'string' || !valor) throw new Error(mensagem);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    try {
+      const intervalo = intervaloDoDiaCivil(valor);
+      return ponta === 'inicio' ? intervalo.inicio : intervalo.fim;
+    } catch {
+      throw new Error(mensagem);
+    }
+  }
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) throw new Error(mensagem);
+
+  return data;
 }
