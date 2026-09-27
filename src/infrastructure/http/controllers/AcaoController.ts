@@ -6,6 +6,7 @@ import ListarAcoes from '@/application/usecases/acao/ListarAcoes';
 import AtualizarAcao from '@/application/usecases/acao/AtualizarAcao';
 import ListarAcoesPorData from '@/application/usecases/acao/ListarAcoesPorData';
 import ListarAcoesPorIntervaloData from '@/application/usecases/acao/ListarAcoesPorIntervaloData';
+import ExportarPlanilhaAcoes from '@/application/usecases/acao/ExportarPlanilhaAcoes';
 import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRepository';
 import FilaEmailService from '@/application/services/email/FilaEmailService';
 import { filaEmail } from '@/infrastructure/fila/filaEmail';
@@ -59,6 +60,32 @@ function responderErroListagem(response: Response, error: unknown) {
   }
 
   return responderErroInterno(response, error);
+}
+
+function textoDaQuery(valor: unknown): string | undefined {
+  return typeof valor === 'string' && valor.length > 0 ? valor : undefined;
+}
+
+export async function exportarPlanilhaAcoes(request: UsuarioRequest, response: Response) {
+  try {
+    const planilha = await new ExportarPlanilhaAcoes(
+      acaoPrismaRepository,
+      edicaoPrismaRepository
+    ).executar({
+      ano: textoDaQuery(request.query.ano),
+      id_edicao: textoDaQuery(request.query.id_edicao),
+    });
+
+    response.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    response.setHeader('Content-Disposition', `attachment; filename="${planilha.nomeArquivo}"`);
+
+    return response.status(200).send(planilha.buffer);
+  } catch (error) {
+    return responderErroListagem(response, error);
+  }
 }
 
 export async function listarTodasAcoes(request: UsuarioRequest, response: Response) {

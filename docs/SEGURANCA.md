@@ -91,7 +91,7 @@ Não-admin tem a situação **forçada** para `Aprovada` e a edição **forçada
 - `celular` é deletado do objeto;
 - `usuario_responsavel` e `usuario_alteracao` são reduzidos a `{ nome }`, sem `email`.
 
-Aplicada em `GET /acoes`, `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` sempre que `sanitizarSaida` é verdadeiro. `GET /acoes/minhas` não sanitiza: o dono autenticado recebe `celular` e e-mails. **Qualquer campo sensível novo em `Acao` precisa ser adicionado a essa função** — ela é a única barreira entre o banco e a resposta pública.
+Aplicada em `GET /acoes`, `GET /acoes/:data` e `GET /acoes/:dataInicial/:dataFinal` sempre que `sanitizarSaida` é verdadeiro. `GET /acoes/minhas` não sanitiza: o dono autenticado recebe `celular` e e-mails. `GET /acoes/planilha` também não: só admin chega nessa rota, e o arquivo repete celular e e-mail do responsável. **Qualquer campo sensível novo em `Acao` precisa ser adicionado a essa função** — ela é a única barreira entre o banco e a resposta pública. O arquivo da planilha é outro caminho de saída e precisa da mesma revisão.
 
 Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continuam visíveis: são dados de divulgação do evento, expostos de propósito.
 
@@ -99,7 +99,7 @@ Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continu
 
 ## Rate limiting
 
-`express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Seis perfis, todos por IP e todos ajustáveis por variável de ambiente:
+`express-rate-limit`, configurado em `src/infrastructure/http/config/rateLimit.ts`. Sete perfis, todos por IP e todos ajustáveis por variável de ambiente:
 
 | Perfil | Aplicado em | Padrão | Variáveis |
 |--------|-------------|--------|-----------|
@@ -109,6 +109,7 @@ Repare que `nome_organizador`, `nome_local_acao` e `endereco_local_acao` continu
 | Pedido de redefinição de senha | `POST /usuarios/esqueci-senha` | 5 / hora | `RATE_LIMIT_PASSWORD_RESET_MAX`, `RATE_LIMIT_PASSWORD_RESET_WINDOW_MS` |
 | Troca de senha | `POST /usuarios/redefinir-senha` | 10 / 15 min | `RATE_LIMIT_PASSWORD_RESET_CONFIRM_*` |
 | Leitura pública | `GET /acoes`, `GET /categorias`, `GET /edicoes/vigente` | 60 / min | `RATE_LIMIT_PUBLIC_READ_*` |
+| Planilha de ações | `GET /acoes/planilha` | 10 / min | `RATE_LIMIT_PLANILHA_MAX`, `RATE_LIMIT_PLANILHA_WINDOW_MS` |
 
 Os limites específicos são cumulativos com o global. `RATE_LIMIT_ENABLED=false` substitui todos os middlewares por um no-op — útil em testes de carga, nunca em produção. Valores não numéricos ou ≤ 0 nas variáveis caem silenciosamente para o padrão.
 
@@ -139,7 +140,7 @@ return {
 
 Vazio ou `*` libera qualquer origem. Em produção, defina a lista explícita de domínios do front separados por vírgula. Note que `CORS_ORIGIN` **não está no `docker-compose.yml`** — se o deploy for por compose, adicione a variável ao serviço `lixozero-api` ou a API subirá com CORS aberto.
 
-`exposedHeaders` inclui `X-Session-Expired` nos dois ramos: sem isso, um front em outra origem não consegue ler o header de `GET /acoes`.
+`exposedHeaders` inclui `X-Session-Expired` e `Content-Disposition` nos dois ramos: sem isso, um front em outra origem não lê o aviso de sessão expirada em `GET /acoes` nem o nome do arquivo em `GET /acoes/planilha`.
 
 ## Superfície de entrada
 

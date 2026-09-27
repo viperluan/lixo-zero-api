@@ -130,6 +130,23 @@ export default class AcaoPrismaRepository implements IAcaoRepository {
     return acoes;
   }
 
+  async listarParaPlanilha(idEdicao?: string) {
+    const lista = await this.prisma.acao.findMany({
+      where: idEdicao ? { id_edicao: idEdicao } : {},
+      include: {
+        categoria: { select: { descricao: true } },
+        usuario_responsavel: { select: { nome: true, email: true } },
+        edicao: { select: { ano: true } },
+      },
+      orderBy: [{ edicao: { ano: 'asc' } }, { data_acao: 'asc' }, { id: 'asc' }],
+    });
+
+    return lista.map((linha) => ({
+      ano: linha.edicao.ano,
+      acao: Acao.carregarAcaoExistente(linha),
+    }));
+  }
+
   async listarPorData(
     intervalo: { inicio: Date; fim: Date },
     situacao?: string,

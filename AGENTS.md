@@ -96,17 +96,20 @@ Não há suíte de testes executável. Valide mudanças com `npm run typecheck` 
 
 ## Fluxo obrigatório de implementação
 
-Antes de codar e antes de encerrar qualquer alteração pedida à IA:
+Pedido de **desenvolvimento** (feature, endpoint, regra de negócio, mudança de comportamento ou schema) segue Spec-Driven Development antes de alterar `src/` ou `prisma/`. A constituição está em [`.specify/memory/constitution.md`](.specify/memory/constitution.md). As skills do fluxo estão em `.cursor/skills/speckit-*` (GitHub Spec Kit 1.0.12).
 
-1. Leia o doc relevante em `docs/` (tabela em Documentação, mais o mapa abaixo).
-2. Se for “consertar” comportamento estranho, leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) — vários itens são intencionais.
-3. Carregue skill só pela tabela abaixo. Skill genérica **não** sobrescreve este arquivo nem o código existente.
-4. Implemente no padrão vizinho: controller fino, caso de uso com `executar()`, entidade com factories, DI no topo do controller.
-5. Não expanda o escopo: sem refatoração, lib nova, “melhoria” não pedida, nem rename de pasta/arquivo de convenção.
-6. Autoreview nos cinco eixos de `.agents/skills/code-review-and-quality/SKILL.md` (correção, legibilidade, arquitetura, segurança, performance). Ignore links dessa skill para arquivos que não existem neste repo.
-7. Atualize os docs afetados (mapa abaixo).
-8. Rode `npm run typecheck` e `npm run lint`.
-9. Na resposta final: o que mudou, docs tocados, skills usadas e o que ficou de fora.
+1. Leia a constituição e o doc relevante em `docs/`. Se for “consertar” comportamento estranho, leia [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) — vários itens são intencionais.
+2. Rode, nesta ordem, as skills `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement` e `speckit-converge`. Artefatos em `specs/`.
+3. Se a spec tiver ambiguidade que mude o comportamento, rode `speckit-clarify` e espere resposta antes do plano. Feature que toca auth, dados persistidos ou mais de um caso de uso: `speckit-checklist` depois do plano e `speckit-analyze` depois das tasks, antes de implementar.
+4. Carregue as skills de qualidade só pela tabela abaixo. Skill genérica **não** sobrescreve este arquivo, a constituição nem o código existente.
+5. Implemente no padrão vizinho: controller fino, caso de uso com `executar()`, entidade com factories, DI no topo do controller.
+6. Não expanda o escopo: sem refatoração, lib nova, “melhoria” não pedida, nem rename de pasta/arquivo de convenção.
+7. Autoreview nos cinco eixos de `.agents/skills/code-review-and-quality/SKILL.md` (correção, legibilidade, arquitetura, segurança, performance). Ignore links dessa skill para arquivos que não existem neste repo.
+8. Atualize os docs afetados (mapa abaixo).
+9. Rode `npm run typecheck` e `npm run lint`.
+10. Na resposta final: o que mudou, a spec usada, docs tocados, skills usadas e o que ficou de fora.
+
+Pergunta, revisão e ajuste que não muda comportamento não abrem spec. Nesses casos, comece no passo 4.
 
 ### Skills do projeto (quando usar / o que ignorar)
 
@@ -114,6 +117,7 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 
 | Situação | Usar | Não fazer |
 |----------|------|-----------|
+| Pedido de desenvolvimento | Spec Kit: `speckit-specify` → `speckit-plan` → `speckit-tasks` → `speckit-implement` → `speckit-converge` | Codar em `src/` ou `prisma/` antes da spec e do plano. Exigir TDD: não há framework de testes |
 | Depois de qualquer código | `code-review-and-quality` | Seguir referências a skills ausentes (`security-and-hardening`, `performance-optimization`) |
 | HTTP, auth ou rota nova | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) + `typescript-security-review` + checklist mental OWASP de `api-security-review` (BOLA, mass assignment, over-exposure, rate limit) | Exigir Zod/Joi, NestJS/Next.js ou o agente `typescript-security-expert`. Não rodar ZAP/Burp nem escrever exploits/PoCs. Não inventar OpenAPI |
 | Schema, migration ou query | `supabase-postgres-best-practices` (tipos, índices, FK, unicidade, paginação, N+1) | Introduzir RLS — autorização é na aplicação |
@@ -130,6 +134,7 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 | Regra de negócio, papel ou e-mail | [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) |
 | Schema ou migration | [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) |
 | Auth, sanitização, rate limit ou CORS | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) |
+| Variável de ambiente | [`.env.example`](.env.example) e o `.env` local, juntos. Copie a chave nova; não sobrescreva valor que já exista no `.env` (senhas, `RATE_LIMIT_ENABLED`, etc.). Não commite o `.env` |
 | Bug conhecido ou decisão consciente | [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) |
 
 ## Ao mexer em cada área
