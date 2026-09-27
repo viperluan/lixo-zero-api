@@ -119,7 +119,7 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | Contexto | Caso de uso | Responsabilidade |
 |----------|-------------|------------------|
 | `acao` | `CriarAcao` | Exige edição vigente com cadastro aberto, data dentro da realização, título único na edição, cria a ação e envia o e-mail |
-| | `AtualizarAcao` | Aprova ou reprova, envia o e-mail com o ano da edição |
+| | `AtualizarAcao` | Aprova ou reprova e envia o e-mail com os textos do modelo, ou o padrão do arquivo |
 | | `ListarAcoes` | Listagem paginada com filtros, edição e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
 | | `ExportarPlanilhaAcoes` | Planilha `.xlsx` do admin: vigente, um ano ou uma aba por ano (`GET /acoes/planilha`) |
 | | `ListarAcoesPorData` | Ações de um dia civil, restritas à vigente para quem não é admin |
@@ -134,6 +134,7 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | | `AtualizarEdicao` | Ajusta as datas da vigente; fim do cadastro no PUT só sem ação |
 | | `DeletarEdicao` | Exclui edição sem ações (inclusive vigente), com o histórico de prorrogação |
 | | `ResolverFiltroEdicao` | Decide o `id_edicao` das listagens de ações |
+| `modeloEmail` | `ListarModelosEmail`, `BuscarModeloEmail`, `SalvarModeloEmail`, `PreverModeloEmail`, `RestaurarModeloEmail` | Textos dos três e-mails da ação; a prévia não enfileira |
 | `usuario` | `CriarUsuario` | Verifica e-mail e CPF/CNPJ duplicados, persiste com senha hasheada |
 | | `AutenticarUsuario` | Confere credenciais e `status`, delega a geração do token |
 | | `GerarTokenUsuario` | Assina o JWT (HS256) e devolve `expires_in` / `expires_at` |

@@ -45,6 +45,11 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `PUT` | `/edicoes/:id/prorrogar` | Admin | — |
 | `PUT` | `/edicoes/:id/inscricoes` | Admin | — |
 | `PUT` | `/edicoes/:id/vigente` | Admin | — |
+| `GET` | `/modelos-email` | Admin | — |
+| `GET` | `/modelos-email/:codigo` | Admin | — |
+| `PUT` | `/modelos-email/:codigo` | Admin | — |
+| `POST` | `/modelos-email/:codigo/previa` | Admin | — |
+| `POST` | `/modelos-email/:codigo/restaurar` | Admin | — |
 
 Todas as rotas também passam pelo rate limit global de 200 requisições por 15 minutos por IP.
 
@@ -592,6 +597,51 @@ Admin. Sem corpo. Só edição **sem ações** (a vigente vazia também sai). Hi
 | `404` | `{ "error": "Edição não encontrada." }` |
 | `409` | `{ "error": "Não é possível excluir uma edição vinculada a ações." }` |
 | `401` / `403` | Sem token / não é admin |
+
+---
+
+## Modelos de e-mail
+
+Admin. Só os três e-mails da ação: `acao_cadastrada`, `acao_aprovada` e `acao_reprovada`. Os de senha não entram. O corpo editável é texto em campos fixos, não HTML. A casca visual continua nos arquivos `.ejs`.
+
+`conteudo` depende do código.
+
+Cadastro: `paragrafos_abertura`, `faixa`, `texto_antes_ficha`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `convite_redes`, `hashtags`.
+
+Aprovação: `faixa`, `paragrafo_cards`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `paragrafo_redes`, `hashtags`.
+
+Reprovação: `faixa`, `corpo`.
+
+O assunto pode usar `{ano}`. Só o cadastro também aceita `{titulo_acao}`. Outro `{marcador}` responde `400`. `url_pasta` precisa começar com `http://` ou `https://`. Campo vazio responde `400`.
+
+A lista devolve `{ "templates": [ ... ] }`. Cada item traz `codigo`, `assunto`, `conteudo`, `atualizado_em` e `id_usuario`. Sem linha gravada, a API devolve o texto padrão e `atualizado_em: null`.
+
+### `PUT /modelos-email/:codigo`
+
+```json
+{
+  "assunto": "CaxiasLixoZero {ano} - Informação de ação aprovada!",
+  "conteudo": {
+    "faixa": "Sua ação foi aprovada!",
+    "paragrafo_cards": "Os cards da campanha estão na pasta.",
+    "rotulo_botao": "Templates SLZ 2026",
+    "url_pasta": "https://drive.google.com/drive/folders/exemplo",
+    "texto_depois_botao": "Divulgue cedo.",
+    "paragrafo_redes": "Marque as redes da campanha.",
+    "hashtags": "@caxiaslixozero\n#slzcxs"
+  }
+}
+```
+
+`id_usuario` sai do token. Código desconhecido: `404` `{ "error": "Modelo de e-mail não encontrado." }`.
+
+### `POST /modelos-email/:codigo/previa`
+
+Sem corpo. Responde `{ "assunto", "html" }` com dados de exemplo. Não enfileira e-mail.
+
+### `POST /modelos-email/:codigo/restaurar`
+
+Sem corpo. Grava de novo o texto original e devolve o modelo.
 
 ---
 

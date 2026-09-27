@@ -6,10 +6,9 @@ import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
 import IEmailService from '@/domain/email/service/IEmailService';
 import IEdicaoRepository from '@/domain/edicao/repository/IEdicaoRepository';
 import { ERRO_EDICAO_NAO_ENCONTRADA } from '@/domain/edicao/erros';
-import GerarTemplateAcaoReprovada from '../email/GerarTemplateAcaoReprovada';
-import GerarTemplateAcaoAprovada from '../email/GerarTemplateAcaoAprovada';
 import Email from '@/domain/email/entity/Email';
-import { resolveCaminhoArquivoTemplate } from '@/shared/utils/resolveCaminhoArquivoTemplate';
+import IModeloEmailRepository from '@/domain/modeloEmail/repository/IModeloEmailRepository';
+import { renderizarModeloEmail, textosEfetivos } from '../modeloEmail/renderizarModeloEmail';
 
 export type AtualizarAcaoEntradaDTO = {
   id: string;
@@ -34,7 +33,8 @@ export default class AtualizarAcao
     private readonly acaoRepository: IAcaoRepository,
     private readonly usuarioRepository: IUsuarioRepository,
     private readonly edicaoRepository: IEdicaoRepository,
-    private readonly emailService: IEmailService
+    private readonly emailService: IEmailService,
+    private readonly modeloEmailRepository: IModeloEmailRepository
   ) {}
 
   async executar({ id, campos }: AtualizarAcaoEntradaDTO): Promise<AtualizarAcaoSaidaDTO> {
@@ -49,16 +49,20 @@ export default class AtualizarAcao
     const edicao = await this.edicaoRepository.buscarPorId(acao.id_edicao);
     if (!edicao) throw new Error(ERRO_EDICAO_NAO_ENCONTRADA);
 
-    const template = await this.gerarTemplate(aprovacao, usuario.nome);
+    const codigo = aprovacao ? 'acao_aprovada' : 'acao_reprovada';
+    const gravado = await this.modeloEmailRepository.buscarPorCodigo(codigo);
+    const emailMontado = await renderizarModeloEmail(codigo, textosEfetivos(codigo, gravado), {
+      nome_usuario: usuario.nome,
+      ano: String(edicao.ano),
+    });
 
     const acaoAtualizada = await this.acaoRepository.atualizar(id, campos);
 
-    const situacaoTexto = aprovacao ? 'aprovada' : 'reprovada';
     const email = Email.criarNovoEmail({
       from: 'caxiaslixozero@gmail.com',
       to: usuario.email,
-      subject: `CaxiasLixoZero ${edicao.ano} - Informação de ação ${situacaoTexto}!`,
-      html: template,
+      subject: emailMontado.assunto,
+      html: emailMontado.html,
     });
 
     await this.emailService.enviarEmail(email);
@@ -74,21 +78,6 @@ export default class AtualizarAcao
     throw new Error(
       `Situação inválida. Use "${AcaoSituacao.Aprovada}" para aprovar ou "${AcaoSituacao.Reprovada}" para reprovar.`
     );
-  }
-
-  private async gerarTemplate(aprovacao: boolean, nomeUsuario: string): Promise<string> {
-    const dados = { nome_usuario: nomeUsuario };
-    const caminhoTemplate = resolveCaminhoArquivoTemplate(
-      aprovacao ? 'NotificacaoAcaoAprovada.ejs' : 'NotificacaoAcaoReprovada.ejs'
-    );
-
-    const template = aprovacao
-      ? await new GerarTemplateAcaoAprovada().executar({ caminhoTemplate, dados })
-      : await new GerarTemplateAcaoReprovada().executar({ caminhoTemplate, dados });
-
-    if (!template) throw new Error('Erro ao gerar template.');
-
-    return template;
   }
 
   private objetoDeSaida({

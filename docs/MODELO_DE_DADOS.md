@@ -119,6 +119,19 @@ Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (
 
 `cadastro_aberto` não é coluna. A migration `20260923040000_adiciona_edicao` cria uma edição por ano já presente em `data_acao`, com os dois intervalos cobrindo os dias gravados, `inscricoes_abertas = false` e `vigente = false`. Não inventa a edição do ano corrente se ele ainda não tem ação.
 
+### `ModeloEmail`
+
+Textos editáveis dos três e-mails da ação. A migration `20260927200000_adiciona_modelo_email` já insere `acao_cadastrada`, `acao_aprovada` e `acao_reprovada` com o texto que estava nos `.ejs`.
+
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| `id` | `TEXT` PK | UUID |
+| `codigo` | `VARCHAR(40)` UNIQUE | Lista fechada no código |
+| `assunto` | `TEXT` | Pode conter `{ano}` e, no cadastro, `{titulo_acao}` |
+| `conteudo` | `JSONB` | Campos de texto daquele código, não HTML |
+| `atualizado_em` | `TIMESTAMP(3)` | |
+| `id_usuario` | `TEXT` FK, nulo no seed | → `Usuario.id`, quem gravou por último |
+
 ### `ProrrogacaoEdicao`
 
 | Coluna | Tipo | Notas |
@@ -132,11 +145,11 @@ Todos os campos textuais são `NOT NULL`. Campos condicionalmente irrelevantes (
 
 ## Chaves estrangeiras
 
-As FKs de `Acao` (categoria, responsável, alteração e edição), a de `RedefinicaoSenha` e as de `ProrrogacaoEdicao` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
+As FKs de `Acao` (categoria, responsável, alteração e edição), a de `RedefinicaoSenha`, as de `ProrrogacaoEdicao` e a de `ModeloEmail` usam `ON DELETE RESTRICT ON UPDATE CASCADE`. Consequências práticas:
 
 - Não dá para excluir uma categoria que tenha ações.
 - Não dá para excluir uma edição que tenha ações. `DeletarEdicao` recusa só edição com ação (vigente vazia pode sair); se a edição estiver vazia, apaga as prorrogações na mesma transação para a FK `RESTRICT` não impedir.
-- Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, que tenha linha em `RedefinicaoSenha`, ou que tenha prorrogado uma edição. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; as outras FKs ainda barram no banco.
+- Não dá para excluir um usuário que seja responsável por alguma ação, que tenha sido o último a alterar alguma ação, que tenha linha em `RedefinicaoSenha`, que tenha prorrogado uma edição, ou que tenha sido o último a gravar um modelo de e-mail. `DeletarUsuario` antecipa a checagem de ações com `possuiAcaoVinculada()` para devolver um `409` legível; as outras FKs ainda barram no banco.
 
 `id_usuario_alteracao` é `NOT NULL` desde o início, por isso `Acao.criarNovaAcao()` o preenche com o próprio `id_usuario_responsavel` na criação.
 

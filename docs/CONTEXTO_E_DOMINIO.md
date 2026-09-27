@@ -154,6 +154,8 @@ Cinco templates EJS em `src/infrastructure/smtp/templates/`. Os três primeiros 
 
 O remetente é `caxiaslixozero@gmail.com`, escrito diretamente no código dos casos de uso. Nos e-mails de ação, `<ano da edição>` é o `ano` da edição da ação. Nos e-mails de senha, `<ano>` continua sendo o ano corrente do servidor. O e-mail de criação recebe a data formatada em `dd/mm/aaaa` e o horário em `hh:mm` (via `adicionaZeroAEsquerda`), além das versões textuais dos enums; os de aprovação/reprovação recebem só o nome do usuário. O de redefinição leva o nome e o link `{URL_FRONT}/redefinir-senha?token=...`. O de senha alterada leva só o nome, sem a senha.
 
+Assunto e trechos de texto dos três e-mails da ação podem ser gravados em `ModeloEmail` por um administrador (`/modelos-email`). Sem registro, o envio usa o texto padrão embutido no código, o mesmo da migration. A casca visual continua no EJS. Nome, dados da ação, ano e título não são campos do formulário: entram na hora de montar. Os e-mails de senha não têm edição na aplicação.
+
 Os casos de uso renderizam o template EJS e chamam `IEmailService.enviarEmail()`; a implementação injetada na API (`FilaEmailService`) publica o e-mail já montado na fila Redis `emails`. O worker (`src/worker.ts`) consome o job e envia via Gmail SMTP (`GMAIL_USER`/`GMAIL_PASS`), com até 5 tentativas e backoff exponencial.
 
 Se o Redis estiver indisponível no `queue.add`, a falha é só logada: a ação já foi persistida e a API ainda responde sucesso. Falha de SMTP no worker relança o erro para o BullMQ retentar; jobs esgotados ficam em `failed` no Redis. Retry pode reenviar o mesmo e-mail. Não há transactional outbox.

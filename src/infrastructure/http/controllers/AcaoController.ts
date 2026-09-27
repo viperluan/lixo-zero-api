@@ -11,6 +11,7 @@ import UsuarioPrismaRepository from '@/application/repositories/UsuarioPrismaRep
 import FilaEmailService from '@/application/services/email/FilaEmailService';
 import { filaEmail } from '@/infrastructure/fila/filaEmail';
 import EdicaoPrismaRepository from '@/application/repositories/EdicaoPrismaRepository';
+import ModeloEmailPrismaRepository from '@/application/repositories/ModeloEmailPrismaRepository';
 import ResolverFiltroEdicao, {
   PerfilFiltroEdicao,
 } from '@/application/usecases/edicao/ResolverFiltroEdicao';
@@ -24,6 +25,7 @@ import { usuarioEhAdmin } from '@/shared/utils/usuarioEhAdmin';
 const acaoPrismaRepository = new AcaoPrismaRepository(prisma);
 const usuarioPrismaRepository = new UsuarioPrismaRepository(prisma);
 const edicaoPrismaRepository = new EdicaoPrismaRepository(prisma);
+const modeloEmailPrismaRepository = new ModeloEmailPrismaRepository(prisma);
 const filaEmailService = new FilaEmailService(filaEmail);
 
 function montarOpcoesListagemAcoes(request: UsuarioRequest) {
@@ -232,7 +234,8 @@ export async function criarAcao(request: UsuarioRequest, response: Response) {
       acaoPrismaRepository,
       usuarioPrismaRepository,
       edicaoPrismaRepository,
-      filaEmailService
+      filaEmailService,
+      modeloEmailPrismaRepository
     );
 
     const acao = await criarAcao.executar({
@@ -261,7 +264,8 @@ export async function atualizarAcao(request: UsuarioRequest, response: Response)
       acaoPrismaRepository,
       usuarioPrismaRepository,
       edicaoPrismaRepository,
-      filaEmailService
+      filaEmailService,
+      modeloEmailPrismaRepository
     );
 
     const acao = await atualizarAcao.executar({

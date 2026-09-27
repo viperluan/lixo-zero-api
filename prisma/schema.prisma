@@ -26,6 +26,7 @@ model Usuario {
   acao_usuario_alteracao Acao[]             @relation("usuario_alteracao")
   redefinicoes_senha     RedefinicaoSenha[]
   prorrogacoes_edicao    ProrrogacaoEdicao[]
+  modelos_email          ModeloEmail[]
 }
 
 model RedefinicaoSenha {
@@ -100,4 +101,16 @@ model Acao {
 
   @@unique([titulo_acao, id_edicao])
   @@index([id_edicao, situacao_acao, data_acao])
+}
+
+model ModeloEmail {
+  id            String   @id @default(uuid())
+  codigo        String   @unique @db.VarChar(40)
+  assunto       String
+  conteudo      Json
+  atualizado_em DateTime @updatedAt
+  id_usuario    String?
+  usuario       Usuario? @relation(fields: [id_usuario], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([id_usuario])
 }
