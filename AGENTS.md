@@ -134,6 +134,7 @@ Skills em `.agents/skills/`. Docs e convenções deste repositório vencem a ski
 | Regra de negócio, papel ou e-mail | [`docs/CONTEXTO_E_DOMINIO.md`](docs/CONTEXTO_E_DOMINIO.md) |
 | Schema ou migration | [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md) |
 | Auth, sanitização, rate limit ou CORS | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) |
+| Variável de ambiente | [`.env.example`](.env.example) e o `.env` local, juntos. Copie a chave nova; não sobrescreva valor que já exista no `.env` (senhas, `RATE_LIMIT_ENABLED`, etc.). Não commite o `.env` |
 | Bug conhecido ou decisão consciente | [`docs/PONTOS_DE_ATENCAO.md`](docs/PONTOS_DE_ATENCAO.md) |
 
 ## Ao mexer em cada área

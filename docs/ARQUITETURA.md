@@ -62,7 +62,7 @@ Exemplo com `POST /acoes`, o caminho mais completo do sistema:
 8. worker.ts             consome a fila `emails` e envia via Nodemailer/Gmail SMTP
 ```
 
-`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova — inclusive a ordenação de `listarComPaginacao` (`data_acao` crescente, `id` como desempate). A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
+`GET /acoes/minhas` reusa o caso de uso `ListarAcoes`, sem classe nova — inclusive a ordenação de `listarComPaginacao` (`data_acao` crescente, `id` como desempate). A rota estática é registrada **antes** de `GET /acoes/:data` em `acaoRoutes.ts`; se ficar depois, `"minhas"` cai no parser de data e vira `400`. O mesmo vale para `GET /acoes/planilha`. O controller `listarMinhasAcoes` exige `AutenticacaoMiddleware`, injeta `id_usuario` a partir de `request.usuario.id` (ignora a query), não sanitiza a saída e respeita `?situacao=` quando informado.
 
 Os middlewares globais são aplicados na ordem exata declarada em `src/app.ts`:
 
@@ -121,6 +121,7 @@ Cada caso de uso exporta seus tipos `XEntradaDTO` e `XSaidaDTO` (os de e-mail us
 | `acao` | `CriarAcao` | Exige edição vigente com cadastro aberto, data dentro da realização, título único na edição, cria a ação e envia o e-mail |
 | | `AtualizarAcao` | Aprova ou reprova, envia o e-mail com o ano da edição |
 | | `ListarAcoes` | Listagem paginada com filtros, edição e sanitização opcional (`GET /acoes` e `GET /acoes/minhas`) |
+| | `ExportarPlanilhaAcoes` | Planilha `.xlsx` do admin: vigente, um ano ou uma aba por ano (`GET /acoes/planilha`) |
 | | `ListarAcoesPorData` | Ações de um dia civil, restritas à vigente para quem não é admin |
 | | `ListarAcoesPorIntervaloData` | Ações entre duas datas, com a mesma regra de edição |
 | `edicao` | `CriarEdicao` | Cria o ano com os dois prazos, datas só daquele ano |

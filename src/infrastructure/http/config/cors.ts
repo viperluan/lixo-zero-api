@@ -1,6 +1,6 @@
 import { CorsOptions } from 'cors';
 
-const CABECALHOS_EXPOSTOS = ['X-Session-Expired'];
+const CABECALHOS_EXPOSTOS = ['X-Session-Expired', 'Content-Disposition'];
 
 export function obterOpcoesCors(): CorsOptions {
   const corsOrigin = process.env.CORS_ORIGIN?.trim();

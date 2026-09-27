@@ -28,8 +28,9 @@ Artefatos ficam em `specs/`. Pergunta, revisão e ajuste que não muda comportam
 3. Ter implementado no padrão vizinho, sem expandir escopo (sem lib nova, refatoração ou rename não pedidos).
 4. Autoreview nos eixos de `.agents/skills/code-review-and-quality/SKILL.md`.
 5. Docs afetados atualizados (mapa em `AGENTS.md`).
-6. `npm run typecheck` e `npm run lint` ok.
-7. Resposta final com o que mudou, a spec usada, docs tocados, skills usadas e o que ficou de fora.
+6. Se `.env.example` ganhou ou mudou chave, a mesma chave está no `.env` local, sem sobrescrever valor que já existia. Não commitar o `.env`.
+7. `npm run typecheck` e `npm run lint` ok.
+8. Resposta final com o que mudou, a spec usada, docs tocados, skills usadas e o que ficou de fora.
 
 ## Qualidade
 

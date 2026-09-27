@@ -70,6 +70,13 @@ export function criarRateLimitRedefinirSenha(): RequestHandler {
   });
 }
 
+export function criarRateLimitPlanilhaAcoes(): RequestHandler {
+  return criarMiddleware({
+    windowMs: lerNumeroEnv('RATE_LIMIT_PLANILHA_WINDOW_MS', 60_000),
+    max: lerNumeroEnv('RATE_LIMIT_PLANILHA_MAX', 10),
+  });
+}
+
 export function criarRateLimitLeituraPublica(): RequestHandler {
   return criarMiddleware({
     windowMs: lerNumeroEnv('RATE_LIMIT_PUBLIC_READ_WINDOW_MS', 60_000),

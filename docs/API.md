@@ -2,7 +2,7 @@
 
 Base URL local: `http://localhost:3000`. Não há prefixo de versão (`/v1`) nem documentação OpenAPI — este arquivo é a referência.
 
-Todas as requisições e respostas usam `application/json`, limitadas a 500 kB de corpo.
+As requisições e respostas usam `application/json`, limitadas a 500 kB de corpo. A exceção é `GET /acoes/planilha`, que devolve um arquivo `.xlsx`.
 
 ## Autenticação
 
@@ -31,6 +31,7 @@ Em rota protegida, JWT expirado responde `401` `{ "message": "Sessão inválida.
 | `POST` | `/categorias` | Admin | — |
 | `GET` | `/acoes` | Público, com auth opcional | Leitura pública (60/min) |
 | `GET` | `/acoes/minhas` | Autenticado | — |
+| `GET` | `/acoes/planilha` | Admin | Planilha (10/min) |
 | `POST` | `/acoes` | Autenticado | — |
 | `GET` | `/acoes/:data` | Autenticado | — |
 | `GET` | `/acoes/:dataInicial/:dataFinal` | Autenticado | — |
@@ -321,6 +322,37 @@ Não há sanitização: `celular` e os e-mails de `usuario_responsavel`/`usuario
 |--------|----------|
 | `200` | Envelope `{ "actions", "totalPages", "currentPage" }` |
 | `401` | Sem token ou sessão inválida |
+| `500` | Falha inesperada via `responderErroInterno` |
+
+### `GET /acoes/planilha`
+
+Requer admin. Devolve um `.xlsx` com todas as ações do recorte de edição, sem paginação. Categoria, situação, usuário, forma de realização, pesquisa e datas da lista são ignorados se vierem na query.
+
+**Query params:**
+
+| Param | Descrição |
+|-------|-----------|
+| `ano` | Igual a `GET /acoes` para admin. Omitido usa a vigente. `todos` gera uma aba por ano |
+| `id_edicao` | UUID da edição. Tem precedência sobre `ano`, exceto quando `ano=todos` |
+
+Cada ano com ação vira uma aba nomeada pelo ano, em ordem crescente. Ano sem ação não vira aba, salvo quando essa edição foi pedida explicitamente: nesse caso a aba existe só com o cabeçalho. Sem edição vigente e sem `ano=todos`, o arquivo vem com uma aba `Ações` só de cabeçalho.
+
+As colunas repetem o CSV da tela de admin, com data e hora em `America/Sao_Paulo`. Cada aba é uma tabela do Excel (filtro no cabeçalho). O cabeçalho usa o verde `#246352` da campanha e as linhas alternam branco e verde claro. Celular e e-mail do responsável vêm completos. Senha e CPF/CNPJ não entram.
+
+| Situação | Nome do arquivo |
+|----------|-----------------|
+| Uma edição | `acoes-2026-202609271854.xlsx` (ano da edição e o momento do download, `AAAAMMDDhhmm` em `America/Sao_Paulo`) |
+| `ano=todos` | `acoes-todas-edicoes-202609271854.xlsx` |
+| Sem edição vigente | `acoes-202609271854.xlsx` |
+
+**200:** corpo binário, `Content-Type` de planilha Excel e `Content-Disposition: attachment`.
+
+| Status | Corpo |
+|--------|-------|
+| `200` | Arquivo `.xlsx` |
+| `401` / `403` | Sem token / não é admin |
+| `404` | `{ "error": "Edição não encontrada." }` |
+| `429` | Limite da rota (10 por minuto, além do global) |
 | `500` | Falha inesperada via `responderErroInterno` |
 
 ### `POST /acoes`

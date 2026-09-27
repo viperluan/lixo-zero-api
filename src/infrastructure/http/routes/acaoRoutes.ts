@@ -4,7 +4,7 @@ import * as acaoController from '../controllers/AcaoController';
 import AutenticacaoMiddleware from '../middlewares/AutenticacaoMiddleware';
 import AutenticacaoOpcionalMiddleware from '../middlewares/AutenticacaoOpcionalMiddleware';
 import AdminMiddleware from '../middlewares/AdminMiddleware';
-import { criarRateLimitLeituraPublica } from '../config/rateLimit';
+import { criarRateLimitLeituraPublica, criarRateLimitPlanilhaAcoes } from '../config/rateLimit';
 
 const acaoRouter = Router();
 
@@ -16,6 +16,13 @@ acaoRouter.get(
   acaoController.listarTodasAcoes
 );
 acaoRouter.get('/minhas', AutenticacaoMiddleware, acaoController.listarMinhasAcoes);
+acaoRouter.get(
+  '/planilha',
+  criarRateLimitPlanilhaAcoes(),
+  AutenticacaoMiddleware,
+  AdminMiddleware,
+  acaoController.exportarPlanilhaAcoes
+);
 acaoRouter.get('/:data', AutenticacaoMiddleware, acaoController.listarPorData);
 acaoRouter.get(
   '/:dataInicial/:dataFinal',

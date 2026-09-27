@@ -1,6 +1,11 @@
 import Acao from '../entity/Acao';
 import { FiltrosListarComPaginacaoType } from '@/application/repositories/AcaoPrismaRepository';
 
+export type AcaoParaPlanilha = {
+  ano: number;
+  acao: Acao;
+};
+
 export default interface IAcaoRepository {
   buscarPorId(id: string): Promise<Acao | null>;
   buscarPorTituloNaEdicao(titulo: string, idEdicao: string): Promise<Acao | null>;
@@ -11,6 +16,7 @@ export default interface IAcaoRepository {
     pagina: number,
     limiteAcoes: number
   ): Promise<Acao[] | null>;
+  listarParaPlanilha(idEdicao?: string): Promise<AcaoParaPlanilha[]>;
   listarPorData(
     intervalo: { inicio: Date; fim: Date },
     situacao?: string,
