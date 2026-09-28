@@ -606,13 +606,15 @@ Admin. Só os três e-mails da ação: `acao_cadastrada`, `acao_aprovada` e `aca
 
 `conteudo` depende do código.
 
-Cadastro: `paragrafos_abertura`, `faixa`, `texto_antes_ficha`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `convite_redes`, `hashtags`.
+Cadastro: `paragrafos_abertura`, `faixa`, `texto_antes_ficha`, `texto_aviso_ficha`, `texto_responsabilidade`, `paragrafo_cards`, `chamada_pasta`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `convite_redes`, `chamada_tags`, `hashtags`, `texto_programacao`, `texto_despedida`, mais o rodapé.
 
-Aprovação: `faixa`, `paragrafo_cards`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `paragrafo_redes`, `hashtags`.
+Aprovação: `faixa`, `paragrafo_cards`, `chamada_pasta`, `rotulo_botao`, `url_pasta`, `texto_depois_botao`, `paragrafo_redes`, `chamada_tags`, `hashtags`, `texto_programacao`, `texto_contato`, mais o rodapé.
 
-Reprovação: `faixa`, `corpo`.
+Reprovação: `faixa`, `corpo`, `texto_despedida`, mais o rodapé.
 
-O assunto pode usar `{ano}`. Só o cadastro também aceita `{titulo_acao}`. Outro `{marcador}` responde `400`. `url_pasta` precisa começar com `http://` ou `https://`. Campo vazio responde `400`.
+Rodapé, nos três: `texto_assinatura`, `texto_instagram`, `url_instagram`, `texto_site`, `url_site`, `texto_duvida`, `texto_copyright`.
+
+O assunto pode usar `{ano}`. Só o cadastro também aceita `{titulo_acao}`. Outro `{marcador}` responde `400`. `url_pasta`, `url_instagram` e `url_site` precisam começar com `http://` ou `https://`. Campo vazio responde `400`. Um conteúdo gravado sem as chaves novas volta completado com o texto padrão na leitura e no envio.
 
 A lista devolve `{ "templates": [ ... ] }`. Cada item traz `codigo`, `assunto`, `conteudo`, `atualizado_em` e `id_usuario`. Sem linha gravada, a API devolve o texto padrão e `atualizado_em: null`.
 
@@ -633,7 +635,7 @@ A lista devolve `{ "templates": [ ... ] }`. Cada item traz `codigo`, `assunto`, 
 }
 ```
 
-`id_usuario` sai do token. Código desconhecido: `404` `{ "error": "Modelo de e-mail não encontrado." }`.
+O corpo precisa trazer todos os campos daquele código. O exemplo mostra a forma; omitir um campo responde `400`. `id_usuario` sai do token. Código desconhecido: `404` `{ "error": "Modelo de e-mail não encontrado." }`.
 
 ### `POST /modelos-email/:codigo/previa`
 

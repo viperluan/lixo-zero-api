@@ -50,14 +50,14 @@ export function validarModeloEmail(
       throw new Error('Preencha todos os campos do e-mail.');
     }
 
-    const limite = campo === 'url_pasta' ? LIMITE_URL : LIMITE_TEXTO;
+    const limite = campo.startsWith('url_') ? LIMITE_URL : LIMITE_TEXTO;
     const texto = valor.trim();
     if (texto.length > limite) {
       throw new Error('Um dos campos do e-mail passou do tamanho permitido.');
     }
 
-    if (campo === 'url_pasta' && !/^https?:\/\/\S+$/i.test(texto)) {
-      throw new Error('O link da pasta precisa começar com http:// ou https://.');
+    if (campo.startsWith('url_') && !/^https?:\/\/\S+$/i.test(texto)) {
+      throw new Error('O link precisa começar com http:// ou https://.');
     }
 
     normalizado[campo] = texto;

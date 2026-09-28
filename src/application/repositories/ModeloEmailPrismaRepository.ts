@@ -2,12 +2,12 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import {
   CodigoModeloEmail,
   codigoModeloEmail,
-  ConteudoModeloEmail,
   ModeloEmailRegistro,
 } from '@/domain/modeloEmail/modeloEmail';
 import IModeloEmailRepository, {
   SalvarModeloEmail,
 } from '@/domain/modeloEmail/repository/IModeloEmailRepository';
+import { completarConteudo } from '@/application/usecases/modeloEmail/textosPadraoModeloEmail';
 
 export default class ModeloEmailPrismaRepository implements IModeloEmailRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -63,7 +63,7 @@ export default class ModeloEmailPrismaRepository implements IModeloEmailReposito
     return {
       codigo,
       assunto: modelo.assunto,
-      conteudo: modelo.conteudo as ConteudoModeloEmail,
+      conteudo: completarConteudo(codigo, modelo.conteudo),
       atualizado_em: modelo.atualizado_em,
       id_usuario: modelo.id_usuario,
     };
