@@ -2,14 +2,14 @@ import { adicionaZeroAEsquerda } from '@/shared/utils/adicionaZeroAEsquerda';
 import { Usecase } from '../usecase';
 import Acao from '@/domain/acao/entity/Acao';
 import Email from '@/domain/email/entity/Email';
-import GerarTemplateAcaoCadastrada from '../email/GerarTemplateAcaoCadastrada';
 import IAcaoRepository from '@/domain/acao/repository/IAcaoRepository';
 import IUsuarioRepository from '@/domain/usuario/repository/IUsuarioRepository';
 import IEdicaoRepository from '@/domain/edicao/repository/IEdicaoRepository';
 import { ERRO_CADASTRO_FECHADO, ERRO_EDICAO_VIGENTE_AUSENTE } from '@/domain/edicao/erros';
 import IEmailService from '@/domain/email/service/IEmailService';
 import { diaCivilDaEntrada, diaCivilDeColunaDate } from '@/shared/utils/diaCivil';
-import { resolveCaminhoArquivoTemplate } from '@/shared/utils/resolveCaminhoArquivoTemplate';
+import IModeloEmailRepository from '@/domain/modeloEmail/repository/IModeloEmailRepository';
+import { renderizarModeloEmail, textosEfetivos } from '../modeloEmail/renderizarModeloEmail';
 
 export type CriarAcaoDadosDTO = {
   nome_organizador: string;
@@ -42,7 +42,8 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
     private readonly acaoRepository: IAcaoRepository,
     private readonly usuarioRepository: IUsuarioRepository,
     private readonly edicaoRepository: IEdicaoRepository,
-    private readonly emailService: IEmailService
+    private readonly emailService: IEmailService,
+    private readonly modeloEmailRepository: IModeloEmailRepository
   ) {}
 
   public async executar(entrada: CriarAcaoEntradaDTO): Promise<CriarAcaoSaidaDTO> {
@@ -96,18 +97,18 @@ export default class CriarAcao implements Usecase<CriarAcaoEntradaDTO, CriarAcao
       informacoes_acao: acao.informacoes_acao,
     };
 
-    const caminhoTemplate = resolveCaminhoArquivoTemplate('NotificacaoAcaoCriada.ejs');
-
-    const gerarTemplateAcaoCadastrada = new GerarTemplateAcaoCadastrada();
-    const template = await gerarTemplateAcaoCadastrada.executar({ caminhoTemplate, dados });
-
-    if (!template) throw new Error('Erro ao gerar template.');
+    const gravado = await this.modeloEmailRepository.buscarPorCodigo('acao_cadastrada');
+    const emailMontado = await renderizarModeloEmail(
+      'acao_cadastrada',
+      textosEfetivos('acao_cadastrada', gravado),
+      { ...dados, ano: String(edicao.ano), titulo_acao: acao.titulo_acao }
+    );
 
     const email = Email.criarNovoEmail({
       from: 'caxiaslixozero@gmail.com',
       to: usuario.email,
-      subject: `CaxiasLixoZero ${edicao.ano} - Cadastro da ação: ${acao.titulo_acao}`,
-      html: template,
+      subject: emailMontado.assunto,
+      html: emailMontado.html,
     });
 
     await this.emailService.enviarEmail(email);

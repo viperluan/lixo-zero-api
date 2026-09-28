@@ -10,7 +10,7 @@
 
 <body style="margin:0;padding:0;background-color:#FFFCE6;color:#2E292C;font-family:Arial,Helvetica,sans-serif;">
   <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
-    Gostariamos de informar que sua ação foi aprovada! Parabéns!
+    <%= faixa %>
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFCE6;">
@@ -30,49 +30,46 @@
 
           <tr>
             <td align="center" style="background-color:#86B499;padding:20px 24px;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.4;font-weight:bold;color:#153C31;">
-              Gostariamos de informar que sua ação foi aprovada! Parabéns!
+              <%= faixa %>
             </td>
           </tr>
 
           <tr>
             <td style="padding:24px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
               <p style="margin:0 0 12px;">
-                <span style="font-weight:bold;">Temos alguns cards e templates prontos para você divulgar a sua ação!</span>
-                Eles servem para ajudar na identificação das ações que fazem parte da Semana Lixo Zero e você pode editá-los para incluir as informações da sua atividade!
+                <%= paragrafo_cards %>
               </p>
 
-              <p style="margin:0 0 12px;font-weight:bold;">Dá uma olhadinha nessa pasta:</p>
+              <p style="margin:0 0 12px;font-weight:bold;"><%= chamada_pasta %></p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
                 <tr>
                   <td align="center" bgcolor="#246352" style="background-color:#246352;border-radius:8px;">
-                    <a target="_blank" href="https://drive.google.com/drive/folders/12qTWAQrkjjoVl9CW72rNawOKY21q6Byo" style="display:inline-block;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;font-weight:bold;color:#FFFCE6;text-decoration:none;">
-                      Templates para ações - SLZ 2026
+                    <a target="_blank" href="<%= url_pasta %>" style="display:inline-block;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;font-weight:bold;color:#FFFCE6;text-decoration:none;">
+                      <%= rotulo_botao %>
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin:0;">Quanto antes você começar a divulgar seu evento, melhor!</p>
+              <p style="margin:0;"><%= texto_depois_botao %></p>
             </td>
           </tr>
 
           <tr>
             <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
               <p style="margin:0 0 12px;">
-                <span style="font-weight:bold;">Ah, não esquece de marcar a gente</span>
-                para que possamos encontrar o seu post e compartilhar nas nossas redes também!
+                <%= paragrafo_redes %>
               </p>
 
-              <p style="margin:0 0 12px;font-weight:bold;">Essas são as tags do nosso evento, anota aí:</p>
+              <p style="margin:0 0 12px;font-weight:bold;"><%= chamada_tags %></p>
 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFFCE6;border:1px solid #A5B798;">
                 <tr>
                   <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.6;font-weight:bold;color:#246352;">
-                    @caxiaslixozero<br>
-                    #semanalixozerocaxias<br>
-                    #slzcxs<br>
-                    #TransformandoIdeiasEmAções
+                    <% hashtags.split('\n').forEach(function (tag) { if (!tag.trim()) return; %>
+                    <%= tag %><br>
+                    <% }) %>
                   </td>
                 </tr>
               </table>
@@ -81,47 +78,37 @@
 
           <tr>
             <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
-              <p style="margin:0;">
-                Fica ligado nas nossas redes sociais para
-                <span style="font-weight:bold;">acompanhar a divulgação da programação (você vai estar lá!!)</span>
-                Também estaremos divulgando o cronograma completo do evento,
-                <span style="font-weight:bold;color:#246352;">até dia 17/10</span>,
-                pelo site
-                <a target="_blank" href="https://www.caxiaslixozero.com.br" style="color:#246352;text-decoration:underline;">www.caxiaslixozero.com.br</a>
-              </p>
+              <p style="margin:0;"><%= texto_programacao %></p>
             </td>
           </tr>
 
           <tr>
             <td style="padding:16px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
-              <p style="margin:0;">
-                Caso você precisar tirar qualquer dúvida, entre em contato pelas nossas redes!
-              </p>
+              <p style="margin:0;"><%= texto_contato %></p>
             </td>
           </tr>
 
           <tr>
             <td style="padding:20px 24px 28px;border-top:1px solid #A5B798;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#2E292C;">
-              <p style="margin:0 0 16px;">Um abraço,<br>Equipe Coletivo Lixo Zero Caxias do Sul</p>
+              <% texto_assinatura.split('\n').forEach(function (paragrafo) { if (!paragrafo.trim()) return; %>
+              <p style="margin:0 0 12px;"><%= paragrafo %></p>
+              <% }) %>
 
               <p style="margin:0;">
                 Instagram:
-                <a target="_blank" href="https://www.instagram.com/caxiaslixozero" style="color:#246352;text-decoration:underline;">@caxiaslixozero</a>
+                <a target="_blank" href="<%= url_instagram %>" style="color:#246352;text-decoration:underline;"><%= texto_instagram %></a>
               </p>
               <p style="margin:0;">
                 Site:
-                <a target="_blank" href="https://www.caxiaslixozero.com.br" style="color:#246352;text-decoration:underline;">www.caxiaslixozero.com.br</a>
+                <a target="_blank" href="<%= url_site %>" style="color:#246352;text-decoration:underline;"><%= texto_site %></a>
               </p>
             </td>
           </tr>
 
           <tr>
             <td align="center" style="background-color:#246352;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#FFFCE6;">
-              <p style="margin:0 0 12px;">
-                Se você tiver alguma dúvida, não hesite
-                <a target="_blank" href="mailto:caxiaslixozero@gmail.com" style="color:#FFFCE6;text-decoration:underline;">entrar em contato</a>!
-              </p>
-              <p style="margin:0;">&copy; 2025 Lixo Zero - Caxias do Sul. Todos os direitos reservados.</p>
+              <p style="margin:0 0 12px;"><%= texto_duvida %></p>
+              <p style="margin:0;"><%= texto_copyright %></p>
             </td>
           </tr>
         </table>
